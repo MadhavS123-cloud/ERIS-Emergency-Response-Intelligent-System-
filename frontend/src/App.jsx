@@ -1,10 +1,12 @@
-import logo from './logo.svg';
-import './App.css';
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import PatientPage from './pages/PatientPage';
 import DriverPage from './pages/DriverPage';
 import HospitalPage from './pages/HospitalPage';
+
+function Home() {
+  return <div>Home Page</div>;
+}
 
 function App() {
   return (
