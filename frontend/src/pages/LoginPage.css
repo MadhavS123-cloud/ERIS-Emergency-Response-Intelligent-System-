@@ -1,0 +1,188 @@
+/* LoginPage.css */
+.login-page-container {
+    min-height: 100vh;
+    background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    position: relative;
+}
+
+.back-to-home {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f172a;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.back-to-home:hover {
+    text-decoration: underline;
+}
+
+.login-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.login-logo-box {
+    background-color: #e11d48;
+    /* Red */
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.login-brand-name {
+    font-size: 32px;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.login-subtitle {
+    font-size: 16px;
+    color: #64748b;
+}
+
+.login-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    padding: 32px;
+    box-sizing: border-box;
+}
+
+.login-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.login-card p {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper svg {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    background-color: #f8fafc;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #334155;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    border-color: #cbd5e1;
+    background-color: #ffffff;
+}
+
+select.form-control {
+    appearance: none;
+    padding-left: 14px;
+    /* Move text left if no icon */
+}
+
+/* Hack to add arrow to select */
+.select-wrapper::after {
+    content: "▼";
+    font-size: 10px;
+    color: #94a3b8;
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-weight: 500;
+}
+
+.forgot-password {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.btn-signin {
+    width: 100%;
+    padding: 14px;
+    background-color: #0a0a0a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-signin:hover {
+    background-color: #262626;
+}

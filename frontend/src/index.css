@@ -1,13 +1,97 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ERIS Global Design System - Professional Emergency Standard */
+:root {
+  /* Core Colors */
+  --emergency-red: #C62828;
+  --emergency-red-dark: #B71C1C;
+  --emergency-red-light: #FFEBEE;
+
+  --dept-blue: #0D47A1;
+  --dept-blue-dark: #01579B;
+  --dept-blue-light: #E3F2FD;
+
+  --success-green: #2E7D32;
+  --warning-orange: #EF6C00;
+
+  /* Neutral Palette */
+  --bg-main: #F5F5F5;
+  --bg-card: #FFFFFF;
+  --border-std: #D1D1D1;
+  --text-primary: #212121;
+  --text-secondary: #616161;
+  --text-on-dark: #FFFFFF;
+
+  /* Spacing & Sizing */
+  --sidebar-width: 280px;
+  --header-height: 64px;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  color: var(--dept-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+/* Functional Utility Classes */
+.btn-emergency {
+  background-color: var(--emergency-red);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 4px;
+}
+
+.btn-emergency:hover {
+  background-color: var(--emergency-red-dark);
+}
+
+.btn-secondary {
+  background-color: var(--dept-blue);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 4px;
+}
+
+.card-std {
+  background: var(--bg-card);
+  border: 1px solid var(--border-std);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  /* Sharp professional corners */
+}
+
+.timestamp {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: 'Courier New', Courier, monospace;
 }
