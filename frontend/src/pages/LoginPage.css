@@ -1,98 +1,159 @@
-/* LoginPage.css */
+/* Modern Glassmorphic Login Page CSS */
 .login-page-container {
     min-height: 100vh;
-    background-color: #f8fafc;
+    background: linear-gradient(-45deg, #0f172a, var(--dept-blue-dark), #1e1b4b, #312e81);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 40px;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
     position: relative;
+    overflow: hidden;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Background floating elements */
+.login-page-container::before,
+.login-page-container::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: 1;
+}
+
+.login-page-container::before {
+    width: 400px;
+    height: 400px;
+    background: rgba(225, 29, 72, 0.4); /* Glow red */
+    bottom: -100px;
+    left: -100px;
+}
+
+.login-page-container::after {
+    width: 500px;
+    height: 500px;
+    background: rgba(37, 99, 235, 0.4); /* Glow blue */
+    top: -150px;
+    right: -100px;
 }
 
 .back-to-home {
     position: absolute;
-    top: 30px;
+    top: 40px;
     left: 40px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: #0f172a;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     font-weight: 600;
     font-size: 15px;
+    z-index: 10;
+    transition: all var(--transition-fast);
+    padding: 10px 16px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .back-to-home:hover {
-    text-decoration: underline;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateX(-5px);
 }
 
 .login-header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 32px;
+    z-index: 10;
 }
 
 .login-logo-box {
-    background-color: #e11d48;
-    /* Red */
+    background: linear-gradient(135deg, var(--emergency-red) 0%, #be123c 100%);
     width: 64px;
     height: 64px;
     border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 25px rgba(225, 29, 72, 0.4);
+    position: relative;
+}
+
+.login-logo-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .login-brand-name {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 900;
-    color: #0f172a;
-    letter-spacing: 0.5px;
+    color: white;
+    letter-spacing: -0.02em;
     margin-bottom: 8px;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .login-subtitle {
     font-size: 16px;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
 }
 
 .login-card {
-    background: #ffffff;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     width: 100%;
     max-width: 440px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f1f5f9;
-    padding: 32px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    padding: 48px;
     box-sizing: border-box;
+    z-index: 10;
 }
 
 .login-card h2 {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 6px;
+    color: white;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
 }
 
 .login-card p {
     font-size: 15px;
-    color: #64748b;
-    margin-bottom: 24px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 32px;
+    line-height: 1.5;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .form-group label {
     display: block;
     font-size: 14px;
     font-weight: 600;
-    color: #0f172a;
-    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 10px;
 }
 
 .input-wrapper {
@@ -103,86 +164,130 @@
 
 .input-wrapper svg {
     position: absolute;
-    left: 14px;
-    color: #94a3b8;
+    left: 16px;
+    color: rgba(255, 255, 255, 0.4);
+    transition: color var(--transition-fast);
 }
 
 .form-control {
     width: 100%;
-    padding: 12px 14px 12px 40px;
-    background-color: #f8fafc;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    font-size: 15px;
-    color: #334155;
+    padding: 14px 14px 14px 48px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    color: white;
     outline: none;
     box-sizing: border-box;
-    transition: all 0.2s;
-    font-family: inherit;
+    transition: all var(--transition-fast);
+    font-family: 'Inter', sans-serif;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.3);
 }
 
 .form-control:focus {
-    border-color: #cbd5e1;
-    background-color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+}
+
+.input-wrapper:focus-within svg {
+    color: white;
 }
 
 select.form-control {
     appearance: none;
-    padding-left: 14px;
-    /* Move text left if no icon */
+    padding-left: 16px;
+    cursor: pointer;
 }
 
-/* Hack to add arrow to select */
+select.form-control option {
+    background: #0f172a;
+    color: white;
+    padding: 12px;
+}
+
 .select-wrapper::after {
-    content: "▼";
-    font-size: 10px;
-    color: #94a3b8;
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid rgba(255,255,255,0.4);
+    border-bottom: 2px solid rgba(255,255,255,0.4);
     position: absolute;
-    right: 14px;
+    right: 20px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-60%) rotate(45deg);
     pointer-events: none;
+    transition: transform var(--transition-fast);
+}
+
+.select-wrapper:focus-within::after {
+    transform: translateY(-40%) rotate(225deg);
+    border-color: white;
 }
 
 .form-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
     font-size: 14px;
 }
 
 .remember-me {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: #334155;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 500;
+    cursor: pointer;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--emergency-red);
+    cursor: pointer;
 }
 
 .forgot-password {
-    color: #2563eb;
+    color: #93c5fd;
     text-decoration: none;
     font-weight: 500;
+    transition: color var(--transition-fast);
 }
 
 .forgot-password:hover {
-    text-decoration: underline;
+    color: white;
+    text-decoration: none;
 }
 
 .btn-signin {
     width: 100%;
-    padding: 14px;
-    background-color: #0a0a0a;
-    color: #ffffff;
+    padding: 16px;
+    background: linear-gradient(135deg, white 0%, #e2e8f0 100%);
+    color: #0f172a;
     border: none;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
 }
 
 .btn-signin:hover {
-    background-color: #262626;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+    background: white;
+}
+
+.btn-signin:active {
+    transform: translateY(0);
 }

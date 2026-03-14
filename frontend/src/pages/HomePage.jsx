@@ -218,223 +218,269 @@ function HomePage() {
     };
 
     return (
-        <div className="landing-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#fcfcfc' }}>
+        <div className="landing-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-main)' }}>
             {/* Header */}
-            <header style={{
-                height: '80px',
-                background: 'white',
+            <header className="glass-panel" style={{
+                height: 'var(--header-height)',
+                position: 'sticky',
+                top: 0,
+                zIndex: 100,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0 80px',
-                borderBottom: '1px solid #eee'
+                borderBottom: '1px solid var(--border-std)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ background: '#C62828', padding: '8px', borderRadius: '4px' }}>
+                    <div style={{
+                        background: 'linear-gradient(135deg, var(--emergency-red) 0%, var(--emergency-red-dark) 100%)',
+                        padding: '8px',
+                        borderRadius: 'var(--radius-sm)',
+                        boxShadow: 'var(--shadow-md)'
+                    }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M10 17h.01" /><path d="M14 17h.01" /><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z" /><path d="M6 13V8l4-4h4l4 4v5" /><circle cx="7" cy="17" r="1" /><circle cx="17" cy="17" r="1" /></svg>
                     </div>
                     <div>
-                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#212121', lineHeight: 1 }}>ERIS</div>
-                        <div style={{ fontSize: '11px', color: '#666', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Emergency Response & Intelligent System</div>
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: 1 }}>ERIS</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Emergency Response System</div>
                     </div>
                 </div>
 
                 <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-                    <a href="#how" style={{ textDecoration: 'none', color: '#444', fontWeight: '600', fontSize: '14px' }}>How It Works</a>
-                    <a href="#hospitals" style={{ textDecoration: 'none', color: '#444', fontWeight: '600', fontSize: '14px' }}>Hospitals</a>
+                    <a href="#how" style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-secondary)' }}>How It Works</a>
+                    <a href="#hospitals" style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-secondary)' }}>Facilities</a>
                     <Link to="/login" style={{
                         textDecoration: 'none',
-                        color: '#212121',
+                        color: 'var(--text-primary)',
                         fontWeight: '700',
                         fontSize: '14px',
-                        border: '1px solid #ddd',
-                        padding: '8px 20px',
-                        borderRadius: '8px'
-                    }}>Staff Login</Link>
+                        border: '1px solid var(--border-std)',
+                        padding: '10px 24px',
+                        borderRadius: 'var(--radius-full)',
+                        transition: 'all var(--transition-fast)',
+                        backgroundColor: 'var(--bg-card)',
+                        boxShadow: 'var(--shadow-sm)'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >Staff Login</Link>
                 </nav>
             </header>
 
             {/* Hero Section */}
-            <main style={{ display: 'flex', alignItems: 'center', padding: '60px 80px', gap: '60px' }}>
-                <div style={{ flex: 1, maxWidth: '600px' }}>
+            <main className="animate-fade-in" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                padding: '80px', 
+                gap: '80px',
+                background: 'radial-gradient(circle at top right, rgba(239, 68, 68, 0.05), transparent 60%)'
+            }}>
+                <div style={{ flex: 1, maxWidth: '640px' }} className="animate-slide-up">
                     <div style={{
-                        display: 'inline-block',
-                        background: '#FFEBEE',
-                        color: '#C62828',
-                        padding: '4px 12px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: '800',
-                        marginBottom: '24px'
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'var(--emergency-red-light)',
+                        color: 'var(--emergency-red-dark)',
+                        padding: '6px 16px',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        marginBottom: '32px',
+                        boxShadow: 'var(--shadow-sm)'
                     }}>
-                        24/7 EMERGENCY SERVICE
+                        <span className="live-dot" style={{ width: '6px', height: '6px' }}></span>
+                        24/7 EMERGENCY DISPATCH
                     </div>
 
                     <h1 style={{
-                        fontSize: '56px',
-                        lineHeight: '1.1',
-                        color: '#1e293b',
+                        fontSize: '64px',
+                        lineHeight: '1.05',
+                        color: 'var(--text-primary)',
                         marginBottom: '24px',
-                        textTransform: 'none'
+                        textTransform: 'none',
+                        letterSpacing: '-0.04em'
                     }}>
                         Fast Emergency Response When Every Second Counts
                     </h1>
 
-                    <p style={{ fontSize: '18px', color: '#64748b', marginBottom: '40px', lineHeight: '1.6' }}>
-                        Get immediate ambulance assistance with real-time tracking and the nearest hospital recommendations.
+                    <p style={{ fontSize: '20px', color: 'var(--text-secondary)', marginBottom: '48px', lineHeight: '1.6', fontWeight: '400' }}>
+                        Get immediate ambulance assistance with real-time tracking and intelligent routing to the nearest prepared hospital.
                     </p>
 
-                    <div style={{ display: 'flex', gap: '16px', marginBottom: '48px' }}>
+                    <div style={{ display: 'flex', gap: '20px', marginBottom: '56px' }}>
                         <Link to="/patient" className="btn-emergency" style={{
                             textDecoration: 'none',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '10px',
-                            padding: '16px 32px'
+                            gap: '12px',
+                            padding: '16px 36px',
+                            fontSize: '16px'
                         }}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                             Book Emergency Ambulance
                         </Link>
 
-                        <Link to="/driver" style={{
+                        <Link to="/driver" className="btn-secondary" style={{
                             textDecoration: 'none',
-                            color: '#212121',
-                            background: 'white',
-                            border: '1px solid #ddd',
-                            padding: '16px 32px',
-                            fontWeight: '700',
-                            borderRadius: '4px',
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--border-std)',
+                            boxShadow: 'var(--shadow-sm)',
+                            padding: '16px 36px',
+                            fontSize: '16px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '10px'
+                            gap: '12px'
                         }}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                             Track Ambulance
                         </Link>
                     </div>
 
-                    <div style={{
-                        background: 'white',
-                        padding: '24px',
-                        borderRadius: '12px',
-                        border: '1px solid #eee',
+                    <div className="card-std" style={{
+                        padding: '24px 32px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '20px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
+                        gap: '24px'
                     }}>
-                        <div style={{ color: '#C62828' }}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                        <div style={{ 
+                            color: 'var(--emergency-red)', 
+                            background: 'var(--emergency-red-light)', 
+                            padding: '16px', 
+                            borderRadius: 'var(--radius-full)' 
+                        }}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                         </div>
                         <div>
-                            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Emergency Hotline</div>
-                            <div style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b' }}>112 or 1800-ERIS-112</div>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase' }}>National Emergency Hotline</div>
+                            <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', marginTop: '4px' }}>112 or 1800-ERIS-112</div>
                         </div>
                     </div>
                 </div>
 
-                <div style={{ flex: 1, position: 'relative' }}>
+                <div style={{ flex: 1, position: 'relative' }} className="animate-fade-in">
+                    <div style={{ position: 'absolute', inset: '-20px', background: 'var(--dept-glow)', filter: 'blur(60px)', borderRadius: 'var(--radius-full)', zIndex: 0 }}></div>
                     <img
                         src="/ambulance_hero_1772528648998.png"
                         alt="Emergency Service"
                         style={{
                             width: '100%',
-                            borderRadius: '24px',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                            borderRadius: 'var(--radius-lg)',
+                            boxShadow: 'var(--shadow-lg)',
+                            position: 'relative',
+                            zIndex: 1,
+                            border: '1px solid rgba(255,255,255,0.2)'
                         }}
                     />
                 </div>
             </main>
 
             {/* How It Works Section */}
-            <section id="how" style={{ padding: '80px 40px', background: 'white', borderTop: '1px solid #eee' }}>
+            <section id="how" style={{ padding: '100px 40px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-std)' }}>
                 <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '80px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '32px', marginBottom: '100px' }}>
                         <div>
-                            <div style={{ fontSize: '36px', fontWeight: '900', color: '#0D47A1' }}>5min</div>
-                            <div style={{ fontSize: '14px', color: '#64748b', marginTop: '8px' }}>Avg Response Time</div>
+                            <div style={{ fontSize: '48px', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>5<span style={{ fontSize: '24px' }}>min</span></div>
+                            <div style={{ fontSize: '15px', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Avg Response Time</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: '36px', fontWeight: '900', color: '#0D47A1' }}>24/7</div>
-                            <div style={{ fontSize: '14px', color: '#64748b', marginTop: '8px' }}>Always Available</div>
+                            <div style={{ fontSize: '48px', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>24<span style={{ fontSize: '24px' }}>/7</span></div>
+                            <div style={{ fontSize: '15px', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Always Available</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: '36px', fontWeight: '900', color: '#0D47A1' }}>150+</div>
-                            <div style={{ fontSize: '14px', color: '#64748b', marginTop: '8px' }}>Ambulances Ready</div>
+                            <div style={{ fontSize: '48px', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>150<span style={{ fontSize: '24px' }}>+</span></div>
+                            <div style={{ fontSize: '15px', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Ambulances Ready</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: '36px', fontWeight: '900', color: '#0D47A1' }}>50+</div>
-                            <div style={{ fontSize: '14px', color: '#64748b', marginTop: '8px' }}>Partner Hospitals</div>
+                            <div style={{ fontSize: '48px', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>50<span style={{ fontSize: '24px' }}>+</span></div>
+                            <div style={{ fontSize: '15px', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Partner Hospitals</div>
                         </div>
                     </div>
 
-                    <h2 style={{ fontSize: '32px', color: '#1e293b', marginBottom: '16px' }}>How ERIS Works</h2>
-                    <p style={{ color: '#64748b', marginBottom: '48px', fontSize: '16px' }}>Simple, fast, and reliable emergency response in 3 easy steps</p>
+                    <h2 style={{ fontSize: '40px', color: 'var(--text-primary)', marginBottom: '16px', letterSpacing: '-0.02em' }}>How ERIS Works</h2>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '64px', fontSize: '18px', maxWidth: '600px', margin: '0 auto 64px' }}>Simple, reliable emergency response in 3 steps</p>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', textAlign: 'left' }}>
-                        <div className="card-std" style={{ padding: '32px', borderRadius: '12px', border: '1px solid #eee' }}>
-                            <div style={{ background: '#eff6ff', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', marginBottom: '24px' }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                        <div className="card-std" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ background: 'var(--dept-blue-light)', width: '56px', height: '56px', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', marginBottom: '32px' }}>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                             </div>
-                            <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#0f172a' }}>1. Request Ambulance</h3>
-                            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>Fill in basic details and your location. Our system instantly finds the nearest available ambulance.</p>
+                            <h3 style={{ fontSize: '20px', marginBottom: '16px', color: 'var(--text-primary)' }}>1. Request Ambulance</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', flex: 1 }}>Fill in basic details and your location. Our system instantly finds the nearest available ambulance using smart routing.</p>
                         </div>
-                        <div className="card-std" style={{ padding: '32px', borderRadius: '12px', border: '1px solid #eee' }}>
-                            <div style={{ background: '#eff6ff', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', marginBottom: '24px' }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                        <div className="card-std" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ background: 'var(--dept-blue-light)', width: '56px', height: '56px', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', marginBottom: '32px' }}>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                             </div>
-                            <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#0f172a' }}>2. Track in Real-Time</h3>
-                            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>See your ambulance's live location and estimated arrival time. Stay informed every step of the way.</p>
+                            <h3 style={{ fontSize: '20px', marginBottom: '16px', color: 'var(--text-primary)' }}>2. Track in Real-Time</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', flex: 1 }}>See your ambulance's live location and estimated arrival time. Stay informed every step of the way on a map.</p>
                         </div>
-                        <div className="card-std" style={{ padding: '32px', borderRadius: '12px', border: '1px solid #eee' }}>
-                            <div style={{ background: '#eff6ff', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', marginBottom: '24px' }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+                        <div className="card-std" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ background: 'var(--dept-blue-light)', width: '56px', height: '56px', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', marginBottom: '32px' }}>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
                             </div>
-                            <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#0f172a' }}>3. Get Treatment</h3>
-                            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>We route you to the best available hospital equipped to handle your emergency with minimal wait time.</p>
+                            <h3 style={{ fontSize: '20px', marginBottom: '16px', color: 'var(--text-primary)' }}>3. Get Treatment</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', flex: 1 }}>We route you to the best available hospital actively equipped to handle your specific emergency.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Dynamic Real-Time Hospitals Section */}
-            <section id="hospitals" style={{ padding: '80px 40px', background: '#f8fafc' }}>
+            <section id="hospitals" style={{ padding: '100px 40px', background: 'var(--bg-main)' }}>
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
                         <div>
-                            <h2 style={{ fontSize: '32px', color: '#1e293b', marginBottom: '8px' }}>Real-Time Nearby Hospitals</h2>
-                            <p style={{ color: '#64748b' }}>Live view of facilities around your actual GPS location</p>
+                            <h2 style={{ fontSize: '40px', color: 'var(--text-primary)', marginBottom: '8px', letterSpacing: '-0.02em' }}>Real-Time Nearby Hospitals</h2>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '18px' }}>Live view of facilities around your actual GPS location</p>
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1fr) 2.5fr', gap: '32px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1.2fr) 2.5fr', gap: '32px' }}>
                         {/* Left side: Fetched Hospital List */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {loadingHospitals ? (
-                                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontWeight: '600' }}>
-                                    <div style={{ marginBottom: '10px' }}><svg className="spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C62828" strokeWidth="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" /></svg></div>
+                                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)', fontWeight: '600' }}>
+                                    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+                                        <div className="live-dot" style={{ width: '12px', height: '12px', background: 'var(--dept-blue)' }}></div>
+                                    </div>
                                     Scanning area for facilities...
                                 </div>
                             ) : hospitals.length > 0 ? (
                                 hospitals.map((hospital, idx) => (
-                                    <div key={hospital.id || idx} className="card-std" style={{ padding: '24px', borderRadius: '12px', border: idx === 0 ? '2px solid #0D47A1' : '1px solid #eee', background: 'white' }}>
+                                    <div key={hospital.id || idx} className="card-std" style={{ padding: '24px', border: idx === 0 ? '2px solid var(--dept-blue)' : '1px solid var(--border-std)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                                            <h3 style={{ fontSize: '16px', color: '#0f172a' }}>{hospital.name}</h3>
-                                            <span style={{ background: '#fee2e2', color: hospital.status === 'ER Ready' ? '#C62828' : '#d97706', fontSize: '11px', padding: '4px 8px', borderRadius: '4px', fontWeight: '800' }}>{hospital.status}</span>
+                                            <h3 style={{ fontSize: '16px', color: 'var(--text-primary)' }}>{hospital.name}</h3>
+                                            <span style={{ 
+                                                background: hospital.status === 'ER Ready' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.1)', 
+                                                color: hospital.status === 'ER Ready' ? 'var(--emergency-red)' : 'var(--warning-orange)', 
+                                                fontSize: '11px', padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontWeight: '800' 
+                                            }}>{hospital.status}</span>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '13px', marginBottom: '12px' }}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '12px' }}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                                             {calculateDistance(userLocation, hospital.coords)} km away
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? '#16a34a' : '#d97706', fontSize: '13px', marginBottom: '24px', fontWeight: '600' }}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: '14px', marginBottom: '24px', fontWeight: '600' }}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                                             Available beds: {hospital.beds} General
                                         </div>
-                                        <button style={{ width: '100%', padding: '10px', background: idx === 0 ? '#0D47A1' : 'white', borderRadius: '6px', fontWeight: '700', color: idx === 0 ? 'white' : '#0f172a', border: idx === 0 ? 'none' : '1px solid #e2e8f0', cursor: 'pointer' }}>{idx === 0 ? 'Select Facility' : 'View Details'}</button>
+                                        <button className={idx === 0 ? "btn-secondary" : ""} style={{ 
+                                            width: '100%', 
+                                            padding: '12px', 
+                                            background: idx === 0 ? 'linear-gradient(135deg, var(--dept-blue) 0%, var(--dept-blue-dark) 100%)' : 'var(--bg-main)', 
+                                            borderRadius: 'var(--radius-sm)', 
+                                            fontWeight: '700', 
+                                            color: idx === 0 ? 'white' : 'var(--text-primary)', 
+                                            border: idx === 0 ? 'none' : '1px solid var(--border-std)', 
+                                            cursor: 'pointer',
+                                            transition: 'all var(--transition-fast)'
+                                        }}>{idx === 0 ? 'Select Facility' : 'View Details'}</button>
                                     </div>
                                 ))
                             ) : (
-                                <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444', fontWeight: '600', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
+                                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--emergency-red)', fontWeight: '600', background: 'var(--emergency-red-light)', borderRadius: 'var(--radius-md)' }}>
                                     No hospitals found within 8km of your location.
                                 </div>
                             )}
@@ -443,49 +489,60 @@ function HomePage() {
                         {/* Right side: Live Leaflet Map */}
                         <div
                             className="card-std"
-                            style={{ padding: '0', borderRadius: '12px', overflow: 'hidden', border: '1px solid #ddd', minHeight: '500px', display: 'flex', flexDirection: 'column' }}
+                            style={{ padding: '0', overflow: 'hidden', minHeight: '500px', display: 'flex', flexDirection: 'column' }}
                         >
-                            <div style={{ background: '#0D47A1', color: 'white', padding: '12px 20px', fontSize: '13px', fontWeight: '700', letterSpacing: '0.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span>LIVE GPS FACILITY TRACKER</span>
-                                {userLocation && <span>LAT: {userLocation[0].toFixed(4)} LON: {userLocation[1].toFixed(4)}</span>}
+                            <div style={{ background: 'var(--text-primary)', color: 'white', padding: '16px 20px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span className="live-dot" style={{ background: 'var(--success-green)' }}></span> LIVE GPS TRACKING</span>
+                                {userLocation && <span style={{ fontFamily: 'monospace', opacity: 0.8 }}>LAT: {userLocation[0].toFixed(4)} LON: {userLocation[1].toFixed(4)}</span>}
                             </div>
-                            <div ref={mapContainer} style={{ flex: 1, width: '100%', backgroundColor: '#e5e5e5' }}></div>
+                            <div ref={mapContainer} style={{ flex: 1, width: '100%', backgroundColor: '#e2e8f0' }}></div>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Final CTA Banner */}
-            <section style={{ background: '#C62828', padding: '60px 40px', color: 'white', textAlign: 'center' }}>
-                <h2 style={{ fontSize: '32px', marginBottom: '16px', color: 'white' }}>Need Emergency Help Right Now?</h2>
-                <p style={{ fontSize: '18px', opacity: 0.9, marginBottom: '32px' }}>Don't wait. Every second matters in an emergency.</p>
+            <section style={{ 
+                background: 'linear-gradient(135deg, var(--emergency-red) 0%, var(--emergency-red-dark) 100%)', 
+                padding: '80px 40px', 
+                color: 'white', 
+                textAlign: 'center',
+                boxShadow: 'inset 0 10px 30px rgba(0,0,0,0.1)'
+            }}>
+                <h2 style={{ fontSize: '40px', marginBottom: '16px', color: 'white', letterSpacing: '-0.02em' }}>Need Emergency Help Right Now?</h2>
+                <p style={{ fontSize: '20px', opacity: 0.9, marginBottom: '40px' }}>Don't wait. Every second matters in an emergency.</p>
                 <Link to="/patient" style={{
                     background: 'white',
-                    color: '#C62828',
-                    padding: '16px 36px',
-                    borderRadius: '8px',
+                    color: 'var(--emergency-red)',
+                    padding: '18px 40px',
+                    borderRadius: 'var(--radius-full)',
                     textDecoration: 'none',
-                    fontWeight: '900',
-                    fontSize: '16px',
+                    fontWeight: '800',
+                    fontSize: '18px',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '12px'
-                }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    gap: '12px',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                    transition: 'transform var(--transition-fast)'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                     Book Ambulance Now
                 </Link>
             </section>
 
             <footer style={{
                 height: '80px',
-                background: '#f8fafc',
-                borderTop: '1px solid #f1f5f9',
+                background: 'var(--text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '13px',
-                color: '#64748b',
-                fontWeight: '600'
+                color: 'rgba(255,255,255,0.7)',
+                fontWeight: '600',
+                letterSpacing: '0.05em'
             }}>
                 © 2026 ERIS NATIONAL EMERGENCY DISPATCH SYSTEM | AUTHORIZED PERSONNEL ONLY
             </footer>

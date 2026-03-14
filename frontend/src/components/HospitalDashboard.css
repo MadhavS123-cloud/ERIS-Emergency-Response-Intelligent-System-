@@ -1,0 +1,234 @@
+/* Modern Hospital Admin Dashboard CSS */
+.hospital-dashboard-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--bg-main);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Sidebar for Hospital */
+.hospital-sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-std);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    z-index: 10;
+}
+
+.hospital-sidebar-header {
+    padding: 32px 24px;
+    background: linear-gradient(135deg, var(--dept-blue-light) 0%, var(--bg-card) 100%);
+    border-bottom: 1px solid var(--border-std);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hospital-nav {
+    padding: 24px 12px;
+    flex: 1;
+}
+
+.hospital-nav-item {
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hospital-nav-item:hover {
+    background: var(--bg-main);
+    color: var(--text-primary);
+}
+
+.hospital-nav-item.active {
+    background: var(--dept-blue-light);
+    color: var(--dept-blue-dark);
+    font-weight: 700;
+}
+
+/* Main Content Area */
+.hospital-main {
+    flex: 1;
+    min-width: 0;
+    padding: 32px 40px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.hospital-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+}
+
+.hospital-header h1 {
+    font-size: 32px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+
+.section-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bed Availability Management Table */
+.beds-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.beds-table th,
+.beds-table td {
+    padding: 12px 0;
+    text-align: left;
+    border-bottom: 1px solid var(--border-std);
+}
+
+.beds-table th {
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.beds-table td b {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.beds-table input {
+    padding: 12px 16px;
+    border: 2px solid var(--border-std);
+    border-radius: var(--radius-sm);
+    width: 120px;
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+    color: var(--dept-blue-dark);
+    transition: all var(--transition-fast);
+}
+
+.beds-table input:focus {
+    outline: none;
+    border-color: var(--dept-blue);
+    box-shadow: 0 0 0 3px var(--dept-glow);
+}
+
+.btn-update {
+    background: linear-gradient(135deg, var(--dept-blue) 0%, var(--dept-blue-dark) 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    width: 100%;
+    margin-top: 16px;
+    box-shadow: 0 4px 14px var(--dept-glow);
+    transition: all var(--transition-fast);
+    font-size: 15px;
+}
+
+.btn-update:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--dept-glow);
+}
+
+.last-sync {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: 'Inter', monospace;
+    margin-top: 16px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Incoming Patient Queue Table */
+.queue-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-std);
+}
+
+.queue-table th,
+.queue-table td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-std);
+}
+
+.queue-table tr:last-child td {
+    border-bottom: none;
+}
+
+.queue-table th {
+    background: var(--bg-main);
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+.queue-table tr {
+    transition: background var(--transition-fast);
+}
+
+.queue-table tr:hover {
+    background: var(--bg-main);
+}
+
+.priority-cell {
+    background: var(--emergency-red-light);
+    color: var(--emergency-red-dark);
+    font-weight: 800;
+    text-align: center;
+    font-size: 12px;
+    text-transform: uppercase;
+    border-radius: var(--radius-full);
+    padding: 6px 12px;
+    display: inline-block;
+}
+
+.action-cell-btn {
+    padding: 10px 24px;
+    background: var(--success-green);
+    color: white;
+    border: none;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.action-cell-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
