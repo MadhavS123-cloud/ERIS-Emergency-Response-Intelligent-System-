@@ -169,3 +169,21 @@ a:hover {
 .animate-slide-up {
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* App Logo Adaptation for Light and Dark Backgrounds */
+.app-logo {
+  object-fit: contain;
+  transition: all var(--transition-fast);
+}
+
+/* Light Mode: Use multiply to remove white background making it transparent */
+.app-logo-light {
+  mix-blend-mode: multiply;
+  filter: contrast(1.05); /* slightly boost contrast */
+}
+
+/* Dark Mode: Native rendering without blend mode so it shows up on dark backgrounds properly */
+.app-logo-dark {
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}

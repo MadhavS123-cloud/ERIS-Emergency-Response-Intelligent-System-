@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import logoDark from '../assets/logo-dark.png';
 import './HospitalDashboard.css';
 
 /**
@@ -33,11 +34,7 @@ function HospitalDashboard() {
             {/* Command Sidebar */}
             <aside className="hospital-sidebar">
                 <div className="hospital-sidebar-header">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--dept-blue)" strokeWidth="2.5">
-                        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
-                        <path d="M12 7v4" />
-                        <path d="M10 9h4" />
-                    </svg>
+                    <img src={logoDark} alt="ERIS Logo" className="app-logo app-logo-dark" style={{ height: '56px', marginBottom: '8px' }} />
                     <div style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                         CITY GENERAL
                     </div>

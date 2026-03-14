@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import logoDark from '../assets/logo-dark.png';
 
 /**
  * Professional Landing Page for ERIS
@@ -232,18 +233,7 @@ function HomePage() {
                 borderBottom: '1px solid var(--border-std)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                        background: 'linear-gradient(135deg, var(--emergency-red) 0%, var(--emergency-red-dark) 100%)',
-                        padding: '8px',
-                        borderRadius: 'var(--radius-sm)',
-                        boxShadow: 'var(--shadow-md)'
-                    }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M10 17h.01" /><path d="M14 17h.01" /><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z" /><path d="M6 13V8l4-4h4l4 4v5" /><circle cx="7" cy="17" r="1" /><circle cx="17" cy="17" r="1" /></svg>
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: 1 }}>ERIS</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Emergency Response System</div>
-                    </div>
+                    <img src={logoDark} alt="ERIS Logo" className="app-logo app-logo-dark" style={{ height: '48px' }} />
                 </div>
 
                 <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>

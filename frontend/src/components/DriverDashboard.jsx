@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import logoDark from '../assets/logo-dark.png';
 import './DriverDashboard.css';
 
 /**
@@ -120,7 +121,7 @@ function DriverDashboard() {
             {/* Sidebar Navigation */}
             <aside className="driver-sidebar">
                 <div className="sidebar-brand">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 17h.01"/><path d="M14 17h.01"/><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/><path d="M6 13V8l4-4h4l4 4v5"/><circle cx="7" cy="17" r="1"/><circle cx="17" cy="17" r="1"/></svg>
+                    <img src={logoDark} alt="ERIS Logo" className="app-logo app-logo-dark" style={{ height: '36px' }} />
                     ERIS | DISPATCH
                 </div>
                 <div className="sidebar-nav">

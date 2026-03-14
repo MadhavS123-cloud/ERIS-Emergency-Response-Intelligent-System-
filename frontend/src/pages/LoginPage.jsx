@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import logoDark from '../assets/logo-dark.png';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -33,12 +34,7 @@ function LoginPage() {
 
             {/* Header / Logo */}
             <div className="login-header">
-                <div className="login-logo-box">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-                        <path d="M10 17h.01" /><path d="M14 17h.01" /><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z" /><path d="M6 13V8l4-4h4l4 4v5" /><circle cx="7" cy="17" r="1" /><circle cx="17" cy="17" r="1" />
-                        <path stroke="white" strokeWidth="2" d="M12 9v6m-3-3h6" />
-                    </svg>
-                </div>
+                <img src={logoDark} alt="ERIS Logo" className="app-logo app-logo-dark" style={{ height: '90px', marginBottom: '16px' }} />
                 <div className="login-brand-name">ERIS SYSTEM</div>
                 <div className="login-subtitle">Secure Staff Portal</div>
             </div>
