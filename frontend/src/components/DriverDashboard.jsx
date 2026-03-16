@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logoDark from '../assets/logo-dark.png';
+import { useTheme } from '../context/ThemeContext';
 import './DriverDashboard.css';
 
 /**
@@ -10,9 +10,11 @@ import './DriverDashboard.css';
  */
 function DriverDashboard() {
     const navigate = useNavigate();
+    const { logoSrc } = useTheme();
     const [activeTab, setActiveTab] = useState('navigation');
     const [tripStatus, setTripStatus] = useState('idle'); // idle, started, arrived, completed
     const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleTimeString());
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
 
     // Map Refs
     const mapInstance = useRef(null);
@@ -121,7 +123,7 @@ function DriverDashboard() {
             {/* Sidebar Navigation */}
             <aside className="driver-sidebar">
                 <div className="sidebar-brand">
-                    <img src={logoDark} alt="ERIS Logo" className="app-logo app-logo-dark" style={{ height: '36px' }} />
+                    <img src={logoSrc} alt="ERIS Logo" className="app-logo" style={{ height: '36px' }} />
                     ERIS | DISPATCH
                 </div>
                 <div className="sidebar-nav">
@@ -148,7 +150,11 @@ function DriverDashboard() {
             </main>
 
             {/* Side Status Panel */}
-            <aside className="tracking-panel">
+            <aside className={`tracking-panel ${isPanelOpen ? 'mobile-open' : ''}`}>
+                <div className="mobile-panel-handle" onClick={() => setIsPanelOpen(!isPanelOpen)}>
+                    <div className="handle-bar"></div>
+                </div>
+                
                 <div className="panel-header">
                     <h2>TRIP CONTROL PANEL</h2>
                     <p style={{ fontSize: '13px', color: '#94a3b8', fontFamily: 'monospace' }}>ID: {dispatchInfo.requestId}</p>

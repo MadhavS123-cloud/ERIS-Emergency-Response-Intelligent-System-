@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logoDark from '../assets/logo-dark.png';
+import { useTheme } from '../context/ThemeContext';
 import './LoginPage.css';
 
 function LoginPage() {
     const navigate = useNavigate();
+    const { logoSrc, theme } = useTheme();
     const [role, setRole] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -34,7 +35,9 @@ function LoginPage() {
 
             {/* Header / Logo */}
             <div className="login-header">
-                <img src={logoDark} alt="ERIS Logo" className="app-logo app-logo-dark" style={{ height: '90px', marginBottom: '16px' }} />
+                <div className="login-logo-box">
+                    <img src={logoSrc} alt="ERIS Logo" className={`app-logo app-logo-${theme}`} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                </div>
                 <div className="login-brand-name">ERIS SYSTEM</div>
                 <div className="login-subtitle">Secure Staff Portal</div>
             </div>
@@ -49,8 +52,7 @@ function LoginPage() {
                         <label>Select Role</label>
                         <div className="input-wrapper select-wrapper">
                             <select
-                                className="form-control"
-                                style={{ color: role ? 'white' : 'rgba(255,255,255,0.4)' }}
+                                className={`form-control ${!role ? 'text-muted' : ''}`}
                                 value={role}
                                 onChange={(e) => setRole(e.target.value)}
                                 required

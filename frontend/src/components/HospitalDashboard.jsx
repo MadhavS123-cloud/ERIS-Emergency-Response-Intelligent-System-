@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logoDark from '../assets/logo-dark.png';
+import { useTheme } from '../context/ThemeContext';
 import './HospitalDashboard.css';
 
 /**
@@ -9,8 +9,10 @@ import './HospitalDashboard.css';
  */
 function HospitalDashboard() {
     const navigate = useNavigate();
+    const { logoSrc } = useTheme();
     const [activeTab, setActiveTab] = useState('dashboard');
     const [lastSync, setLastSync] = useState(new Date().toLocaleTimeString());
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Bed Counts State
     const [icuAvailable, setIcuAvailable] = useState(12);
@@ -31,17 +33,37 @@ function HospitalDashboard() {
 
     return (
         <div className="hospital-dashboard-container">
+            {/* Mobile Header (Visible only on mobile) */}
+            <div className="mobile-hospital-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img src={logoSrc} alt="ERIS Logo" className="app-logo" style={{ height: '32px' }} />
+                    <span style={{ fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>CITY GENERAL</span>
+                </div>
+                <button 
+                    className="mobile-sidebar-toggle" 
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        {isSidebarOpen ? (
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        ) : (
+                            <path d="M4 12h16M4 6h16M4 18h16" />
+                        )}
+                    </svg>
+                </button>
+            </div>
+
             {/* Command Sidebar */}
-            <aside className="hospital-sidebar">
+            <aside className={`hospital-sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
                 <div className="hospital-sidebar-header">
-                    <img src={logoDark} alt="ERIS Logo" className="app-logo app-logo-dark" style={{ height: '56px', marginBottom: '8px' }} />
+                    <img src={logoSrc} alt="ERIS Logo" className="app-logo" style={{ height: '56px', marginBottom: '8px' }} />
                     <div style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                         CITY GENERAL
                     </div>
                 </div>
                 <nav className="hospital-nav">
-                    <div className="hospital-nav-item active">Operational Overview</div>
-                    <div className="hospital-nav-item">Bed Coordination</div>
+                    <div className="hospital-nav-item active" onClick={() => setIsSidebarOpen(false)}>Operational Overview</div>
+                    <div className="hospital-nav-item" onClick={() => setIsSidebarOpen(false)}>Bed Coordination</div>
                     <div className="hospital-nav-item" style={{ color: 'var(--emergency-red)', marginTop: 'auto' }} onClick={() => navigate('/')}>
                         System Logout
                     </div>
@@ -68,39 +90,41 @@ function HospitalDashboard() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
                     INCOMING AMBULANCE DISPATCH RECORDS
                 </div>
-                <table className="queue-table">
-                    <thead>
-                        <tr>
-                            <th>Patient ID</th>
-                            <th>Priority</th>
-                            <th>Emergency / Diagnosis</th>
-                            <th>EMS unit</th>
-                            <th>ETA (EST)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {patients.map((p, idx) => (
-                            <tr key={idx}>
-                                <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.id}</td>
-                                <td>
-                                    <span className="priority-cell" style={{
-                                        background: p.priority === 'CRITICAL' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.15)',
-                                        color: p.priority === 'CRITICAL' ? 'var(--emergency-red-dark)' : '#d97706'
-                                    }}>
-                                        {p.priority}
-                                    </span>
-                                </td>
-                                <td>{p.diagnosis}</td>
-                                <td style={{ fontFamily: 'monospace', fontWeight: '500' }}>{p.ambulance}</td>
-                                <td style={{ fontWeight: 800, color: 'var(--dept-blue-dark)' }}>{p.eta}</td>
-                                <td><button className="action-cell-btn">Assign Unit</button></td>
+                <div className="table-responsive">
+                    <table className="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Priority</th>
+                                <th>Emergency / Diagnosis</th>
+                                <th>EMS unit</th>
+                                <th>ETA (EST)</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {patients.map((p, idx) => (
+                                <tr key={idx}>
+                                    <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.id}</td>
+                                    <td>
+                                        <span className="priority-cell" style={{
+                                            background: p.priority === 'CRITICAL' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.15)',
+                                            color: p.priority === 'CRITICAL' ? 'var(--emergency-red-dark)' : '#d97706'
+                                        }}>
+                                            {p.priority}
+                                        </span>
+                                    </td>
+                                    <td>{p.diagnosis}</td>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: '500' }}>{p.ambulance}</td>
+                                    <td style={{ fontWeight: 800, color: 'var(--dept-blue-dark)' }}>{p.eta}</td>
+                                    <td><button className="action-cell-btn">Assign Unit</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-                <div style={{ marginTop: '48px', display: 'grid', gridTemplateColumns: 'minmax(420px, 1fr) 2fr', gap: '48px' }}>
+                <div className="capacity-grid">
 
                     {/* Capacity Management Section */}
                     <div>
@@ -109,22 +133,24 @@ function HospitalDashboard() {
                             FACILITY CAPACITY MANAGEMENT
                         </div>
                         <div style={{ background: 'var(--bg-main)', padding: '32px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-std)' }}>
-                            <table className="beds-table" style={{ border: 'none', margin: 0 }}>
-                                <tbody>
-                                    <tr>
-                                        <td><b>ICU BEDS AVAILABLE</b></td>
-                                        <td><input type="number" value={icuAvailable} onChange={(e) => setIcuAvailable(e.target.value)} /></td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>GENERAL BEDS AVAILABLE</b></td>
-                                        <td><input type="number" value={generalAvailable} onChange={(e) => setGeneralAvailable(e.target.value)} /></td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>VENTILATORS (CRITICAL)</b></td>
-                                        <td><input type="number" value={ventilatorsAvailable} onChange={(e) => setVentilatorsAvailable(e.target.value)} /></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div className="table-responsive">
+                                <table className="beds-table" style={{ border: 'none', margin: 0 }}>
+                                    <tbody>
+                                        <tr>
+                                            <td><b>ICU BEDS AVAILABLE</b></td>
+                                            <td><input type="number" value={icuAvailable} onChange={(e) => setIcuAvailable(e.target.value)} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>GENERAL BEDS AVAILABLE</b></td>
+                                            <td><input type="number" value={generalAvailable} onChange={(e) => setGeneralAvailable(e.target.value)} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>VENTILATORS (CRITICAL)</b></td>
+                                            <td><input type="number" value={ventilatorsAvailable} onChange={(e) => setVentilatorsAvailable(e.target.value)} /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                             <button className="btn-update" onClick={handleUpdateCapacity}>Confirm & Sync Update</button>
                             <div className="last-sync" style={{ marginTop: '24px' }}>TIMESTAMPED: {lastSync}</div>
                         </div>
