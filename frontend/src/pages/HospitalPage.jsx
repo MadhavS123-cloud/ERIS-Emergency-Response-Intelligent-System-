@@ -1,4 +1,9 @@
+import React from 'react';
+import HospitalDashboard from '../components/HospitalDashboard';
+import './HospitalPage.css';
+
 function HospitalPage() {
-    return <div>Hospital Page</div>;
+    return <HospitalDashboard />;
 }
+
 export default HospitalPage;

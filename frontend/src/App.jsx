@@ -1,34 +1,30 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import FloatingBookButton from './components/FloatingBookButton';
+
+import HomePage from './pages/HomePage';
 import PatientPage from './pages/PatientPage';
 import DriverPage from './pages/DriverPage';
 import HospitalPage from './pages/HospitalPage';
-
-function Home() {
-  return <div>Home Page</div>;
-}
+import LoginPage from './pages/LoginPage';
 
 function App() {
   return (
-    <Router>
-      <div style={{ padding: "20px" }}>
-        <h1>Emergency Response Intelligent System (ERIS)</h1>
-
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/patient">Patient</Link>
-          <Link to="/driver">Driver</Link>
-          <Link to="/hospital">Hospital</Link>
-        </nav>
-
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/patient" element={<PatientPage />} />
-          <Route path="/driver" element={<DriverPage />} />
-          <Route path="/hospital" element={<HospitalPage />} />
-        </Routes>
-      </div>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <div className="app-container">
+          <FloatingBookButton />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/patient" element={<PatientPage />} />
+            <Route path="/driver" element={<DriverPage />} />
+            <Route path="/hospital" element={<HospitalPage />} />
+          </Routes>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 
