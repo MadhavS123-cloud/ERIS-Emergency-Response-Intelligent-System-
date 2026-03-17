@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-
-import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import EmergencyForm from '../components/EmergencyForm';
 import BackButton from '../components/BackButton';

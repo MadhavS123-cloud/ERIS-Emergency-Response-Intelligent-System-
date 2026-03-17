@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './EmergencyForm.css';
 
 function EmergencyForm() {
@@ -11,6 +11,88 @@ function EmergencyForm() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [userLocation, setUserLocation] = useState(null);
+    const [addressFetched, setAddressFetched] = useState('Fetching your live location...');
+    const mapRef = useRef(null);
+    const mapContainer = useRef(null);
+
+    useEffect(() => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    setUserLocation([lat, lon]);
+                    
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                        const data = await response.json();
+                        if (data && data.display_name) {
+                            setAddressFetched(data.display_name);
+                            setFormData(prev => ({ ...prev, pickupAddress: data.display_name }));
+                        } else {
+                            setAddressFetched(`Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+                            setFormData(prev => ({ ...prev, pickupAddress: `${lat}, ${lon}` }));
+                        }
+                    } catch (err) {
+                        setAddressFetched(`Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+                        setFormData(prev => ({ ...prev, pickupAddress: `${lat}, ${lon}` }));
+                    }
+                },
+                (error) => {
+                    console.error("Location error:", error);
+                    setAddressFetched("Unable to get location. Please ensure location services are enabled.");
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        } else {
+            setAddressFetched("Geolocation is not supported by your browser.");
+        }
+        
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!mapContainer.current || !window.L || !userLocation) return;
+        
+        if (!mapRef.current) {
+            mapRef.current = window.L.map(mapContainer.current, {
+                zoomControl: true,
+                dragging: false,
+                scrollWheelZoom: false
+            }).setView(userLocation, 15);
+
+            window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapRef.current);
+
+            const patientIcon = window.L.divIcon({
+                className: 'custom-patient-icon',
+                html: `
+                  <div style="
+                    background-color: #C62828; 
+                    width: 16px; 
+                    height: 16px; 
+                    border-radius: 50%; 
+                    border: 3px solid white;
+                    box-shadow: 0 0 0 2px #C62828, 0 4px 10px rgba(0,0,0,0.3);
+                  "></div>
+                `,
+                iconSize: [22, 22],
+                iconAnchor: [11, 11]
+            });
+
+            window.L.marker(userLocation, { icon: patientIcon })
+                .addTo(mapRef.current);
+        } else {
+            mapRef.current.setView(userLocation, 15);
+        }
+    }, [userLocation]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -28,7 +110,7 @@ function EmergencyForm() {
                 patientName: '',
                 contactNumber: '',
                 emergencyType: '',
-                pickupAddress: '',
+                pickupAddress: addressFetched,
                 medicalNotes: ''
             });
         }, 1500);
@@ -89,15 +171,22 @@ function EmergencyForm() {
                 </div>
 
                 <div className="form-group">
-                    <label>Pickup Location / Details *</label>
-                    <textarea 
-                        name="pickupAddress"
-                        className="form-control" 
-                        placeholder="Detailed address and landmarks for the driver"
-                        value={formData.pickupAddress}
-                        onChange={handleChange}
-                        required 
-                    />
+                    <label>Pickup Location (Auto-detected) *</label>
+                    <div style={{
+                        background: 'var(--bg-main)',
+                        border: '1px solid var(--border-std)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '12px',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--text-primary)',
+                        marginBottom: '12px'
+                    }}>
+                        {addressFetched}
+                    </div>
+                    <div 
+                        ref={mapContainer} 
+                        style={{ height: '200px', width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-std)', backgroundColor: '#e2e8f0', zIndex: 1 }}
+                    ></div>
                 </div>
 
                 <div className="form-group">
