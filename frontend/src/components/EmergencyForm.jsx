@@ -1,6 +1,149 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './EmergencyForm.css';
 
+function DispatchModal({ onClose }) {
+    return (
+        <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            animation: 'fadeInOverlay 0.3s ease'
+        }}>
+            <style>{`
+                @keyframes fadeInOverlay {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUpModal {
+                    from { transform: translateY(40px) scale(0.95); opacity: 0; }
+                    to { transform: translateY(0) scale(1); opacity: 1; }
+                }
+                @keyframes pulseSiren {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+                    50% { box-shadow: 0 0 0 18px rgba(220, 38, 38, 0); }
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
+            <div style={{
+                background: 'linear-gradient(145deg, #1a1a2e, #16213e)',
+                borderRadius: '24px',
+                padding: '48px 40px 40px',
+                maxWidth: '420px',
+                width: '90%',
+                textAlign: 'center',
+                boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)',
+                animation: 'slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both'
+            }}>
+                {/* Siren Icon */}
+                <div style={{
+                    width: '90px',
+                    height: '90px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 28px',
+                    animation: 'pulseSiren 1.6s ease-in-out infinite',
+                    fontSize: '42px'
+                }}>
+                    🚑
+                </div>
+
+                {/* Title */}
+                <h2 style={{
+                    color: '#ffffff',
+                    fontSize: '22px',
+                    fontWeight: '800',
+                    marginBottom: '10px',
+                    letterSpacing: '-0.3px'
+                }}>
+                    Ambulance Dispatched!
+                </h2>
+
+                {/* Message */}
+                <p style={{
+                    color: '#94a3b8',
+                    fontSize: '15px',
+                    lineHeight: '1.7',
+                    marginBottom: '28px'
+                }}>
+                    Emergency ambulance has been dispatched successfully to your location.
+                    <br />
+                    <span style={{ color: '#34d399', fontWeight: '600' }}>
+                        Please stay calm — help is on the way.
+                    </span>
+                </p>
+
+                {/* ETA Badge */}
+                <div style={{
+                    background: 'rgba(52, 211, 153, 0.12)',
+                    border: '1px solid rgba(52, 211, 153, 0.3)',
+                    borderRadius: '12px',
+                    padding: '12px 20px',
+                    marginBottom: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px'
+                }}>
+                    <span style={{ fontSize: '20px' }}>⏱️</span>
+                    <span style={{ color: '#a7f3d0', fontSize: '14px', fontWeight: '600' }}>
+                        Estimated Arrival: <strong style={{ color: '#34d399' }}>5–10 minutes</strong>
+                    </span>
+                </div>
+
+                {/* Tips */}
+                <div style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    borderRadius: '12px',
+                    padding: '14px 18px',
+                    marginBottom: '32px',
+                    textAlign: 'left'
+                }}>
+                    <p style={{ color: '#cbd5e1', fontSize: '13px', marginBottom: '6px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        While you wait:
+                    </p>
+                    <ul style={{ color: '#94a3b8', fontSize: '13px', paddingLeft: '18px', margin: 0, lineHeight: '1.9' }}>
+                        <li>Keep phone line clear for the driver to call</li>
+                        <li>Stay at your location if possible</li>
+                        <li>Send someone to receive the ambulance</li>
+                    </ul>
+                </div>
+
+                {/* OK Button */}
+                <button onClick={onClose} style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    letterSpacing: '0.5px',
+                    transition: 'opacity 0.2s, transform 0.2s',
+                    boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)'
+                }}
+                onMouseOver={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseOut={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; }}
+                >
+                    ✓ Got it, Thank you
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function EmergencyForm() {
     const [formData, setFormData] = useState({
         patientName: '',
@@ -11,6 +154,7 @@ function EmergencyForm() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showModal, setShowModal] = useState(false);
     const [userLocation, setUserLocation] = useState(null);
     const [addressFetched, setAddressFetched] = useState('Fetching your live location...');
     const mapRef = useRef(null);
@@ -102,22 +246,26 @@ function EmergencyForm() {
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate API call for dispatch
         setTimeout(() => {
-            alert('Emergency Ambulance Dispatched successfully to your location. Please stay calm and wait for help.');
             setIsSubmitting(false);
-            setFormData({
-                patientName: '',
-                contactNumber: '',
-                emergencyType: '',
-                pickupAddress: addressFetched,
-                medicalNotes: ''
-            });
+            setShowModal(true);
         }, 1500);
+    };
+
+    const handleModalClose = () => {
+        setShowModal(false);
+        setFormData({
+            patientName: '',
+            contactNumber: '',
+            emergencyType: '',
+            pickupAddress: addressFetched,
+            medicalNotes: ''
+        });
     };
 
     return (
         <div className="emergency-form-wrapper animate-slide-up">
+            {showModal && <DispatchModal onClose={handleModalClose} />}
             <div className="emergency-form-container">
                 <h2>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--emergency-red)" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
