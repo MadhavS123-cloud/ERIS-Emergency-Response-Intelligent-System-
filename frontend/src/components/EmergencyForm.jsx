@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
 import './EmergencyForm.css';
@@ -14,6 +14,9 @@ function EmergencyForm() {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submittedDispatch, setSubmittedDispatch] = useState(null);
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
+    const [locationError, setLocationError] = useState('');
+    const locationFetchedRef = useRef(false);
 
     const formatCurrency = (amount) =>
         new Intl.NumberFormat('en-IN', {
@@ -25,6 +28,106 @@ function EmergencyForm() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Automatic location detection on component mount
+    useEffect(() => {
+        if (!locationFetchedRef.current && !formData.pickupAddress) {
+            locationFetchedRef.current = true;
+            getCurrentLocationAddress();
+        }
+    }, []);
+
+    const getCurrentLocationAddress = async () => {
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setIsGettingLocation(true);
+        setLocationError('');
+
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            });
+
+            const { latitude, longitude } = position.coords;
+            
+            // Reverse geocoding to get address
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+                {
+                    headers: {
+                        'User-Agent': 'ERIS-Emergency-System'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch address');
+            }
+
+            const data = await response.json();
+            
+            if (data && data.display_name) {
+                // Format the address to be more readable
+                const formattedAddress = formatAddress(data);
+                setFormData(prev => ({ ...prev, pickupAddress: formattedAddress }));
+            } else {
+                // Fallback to coordinates if no address found
+                setFormData(prev => ({ 
+                    ...prev, 
+                    pickupAddress: `Current Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}` 
+                }));
+            }
+        } catch (error) {
+            console.error('Location error:', error);
+            setLocationError('Unable to get your location. Please enter address manually.');
+            // Set a default placeholder message
+            setFormData(prev => ({ 
+                ...prev, 
+                pickupAddress: '' 
+            }));
+        } finally {
+            setIsGettingLocation(false);
+        }
+    };
+
+    const formatAddress = (data) => {
+        const address = data.address || {};
+        const parts = [];
+        
+        // Build address components in order of preference
+        if (address.house_number) parts.push(address.house_number);
+        if (address.road) parts.push(address.road);
+        if (address.neighbourhood) parts.push(address.neighbourhood);
+        if (address.suburb) parts.push(address.suburb);
+        
+        // Add city/town
+        if (address.city || address.town || address.village) {
+            parts.push(address.city || address.town || address.village);
+        }
+        
+        // Add state and postcode
+        if (address.state) parts.push(address.state);
+        if (address.postcode) parts.push(address.postcode);
+        
+        // If we couldn't build a proper address, use the display_name
+        if (parts.length === 0) {
+            return data.display_name;
+        }
+        
+        return parts.join(', ');
+    };
+
+    const handleLocationRefresh = () => {
+        locationFetchedRef.current = false;
+        getCurrentLocationAddress();
     };
 
     const handleSubmit = (e) => {
@@ -168,15 +271,90 @@ function EmergencyForm() {
                     </div>
 
                     <div className="form-group">
-                        <label>Pickup Location / Details *</label>
+                        <label>
+                            Pickup Location / Details *
+                            <button
+                                type="button"
+                                onClick={handleLocationRefresh}
+                                disabled={isGettingLocation}
+                                style={{
+                                    marginLeft: '12px',
+                                    padding: '4px 8px',
+                                    fontSize: 'var(--text-xs)',
+                                    background: 'var(--dept-blue-light)',
+                                    color: 'var(--dept-blue)',
+                                    border: 'none',
+                                    borderRadius: 'var(--radius-sm)',
+                                    cursor: isGettingLocation ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="23 4 23 10 17 10"/>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                                </svg>
+                                {isGettingLocation ? 'Getting Location...' : 'Refresh Location'}
+                            </button>
+                        </label>
+                        {isGettingLocation && (
+                            <div style={{
+                                padding: '12px',
+                                background: 'var(--dept-blue-light)',
+                                color: 'var(--dept-blue)',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: 'var(--text-sm)',
+                                marginBottom: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <div className="live-dot" style={{ width: '6px', height: '6px' }}></div>
+                                Detecting your current location...
+                            </div>
+                        )}
+                        {locationError && (
+                            <div style={{
+                                padding: '12px',
+                                background: 'var(--emergency-red-light)',
+                                color: 'var(--emergency-red)',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: 'var(--text-sm)',
+                                marginBottom: '8px'
+                            }}>
+                                {locationError}
+                            </div>
+                        )}
                         <textarea
                             name="pickupAddress"
                             className="form-control"
-                            placeholder="Detailed address and landmarks for the driver"
+                            placeholder={isGettingLocation ? "Detecting your location..." : "Detailed address and landmarks for the driver (auto-detected)"}
                             value={formData.pickupAddress}
                             onChange={handleChange}
                             required
+                            disabled={isGettingLocation}
+                            style={{
+                                background: isGettingLocation ? 'var(--bg-glass)' : 'var(--bg-main)',
+                                cursor: isGettingLocation ? 'not-allowed' : 'text'
+                            }}
                         />
+                        {!isGettingLocation && formData.pickupAddress && (
+                            <div style={{
+                                fontSize: 'var(--text-xs)',
+                                color: 'var(--text-secondary)',
+                                marginTop: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                Location auto-detected. You can edit if needed.
+                            </div>
+                        )}
                     </div>
 
                     <div className="form-group">
