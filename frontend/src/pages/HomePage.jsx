@@ -18,6 +18,7 @@ function HomePage() {
     const [hospitals, setHospitals] = useState([]);
     const [loadingHospitals, setLoadingHospitals] = useState(true);
     const [showAllHospitals, setShowAllHospitals] = useState(false);
+    const [selectedHospitalId, setSelectedHospitalId] = useState(null);
     const markersRef = useRef([]);
 
     // 1. Get User Location (Browser Geolocation API)
@@ -80,6 +81,11 @@ function HomePage() {
                         const lonDiff = lonCoord - lng;
                         const distSq = latDiff * latDiff + lonDiff * lonDiff;
 
+                        // Mock insurance pool for demo
+                        const insurancePool = ['Ayushman Bharat', 'HDFC Ergo', 'ICICI Lombard', 'Star Health', 'Bajaj Allianz', 'Niva Bupa', 'Care Health'];
+                        const shuffled = insurancePool.sort(() => 0.5 - Math.random());
+                        const insuranceCount = Math.floor(Math.random() * 4) + 1; // 1–4 providers
+
                         return {
                             id: el.id,
                             name: el.tags.name,
@@ -87,7 +93,8 @@ function HomePage() {
                             distSq: distSq,
                             // Assign mock statuses to make the dashboard look active
                             status: Math.random() > 0.4 ? 'ER Ready' : 'Limited',
-                            beds: Math.floor(Math.random() * 40) + 10
+                            beds: Math.floor(Math.random() * 40) + 10,
+                            insurance: shuffled.slice(0, insuranceCount)
                         };
                     });
 
@@ -118,9 +125,9 @@ function HomePage() {
             } catch (err) {
                 console.error("Failed to fetch hospitals, using fallbacks:", err);
                 setHospitals([
-                    { id: 101, name: 'Sri Sathya Sai Super Speciality Hospital', coords: [12.9785, 77.7262], status: 'ER Ready', beds: 48 },
-                    { id: 102, name: 'Vydehi Institute of Medical Sciences', coords: [12.9760, 77.7215], status: 'ER Ready', beds: 120 },
-                    { id: 103, name: 'Apollo Hospitals Whitefield', coords: [12.9647, 77.7176], status: 'Limited', beds: 5 }
+                    { id: 101, name: 'Sri Sathya Sai Super Speciality Hospital', coords: [12.9785, 77.7262], status: 'ER Ready', beds: 48, insurance: ['Ayushman Bharat', 'Star Health', 'HDFC Ergo'] },
+                    { id: 102, name: 'Vydehi Institute of Medical Sciences', coords: [12.9760, 77.7215], status: 'ER Ready', beds: 120, insurance: ['Ayushman Bharat', 'ICICI Lombard', 'Bajaj Allianz', 'Niva Bupa', 'Care Health'] },
+                    { id: 103, name: 'Apollo Hospitals Whitefield', coords: [12.9647, 77.7176], status: 'Limited', beds: 5, insurance: ['HDFC Ergo', 'Star Health'] }
                 ]);
             } finally {
                 setLoadingHospitals(false);
@@ -419,8 +426,37 @@ function HomePage() {
                             ) : hospitals.length > 0 ? (
                                 <>
                                     {/* Show top 3 hospitals */}
-                                    {hospitals.slice(0, showAllHospitals ? hospitals.length : 3).map((hospital, idx) => (
-                                        <div key={hospital.id || idx} className="card-std" style={{ padding: '24px', border: idx === 0 ? '2px solid var(--dept-blue)' : '1px solid var(--border-std)' }}>
+                                    {hospitals.slice(0, showAllHospitals ? hospitals.length : 3).map((hospital, idx) => {
+                                        const isSelected = selectedHospitalId === hospital.id;
+                                        const isUnavailable = hospital.beds === 0;
+                                        const isDisabled = isUnavailable || (selectedHospitalId !== null && !isSelected);
+
+                                        let btnText = 'Choose Facility';
+                                        let btnBg = '#2563EB';
+                                        let btnColor = 'white';
+                                        let btnBorder = 'none';
+                                        let btnCursor = 'pointer';
+
+                                        if (isSelected) {
+                                            btnText = 'Selected ✓';
+                                            btnBg = '#1d4ed8';
+                                        } else if (isUnavailable) {
+                                            btnText = 'Not Available';
+                                            btnBg = '#e2e8f0';
+                                            btnColor = '#94a3b8';
+                                            btnCursor = 'not-allowed';
+                                        } else if (selectedHospitalId !== null) {
+                                            btnBg = '#e2e8f0';
+                                            btnColor = '#94a3b8';
+                                            btnCursor = 'not-allowed';
+                                        }
+
+                                        return (
+                                        <div key={hospital.id || idx} className="card-std" style={{
+                                            padding: '24px',
+                                            border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-std)',
+                                            transition: 'border-color 0.15s ease'
+                                        }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                                 <h3 style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>{hospital.name}</h3>
                                                 <span style={{ 
@@ -433,23 +469,64 @@ function HomePage() {
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                                                 {calculateDistance(userLocation, hospital.coords)} km away
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: 'var(--text-sm)', marginBottom: '24px', fontWeight: '600' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: 'var(--text-sm)', marginBottom: '16px', fontWeight: '600' }}>
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                                                 Available beds: {hospital.beds} General
                                             </div>
-                                            <button className={idx === 0 ? "btn-secondary" : ""} style={{ 
-                                                width: '100%', 
-                                                padding: '12px', 
-                                                background: idx === 0 ? 'linear-gradient(135deg, var(--dept-blue) 0%, var(--dept-blue-dark) 100%)' : 'var(--bg-main)', 
-                                                borderRadius: 'var(--radius-sm)', 
-                                                fontWeight: '700', 
-                                                color: idx === 0 ? 'white' : 'var(--text-primary)', 
-                                                border: idx === 0 ? 'none' : '1px solid var(--border-std)', 
-                                                cursor: 'pointer',
-                                                transition: 'all var(--transition-fast)'
-                                            }}>{idx === 0 ? 'Select Facility' : 'View Details'}</button>
+                                            {/* Insurance Section */}
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '8px' }}>Accepted Insurance</div>
+                                                {hospital.insurance && hospital.insurance.length > 0 ? (
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                                                        {hospital.insurance.slice(0, 3).map((ins, i) => (
+                                                            <span key={i} style={{
+                                                                background: '#F3F4F6',
+                                                                color: '#374151',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                padding: '4px 10px',
+                                                                borderRadius: '999px',
+                                                                whiteSpace: 'nowrap'
+                                                            }}>{ins}</span>
+                                                        ))}
+                                                        {hospital.insurance.length > 3 && (
+                                                            <span style={{
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                color: '#6B7280',
+                                                                padding: '4px 6px'
+                                                            }}>+{hospital.insurance.length - 3} more</span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ fontSize: '12px', color: '#9CA3AF', fontStyle: 'italic' }}>No insurance info available</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                disabled={isDisabled}
+                                                onClick={() => {
+                                                    if (!isDisabled) {
+                                                        setSelectedHospitalId(isSelected ? null : hospital.id);
+                                                    }
+                                                }}
+                                                style={{ 
+                                                    width: '100%', 
+                                                    padding: '13px', 
+                                                    marginTop: '0',
+                                                    background: btnBg, 
+                                                    borderRadius: '8px', 
+                                                    fontWeight: '700', 
+                                                    fontSize: 'var(--text-sm)',
+                                                    color: btnColor, 
+                                                    border: btnBorder, 
+                                                    cursor: btnCursor,
+                                                    transition: 'background 0.15s ease, color 0.15s ease',
+                                                    letterSpacing: '0.02em'
+                                                }}
+                                            >{btnText}</button>
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                     
                                     {/* View More button */}
                                     {hospitals.length > 3 && !showAllHospitals && (

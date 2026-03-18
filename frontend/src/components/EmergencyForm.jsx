@@ -203,14 +203,6 @@ function EmergencyForm() {
                             Back to Home
                         </Link>
                     </div>
-
-                    <button
-                        type="button"
-                        className="dispatch-reset-btn"
-                        onClick={() => setSubmittedDispatch(null)}
-                    >
-                        Submit Another Emergency
-                    </button>
                 </div>
             </div>
         );
