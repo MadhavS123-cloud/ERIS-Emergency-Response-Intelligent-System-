@@ -17,6 +17,7 @@ function HomePage() {
     const [userLocation, setUserLocation] = useState(null);
     const [hospitals, setHospitals] = useState([]);
     const [loadingHospitals, setLoadingHospitals] = useState(true);
+    const [showAllHospitals, setShowAllHospitals] = useState(false);
     const markersRef = useRef([]);
 
     // 1. Get User Location (Browser Geolocation API)
@@ -91,15 +92,22 @@ function HomePage() {
                     });
 
                 if (parsedHospitals.length > 0) {
-                    // Sort by nearest
-                    parsedHospitals.sort((a, b) => a.distSq - b.distSq);
+                    // Sort by distance first, then by bed availability (higher beds first)
+                    parsedHospitals.sort((a, b) => {
+                        // First sort by distance (nearest first)
+                        if (a.distSq !== b.distSq) {
+                            return a.distSq - b.distSq;
+                        }
+                        // Then sort by bed availability (more beds first)
+                        return b.beds - a.beds;
+                    });
 
                     // Specific hospital promotion logic to ensure prominent hospitals show up in UI if they exist in range
                     const preferredNames = ["sathya sai", "vydehi", "apollo", "manipal"];
                     parsedHospitals.sort((a, b) => {
                         const aPref = preferredNames.some(p => a.name.toLowerCase().includes(p)) ? -1 : 0;
                         const bPref = preferredNames.some(p => b.name.toLowerCase().includes(p)) ? -1 : 0;
-                        return (aPref - bPref) || (a.distSq - b.distSq);
+                        return (aPref - bPref) || (a.distSq - b.distSq) || (b.beds - a.beds);
                     });
 
                     // Show all nearby hospitals
@@ -320,7 +328,6 @@ function HomePage() {
                 </div>
 
                     <div style={{ flex: 1, position: 'relative' }} className="animate-fade-in">
-                        <div style={{ position: 'absolute', inset: '-20px', background: 'var(--dept-glow)', filter: 'blur(60px)', borderRadius: 'var(--radius-full)', zIndex: 0 }}></div>
                         <img
                             src="/hero-ambulance.jpg"
                             alt="ERIS Ambulance Dispatch"
@@ -410,37 +417,96 @@ function HomePage() {
                                     Scanning area for facilities...
                                 </div>
                             ) : hospitals.length > 0 ? (
-                                hospitals.map((hospital, idx) => (
-                                    <div key={hospital.id || idx} className="card-std" style={{ padding: '24px', border: idx === 0 ? '2px solid var(--dept-blue)' : '1px solid var(--border-std)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                                            <h3 style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>{hospital.name}</h3>
-                                            <span style={{ 
-                                                background: hospital.status === 'ER Ready' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.1)', 
-                                                color: hospital.status === 'ER Ready' ? 'var(--emergency-red)' : 'var(--warning-orange)', 
-                                                fontSize: 'var(--text-xs)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontWeight: '800' 
-                                            }}>{hospital.status}</span>
+                                <>
+                                    {/* Show top 3 hospitals */}
+                                    {hospitals.slice(0, showAllHospitals ? hospitals.length : 3).map((hospital, idx) => (
+                                        <div key={hospital.id || idx} className="card-std" style={{ padding: '24px', border: idx === 0 ? '2px solid var(--dept-blue)' : '1px solid var(--border-std)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                                <h3 style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>{hospital.name}</h3>
+                                                <span style={{ 
+                                                    background: hospital.status === 'ER Ready' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.1)', 
+                                                    color: hospital.status === 'ER Ready' ? 'var(--emergency-red)' : 'var(--warning-orange)', 
+                                                    fontSize: 'var(--text-xs)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontWeight: '800' 
+                                                }}>{hospital.status}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', marginBottom: '12px' }}>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                                {calculateDistance(userLocation, hospital.coords)} km away
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: 'var(--text-sm)', marginBottom: '24px', fontWeight: '600' }}>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                                                Available beds: {hospital.beds} General
+                                            </div>
+                                            <button className={idx === 0 ? "btn-secondary" : ""} style={{ 
+                                                width: '100%', 
+                                                padding: '12px', 
+                                                background: idx === 0 ? 'linear-gradient(135deg, var(--dept-blue) 0%, var(--dept-blue-dark) 100%)' : 'var(--bg-main)', 
+                                                borderRadius: 'var(--radius-sm)', 
+                                                fontWeight: '700', 
+                                                color: idx === 0 ? 'white' : 'var(--text-primary)', 
+                                                border: idx === 0 ? 'none' : '1px solid var(--border-std)', 
+                                                cursor: 'pointer',
+                                                transition: 'all var(--transition-fast)'
+                                            }}>{idx === 0 ? 'Select Facility' : 'View Details'}</button>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', marginBottom: '12px' }}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                                            {calculateDistance(userLocation, hospital.coords)} km away
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: 'var(--text-sm)', marginBottom: '24px', fontWeight: '600' }}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                                            Available beds: {hospital.beds} General
-                                        </div>
-                                        <button className={idx === 0 ? "btn-secondary" : ""} style={{ 
-                                            width: '100%', 
-                                            padding: '12px', 
-                                            background: idx === 0 ? 'linear-gradient(135deg, var(--dept-blue) 0%, var(--dept-blue-dark) 100%)' : 'var(--bg-main)', 
-                                            borderRadius: 'var(--radius-sm)', 
-                                            fontWeight: '700', 
-                                            color: idx === 0 ? 'white' : 'var(--text-primary)', 
-                                            border: idx === 0 ? 'none' : '1px solid var(--border-std)', 
-                                            cursor: 'pointer',
-                                            transition: 'all var(--transition-fast)'
-                                        }}>{idx === 0 ? 'Select Facility' : 'View Details'}</button>
-                                    </div>
-                                ))
+                                    ))}
+                                    
+                                    {/* View More button */}
+                                    {hospitals.length > 3 && !showAllHospitals && (
+                                        <button
+                                            onClick={() => setShowAllHospitals(true)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '16px',
+                                                background: 'var(--bg-card)',
+                                                border: '1px solid var(--border-std)',
+                                                borderRadius: 'var(--radius-md)',
+                                                color: 'var(--text-primary)',
+                                                fontSize: 'var(--text-sm)',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px'
+                                            }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <polyline points="12 6 12 12 16 14"/>
+                                            </svg>
+                                            View {hospitals.length - 3} More Hospitals
+                                        </button>
+                                    )}
+                                    
+                                    {/* Show Less button */}
+                                    {showAllHospitals && (
+                                        <button
+                                            onClick={() => setShowAllHospitals(false)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '16px',
+                                                background: 'var(--bg-card)',
+                                                border: '1px solid var(--border-std)',
+                                                borderRadius: 'var(--radius-md)',
+                                                color: 'var(--text-primary)',
+                                                fontSize: 'var(--text-sm)',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px'
+                                            }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <polyline points="12 6 12 12 8 14"/>
+                                            </svg>
+                                            Show Less
+                                        </button>
+                                    )}
+                                </>
                             ) : (
                                 <div style={{ padding: '40px', textAlign: 'center', color: 'var(--emergency-red)', fontWeight: '600', background: 'var(--emergency-red-light)', borderRadius: 'var(--radius-md)' }}>
                                     No hospitals found within 8km of your location.
