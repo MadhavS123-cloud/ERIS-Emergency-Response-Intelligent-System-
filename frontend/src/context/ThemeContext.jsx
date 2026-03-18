@@ -1,20 +1,54 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import logoLight from '../assets/logo.png';
+import logoDark from '../assets/logo-dark.png';
 
 export const ThemeContext = createContext();
 
-export const useTheme = () => useContext(ThemeContext);
+export function ThemeProvider({ children }) {
+  // Read system preference directly, no local storage fallback
+  const getSystemTheme = () => 
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(getSystemTheme);
 
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+  useEffect(() => {
+    // Listener for dynamic OS theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+
+    // Attempt to use modern addEventListener, fallback to addListener for older browsers
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    // Apply theme class to document body
+    document.body.className = theme === 'dark' ? 'dark-theme' : 'light-theme';
+  }, [theme]);
+
+  // Provide the correct logo source globally
+  const logoSrc = theme === 'dark' ? logoDark : logoLight;
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, logoSrc }}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
+// Custom hook for easy consumption
+export const useTheme = () => useContext(ThemeContext);

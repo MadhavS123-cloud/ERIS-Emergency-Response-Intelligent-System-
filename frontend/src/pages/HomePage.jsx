@@ -57,7 +57,7 @@ function HomePage() {
             const [lat, lng] = userLocation;
             // Overpass API Query for hospitals within a 15km radius
             const query = `
-                [out:json][timeout:25];
+                [out:json];
                 (
                   node["amenity"="hospital"](around:15000, ${lat}, ${lng});
                   way["amenity"="hospital"](around:15000, ${lat}, ${lng});
@@ -65,18 +65,7 @@ function HomePage() {
                 out center;
             `;
             try {
-                const response = await fetch('https://overpass-api.de/api/interpreter', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: "data=" + encodeURIComponent(query)
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Overpass API responded with status: ${response.status}`);
-                }
-                
+                const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
                 const data = await response.json();
 
                 // Parse, map, and add mock status/beds
@@ -114,8 +103,8 @@ function HomePage() {
                         return (aPref - bPref) || (a.distSq - b.distSq);
                     });
 
-                    // Show all nearby hospitals
-                    setHospitals(parsedHospitals);
+                    // Keep only top 3
+                    setHospitals(parsedHospitals.slice(0, 3));
                 } else {
                     throw new Error("No hospitals found in API response.");
                 }
@@ -293,7 +282,7 @@ function HomePage() {
                             Book Emergency Ambulance
                         </Link>
 
-                        <Link to="/track" className="btn-secondary" style={{
+                        <Link to="/driver" className="btn-secondary" style={{
                             textDecoration: 'none',
                             background: 'var(--bg-card)',
                             color: 'var(--text-primary)',
@@ -485,7 +474,7 @@ function HomePage() {
             }}>
                 <h2 style={{ fontSize: 'var(--text-4xl)', marginBottom: '16px', color: 'white', letterSpacing: '-0.02em' }}>Need Emergency Help Right Now?</h2>
                 <p style={{ fontSize: 'var(--text-xl)', opacity: 0.9, marginBottom: '40px' }}>Don't wait. Every second matters in an emergency.</p>
-                    <Link to="/patient" className="btn-emergency" style={{
+                    <Link to="/patient" style={{
                     background: 'white',
                     color: 'var(--emergency-red)',
                     padding: '18px 40px',
