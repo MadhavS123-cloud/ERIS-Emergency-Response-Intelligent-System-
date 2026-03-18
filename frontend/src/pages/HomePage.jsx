@@ -293,7 +293,7 @@ function HomePage() {
                             Book Emergency Ambulance
                         </Link>
 
-                        <Link to="/driver" className="btn-secondary" style={{
+                        <Link to="/track" className="btn-secondary" style={{
                             textDecoration: 'none',
                             background: 'var(--bg-card)',
                             color: 'var(--text-primary)',
@@ -485,7 +485,7 @@ function HomePage() {
             }}>
                 <h2 style={{ fontSize: 'var(--text-4xl)', marginBottom: '16px', color: 'white', letterSpacing: '-0.02em' }}>Need Emergency Help Right Now?</h2>
                 <p style={{ fontSize: 'var(--text-xl)', opacity: 0.9, marginBottom: '40px' }}>Don't wait. Every second matters in an emergency.</p>
-                    <Link to="/patient" style={{
+                    <Link to="/patient" className="btn-emergency" style={{
                     background: 'white',
                     color: 'var(--emergency-red)',
                     padding: '18px 40px',
