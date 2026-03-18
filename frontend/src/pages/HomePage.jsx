@@ -10,7 +10,6 @@ import './HomePage.css';
 function HomePage() {
     const mapRef = useRef(null);
     const mapContainer = useRef(null);
-    const { logoSrc } = useTheme();
 
 
 
@@ -228,7 +227,7 @@ function HomePage() {
             <header className="home-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-                        <img src={logoSrc} alt="ERIS Logo" className="app-logo home-logo-img" style={{ height: '48px' }} />
+                        <img src="/logo192.png" alt="ERIS Logo" className="app-logo home-logo-img" style={{ height: '48px' }} />
                     </Link>
                 </div>
 

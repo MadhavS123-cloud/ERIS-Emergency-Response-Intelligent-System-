@@ -5,7 +5,6 @@ import EmergencyForm from '../components/EmergencyForm';
 import BackButton from '../components/BackButton';
 
 function PatientPage() {
-    const { logoSrc } = useTheme();
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-main)' }}>
@@ -22,7 +21,7 @@ function PatientPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                     <BackButton />
                     <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                        <img src={logoSrc} alt="ERIS Logo" className="app-logo" style={{ height: '40px' }} />
+                        <img src="/logo192.png" alt="ERIS Logo" className="app-logo" style={{ height: '40px' }} />
                     </Link>
                 </div>
             </header>

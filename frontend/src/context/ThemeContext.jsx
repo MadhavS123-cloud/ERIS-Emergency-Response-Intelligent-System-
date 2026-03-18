@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import logoLight from '../assets/logo.png';
-import logoDark from '../assets/logo-dark.png';
 
 export const ThemeContext = createContext();
 
@@ -40,11 +38,8 @@ export function ThemeProvider({ children }) {
     document.body.className = theme === 'dark' ? 'dark-theme' : 'light-theme';
   }, [theme]);
 
-  // Provide the correct logo source globally
-  const logoSrc = theme === 'dark' ? logoDark : logoLight;
-
   return (
-    <ThemeContext.Provider value={{ theme, logoSrc }}>
+    <ThemeContext.Provider value={{ theme }}>
       {children}
     </ThemeContext.Provider>
   );

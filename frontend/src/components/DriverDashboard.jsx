@@ -39,7 +39,6 @@ const statusMeta = {
 
 function DriverDashboard() {
     const navigate = useNavigate();
-    const { logoSrc } = useTheme();
     const { activeDispatch, dispatches, updateDispatchStatus, selectDispatch, resetDemoState } = useEris();
     const [activeTab, setActiveTab] = useState('navigation');
     const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -221,7 +220,7 @@ function DriverDashboard() {
         <div className="driver-dashboard-container">
             <aside className="driver-sidebar">
                 <div className="sidebar-brand">
-                    <img src={logoSrc} alt="ERIS Logo" className="app-logo" style={{ height: '36px' }} />
+                    <img src="/logo192.png" alt="ERIS Logo" className="app-logo" style={{ height: '36px' }} />
                     ERIS | DISPATCH
                 </div>
 

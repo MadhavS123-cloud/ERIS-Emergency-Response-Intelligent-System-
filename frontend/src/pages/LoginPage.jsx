@@ -5,7 +5,7 @@ import './LoginPage.css';
 
 function LoginPage() {
     const navigate = useNavigate();
-    const { logoSrc, theme } = useTheme();
+    const { theme } = useTheme();
     const [role, setRole] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -36,7 +36,7 @@ function LoginPage() {
             {/* Header / Logo */}
             <div className="login-header">
                 <div className="login-logo-box">
-                    <img src={logoSrc} alt="ERIS Logo" className={`app-logo app-logo-${theme}`} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                    <img src="/logo192.png" alt="ERIS Logo" className={`app-logo app-logo-${theme}`} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
                 </div>
                 <div className="login-brand-name">ERIS SYSTEM</div>
                 <div className="login-subtitle">Secure Staff Portal</div>

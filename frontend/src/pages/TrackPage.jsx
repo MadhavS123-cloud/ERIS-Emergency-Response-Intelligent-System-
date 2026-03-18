@@ -30,7 +30,6 @@ const formatCurrency = (amount) =>
     }).format(amount || 0);
 
 function TrackPage() {
-    const { logoSrc } = useTheme();
     const { activeDispatch } = useEris();
     const mapRef = useRef(null);
     const mapContainerRef = useRef(null);
@@ -181,7 +180,7 @@ function TrackPage() {
             <header className="track-header">
                 <div className="track-brand">
                     <Link to="/">
-                        <img src={logoSrc} alt="ERIS Logo" className="app-logo" style={{ height: '44px' }} />
+                        <img src="/logo192.png" alt="ERIS Logo" className="app-logo" style={{ height: '44px' }} />
                     </Link>
                     <div>
                         <div className="track-brand-title">Ambulance Tracking</div>
