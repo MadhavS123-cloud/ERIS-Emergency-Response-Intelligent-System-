@@ -27,7 +27,7 @@ function FloatingBookButton() {
 
     // Target the main CTAs on the homepage that should hide the floating button when visible
     const heroBtn = document.querySelector('.hero-section .btn-emergency');
-    const footerBtn = document.querySelector('section .btn-emergency') || document.querySelector('footer')?.previousElementSibling?.querySelector('a');
+    const footerBtn = document.querySelector('section:last-of-type .btn-emergency');
 
     if (heroBtn) observer.observe(heroBtn);
     if (footerBtn) observer.observe(footerBtn);

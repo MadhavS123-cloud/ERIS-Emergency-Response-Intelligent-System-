@@ -37,6 +37,21 @@
     padding: 20px 0;
 }
 
+.driver-sidebar-queue {
+    padding: 0 16px 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.driver-sidebar-label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 8px;
+}
+
 .sidebar-nav-item {
     padding: 16px 24px;
     font-weight: 600;
@@ -57,6 +72,48 @@
     background: var(--emergency-red-light);
     border-left: 4px solid var(--emergency-red);
     color: var(--emergency-red-dark);
+}
+
+.dispatch-queue-card,
+.driver-secondary-action {
+    width: 100%;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.35);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    color: #e2e8f0;
+    text-align: left;
+}
+
+.dispatch-queue-card.selected {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.dispatch-queue-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    color: #cbd5e1;
+}
+
+.dispatch-queue-row.muted {
+    color: #94a3b8;
+    margin-top: 8px;
+}
+
+.dispatch-queue-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 8px;
+    color: #f8fafc;
+}
+
+.driver-secondary-action {
+    margin: 0 16px 16px;
+    text-align: center;
+    font-weight: 700;
 }
 
 /* Tracking Sidebar View (Side Trip Status Panel) */
@@ -156,6 +213,17 @@
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
+.btn-transport {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+.btn-transport:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+}
+
 .btn-complete:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
@@ -213,6 +281,130 @@
     box-shadow: var(--shadow-md);
 }
 
+.driver-alt-view {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    display: grid;
+    align-content: start;
+    gap: 16px;
+}
+
+.driver-alt-view p {
+    color: var(--text-secondary);
+    max-width: 720px;
+}
+
+.driver-log-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.driver-log-item {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid var(--border-std);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+}
+
+.driver-log-type {
+    height: fit-content;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.driver-log-type.system {
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--dept-blue);
+}
+
+.driver-log-type.driver {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success-green);
+}
+
+.driver-log-type.hospital {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--warning-orange);
+}
+
+.driver-log-type.patient {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--emergency-red);
+}
+
+.driver-log-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+.radio-feed-item strong {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.driver-medical-note {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-size: 13px;
+}
+
+.driver-section-title {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.driver-panel-stats {
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.driver-stat-card {
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.driver-stat-card span {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.driver-stat-card strong {
+    color: #f8fafc;
+    font-size: 14px;
+}
+
+.driver-empty-state {
+    padding: 32px 24px;
+    color: var(--text-secondary);
+}
+
 .live-dot {
     width: 8px;
     height: 8px;
@@ -251,6 +443,9 @@
         overflow-x: auto;
         padding: 10px 16px;
         gap: 8px;
+    }
+    .driver-sidebar-queue {
+        padding-top: 8px;
     }
     .sidebar-nav-item {
         white-space: nowrap;
@@ -307,6 +502,15 @@
     .driver-main {
         flex: 1; /* fills remaining space */
         height: calc(100vh - 120px); /* Height minus top nav and bottom button area */
+    }
+    .driver-alt-view {
+        padding: 24px 16px 120px;
+    }
+    .driver-log-item {
+        grid-template-columns: 1fr;
+    }
+    .driver-panel-stats {
+        grid-template-columns: 1fr;
     }
     .map-overlay-badge {
         top: 12px;
