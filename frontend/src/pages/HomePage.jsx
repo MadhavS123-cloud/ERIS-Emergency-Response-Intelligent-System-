@@ -102,8 +102,8 @@ function HomePage() {
                         return (aPref - bPref) || (a.distSq - b.distSq);
                     });
 
-                    // Keep only top 3
-                    setHospitals(parsedHospitals.slice(0, 3));
+                    // Show all nearby hospitals
+                    setHospitals(parsedHospitals);
                 } else {
                     throw new Error("No hospitals found in API response.");
                 }
