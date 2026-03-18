@@ -120,7 +120,11 @@ function HomePage() {
                 setHospitals([
                     { id: 101, name: 'Sri Sathya Sai Super Speciality Hospital', coords: [12.9785, 77.7262], status: 'ER Ready', beds: 48 },
                     { id: 102, name: 'Vydehi Institute of Medical Sciences', coords: [12.9760, 77.7215], status: 'ER Ready', beds: 120 },
-                    { id: 103, name: 'Apollo Hospitals Whitefield', coords: [12.9647, 77.7176], status: 'Limited', beds: 5 }
+                    { id: 103, name: 'Apollo Hospitals Whitefield', coords: [12.9647, 77.7176], status: 'Limited', beds: 5 },
+                    { id: 104, name: 'Columbia Asia Hospital', coords: [12.9694, 77.7497], status: 'ER Ready', beds: 35 },
+                    { id: 105, name: 'Manipal Hospital Whitefield', coords: [12.9796, 77.7379], status: 'ER Ready', beds: 28 },
+                    { id: 106, name: 'Fortis Hospital Bannerghatta', coords: [12.9136, 77.6098], status: 'Limited', beds: 15 },
+                    { id: 107, name: 'Narayana Health City', coords: [12.9270, 77.6808], status: 'ER Ready', beds: 85 }
                 ]);
             } finally {
                 setLoadingHospitals(false);
@@ -468,7 +472,9 @@ function HomePage() {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                gap: '8px'
+                                                gap: '8px',
+                                                visibility: 'visible',
+                                                opacity: 1
                                             }}
                                         >
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
