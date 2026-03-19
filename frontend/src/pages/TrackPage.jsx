@@ -40,6 +40,11 @@ function TrackPage() {
     const watchIdRef = useRef(null);
 
     const dispatch = activeDispatch;
+    
+    // Debug logging
+    console.log('TrackPage - activeDispatch:', activeDispatch);
+    console.log('TrackPage - dispatch:', dispatch);
+    
     const currentIndex = Math.max(STATUS_STEPS.findIndex((step) => step.key === dispatch?.status), 0);
 
     useEffect(() => {

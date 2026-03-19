@@ -286,6 +286,10 @@ export function ErisProvider({ children }) {
     state.dispatches[0] ||
     null;
 
+  // Debug logging
+  console.log('ErisContext - state:', state);
+  console.log('ErisContext - activeDispatch:', activeDispatch);
+
   return (
     <ErisContext.Provider
       value={{
