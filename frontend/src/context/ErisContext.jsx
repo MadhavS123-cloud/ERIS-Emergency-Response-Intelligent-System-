@@ -280,15 +280,20 @@ export function ErisProvider({ children }) {
     setState(createInitialState());
   };
 
-  const activeDispatch =
-    state.dispatches.find((dispatch) => dispatch.id === state.selectedDispatchId) ||
-    state.dispatches.find((dispatch) => dispatch.status !== 'completed') ||
-    state.dispatches[0] ||
-    null;
-
-  // Debug logging
-  console.log('ErisContext - state:', state);
-  console.log('ErisContext - activeDispatch:', activeDispatch);
+  const activeDispatch = React.useMemo(() => {
+    // First try to find the selected dispatch by ID
+    if (state.selectedDispatchId) {
+      const selected = state.dispatches.find((dispatch) => dispatch.id === state.selectedDispatchId);
+      if (selected) return selected;
+    }
+    
+    // If no selected dispatch, find the first non-completed dispatch
+    const activeDispatch = state.dispatches.find((dispatch) => dispatch.status !== 'completed');
+    if (activeDispatch) return activeDispatch;
+    
+    // Finally, return the first dispatch if available
+    return state.dispatches[0] || null;
+  }, [state.dispatches, state.selectedDispatchId]);
 
   return (
     <ErisContext.Provider
