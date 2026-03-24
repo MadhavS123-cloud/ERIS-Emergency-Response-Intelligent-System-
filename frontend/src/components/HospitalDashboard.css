@@ -212,6 +212,14 @@
     transition: background var(--transition-fast);
 }
 
+.critical-row {
+    background: rgba(239, 68, 68, 0.04);
+}
+
+.critical-row td:first-child {
+    box-shadow: inset 4px 0 0 var(--emergency-red);
+}
+
 .queue-table tr:hover {
     background: var(--bg-main);
 }

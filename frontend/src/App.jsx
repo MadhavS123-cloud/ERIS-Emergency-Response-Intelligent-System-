@@ -9,6 +9,7 @@ import PatientPage from './pages/PatientPage';
 import DriverPage from './pages/DriverPage';
 import HospitalPage from './pages/HospitalPage';
 import LoginPage from './pages/LoginPage';
+import TrackPage from './pages/TrackPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/patient" element={<PatientPage />} />
+              <Route path="/track" element={<TrackPage />} />
               <Route path="/driver" element={<DriverPage />} />
               <Route path="/hospital" element={<HospitalPage />} />
             </Routes>

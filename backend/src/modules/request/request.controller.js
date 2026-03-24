@@ -1,0 +1,52 @@
+const requestService = require('./request.service');
+const APIResponse = require('../../utils/response');
+
+class RequestController {
+  async createRequest(req, res, next) {
+    try {
+      const request = await requestService.createRequest(req.user.id, req.body);
+      return APIResponse.success(res, request, 'Emergency request created successfully and added to queue', 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAllRequests(req, res, next) {
+    try {
+      const requests = await requestService.getAllRequests();
+      return APIResponse.success(res, requests, 'Requests retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getMyRequests(req, res, next) {
+    try {
+      const requests = await requestService.getUserRequests(req.user.id);
+      return APIResponse.success(res, requests, 'User requests retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getRequest(req, res, next) {
+    try {
+      const request = await requestService.getRequestById(req.params.id);
+      return APIResponse.success(res, request, 'Request retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateRequestStatus(req, res, next) {
+    try {
+      const driverId = req.user.role === 'DRIVER' ? req.user.id : null;
+      const request = await requestService.updateRequestStatus(req.params.id, req.body.status, driverId);
+      return APIResponse.success(res, request, 'Request status updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = new RequestController();

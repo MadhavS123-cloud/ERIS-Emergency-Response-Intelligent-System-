@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useEris } from '../context/ErisContext';
 import './HomePage.css';
 
 /**
@@ -10,6 +11,7 @@ import './HomePage.css';
 function HomePage() {
     const mapRef = useRef(null);
     const mapContainer = useRef(null);
+    const { activeDispatch, resetDemoState } = useEris();
 
 
 
@@ -20,6 +22,9 @@ function HomePage() {
     const [showAllHospitals, setShowAllHospitals] = useState(false);
     const [selectedHospitalId, setSelectedHospitalId] = useState(null);
     const markersRef = useRef([]);
+
+    // Determine if the current active dispatch belongs to an actual user session (not a pre-seeded demo dispatch)
+    const isPatientSession = activeDispatch && !activeDispatch.id.startsWith('dispatch-seed-');
 
     // 1. Get User Location (Browser Geolocation API)
     useEffect(() => {
@@ -241,7 +246,7 @@ function HomePage() {
     };
 
     return (
-        <div className="landing-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-main)' }}>
+        <div className="landing-page" style={{ height: '100dvh', overflowY: 'auto', scrollSnapType: 'y mandatory', scrollPaddingTop: '70px', backgroundColor: 'var(--bg-main)' }}>
             {/* Header */}
             <header className="home-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -253,14 +258,26 @@ function HomePage() {
                 <nav className="home-nav">
                     <a href="#how">How It Works</a>
                     <a href="#hospitals">Facilities</a>
-                    <Link to="/login" className="btn-nav-login">
-                        Staff Login
-                    </Link>
+                    {isPatientSession ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontWeight: '600', fontSize: 'var(--text-sm)', background: 'var(--bg-card)', padding: '8px 16px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-std)' }}>
+                                <span className="live-dot" style={{ background: 'var(--success-green)' }}></span>
+                                Welcome, <span style={{ textTransform: 'capitalize' }}>{activeDispatch.patientName.split(' ')[0]}</span>
+                            </div>
+                            <button onClick={resetDemoState} className="btn-nav-login" style={{ background: 'transparent', color: 'var(--emergency-red)', border: '1px solid var(--emergency-red)', cursor: 'pointer' }}>
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <Link to="/login" className="btn-nav-login">
+                            Staff Login
+                        </Link>
+                    )}
                 </nav>
             </header>
 
             {/* Hero Section */}
-            <main className="hero-section animate-fade-in">
+            <main className="hero-section animate-fade-in" style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)' }}>
                 <div className="hero-text animate-slide-up">
                     <div style={{
                         display: 'inline-flex',
@@ -279,43 +296,75 @@ function HomePage() {
                         24/7 EMERGENCY DISPATCH
                     </div>
 
-                    <h1 className="hero-title">
-                        Fast Emergency Response When Every Second Counts
-                    </h1>
+                    {isPatientSession ? (
+                        <div className="active-booking-hero" style={{ background: 'var(--bg-card)', padding: '32px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-std)', boxShadow: 'var(--shadow-lg)', marginBottom: '40px', textAlign: 'left' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                                <h2 style={{ fontSize: 'var(--text-2xl)', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>Active Emergency Booking</h2>
+                                <span style={{ background: 'var(--emergency-red-light)', color: 'var(--emergency-red)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: '800', letterSpacing: '0.05em' }}>
+                                    {activeDispatch.status === 'completed' ? 'COMPLETED' : 'IN PROGRESS'}
+                                </span>
+                            </div>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                                <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Assigned EMS Unit</div>
+                                    <div style={{ fontSize: 'var(--text-lg)', fontWeight: '800', color: 'var(--text-primary)' }}>{activeDispatch.ambulanceId}</div>
+                                </div>
+                                <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Estimated Arrival</div>
+                                    <div style={{ fontSize: 'var(--text-lg)', fontWeight: '800', color: 'var(--dept-blue)' }}>{activeDispatch.eta}</div>
+                                </div>
+                                <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
+                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Destination Facility</div>
+                                    <div style={{ fontSize: 'var(--text-base)', fontWeight: '700', color: 'var(--text-primary)' }}>{activeDispatch.hospitalName}</div>
+                                </div>
+                            </div>
 
-                    <p style={{ fontSize: 'var(--text-xl)', color: 'var(--text-secondary)', marginBottom: '48px', lineHeight: '1.6', fontWeight: '400' }}>
-                        Get immediate ambulance assistance with real-time tracking and intelligent routing to the nearest prepared hospital.
-                    </p>
+                            <Link to="/track" className="btn-emergency" style={{ display: 'flex', justifyContent: 'center', padding: '16px', textDecoration: 'none' }}>
+                                Track Ambulance Live
+                            </Link>
+                        </div>
+                    ) : (
+                        <>
+                            <h1 className="hero-title">
+                                Fast Emergency Response When Every Second Counts
+                            </h1>
 
-                    <div className="hero-buttons">
-                        <Link to="/patient" className="btn-emergency" style={{
-                            textDecoration: 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '16px 36px',
-                            fontSize: 'var(--text-base)'
-                        }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            Book Emergency Ambulance
-                        </Link>
+                            <p style={{ fontSize: 'var(--text-xl)', color: 'var(--text-secondary)', marginBottom: '48px', lineHeight: '1.6', fontWeight: '400' }}>
+                                Get immediate ambulance assistance with real-time tracking and intelligent routing to the nearest prepared hospital.
+                            </p>
 
-                        <Link to="/driver" className="btn-secondary" style={{
-                            textDecoration: 'none',
-                            background: 'var(--bg-card)',
-                            color: 'var(--text-primary)',
-                            border: '1px solid var(--border-std)',
-                            boxShadow: 'var(--shadow-sm)',
-                            padding: '16px 36px',
-                            fontSize: 'var(--text-base)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px'
-                        }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                            Track Ambulance
-                        </Link>
-                    </div>
+                            <div className="hero-buttons">
+                                <Link to="/patient" className="btn-emergency" style={{
+                                    textDecoration: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    padding: '16px 36px',
+                                    fontSize: 'var(--text-base)'
+                                }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                    Book Emergency Ambulance
+                                </Link>
+
+                                <Link to="/track" className="btn-secondary" style={{
+                                    textDecoration: 'none',
+                                    background: 'var(--bg-card)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-std)',
+                                    boxShadow: 'var(--shadow-sm)',
+                                    padding: '16px 36px',
+                                    fontSize: 'var(--text-base)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px'
+                                }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                    Track Ambulance
+                                </Link>
+                            </div>
+                        </>
+                    )}
 
                     <div className="card-std hero-contact" style={{
                         padding: '24px 32px',
@@ -340,7 +389,7 @@ function HomePage() {
 
                     <div style={{ flex: 1, position: 'relative' }} className="animate-fade-in">
                         <img
-                            src="/hero-ambulance.jpg"
+                            src="/erisimg.jpeg"
                             alt="ERIS Ambulance Dispatch"
                             style={{
                                 width: '100%',
@@ -357,7 +406,7 @@ function HomePage() {
             </main>
 
             {/* How It Works Section */}
-            <section id="how" className="section-padding" style={{ padding: '100px 40px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-std)' }}>
+            <section id="how" className="section-padding" style={{ padding: '100px 40px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-std)', scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
                     <div className="stats-grid">
                         <div>
@@ -408,7 +457,7 @@ function HomePage() {
             </section>
 
             {/* Dynamic Real-Time Hospitals Section */}
-            <section id="hospitals" className="section-padding" style={{ padding: '100px 40px', background: 'var(--bg-main)' }}>
+            <section id="hospitals" className="section-padding" style={{ padding: '100px 40px', background: 'var(--bg-main)', scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
                         <div>
@@ -613,7 +662,13 @@ function HomePage() {
             </section>
 
             {/* Final CTA Banner */}
+            <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)', display: 'flex', flexDirection: 'column' }}>
             <section style={{ 
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
                 background: 'linear-gradient(135deg, var(--emergency-red) 0%, var(--emergency-red-dark) 100%)', 
                 padding: '80px 40px', 
                 color: 'white', 
@@ -657,6 +712,7 @@ function HomePage() {
             }}>
                 © 2026 ERIS NATIONAL EMERGENCY DISPATCH SYSTEM | AUTHORIZED PERSONNEL ONLY
             </footer>
+            </div>
         </div>
     );
 }
