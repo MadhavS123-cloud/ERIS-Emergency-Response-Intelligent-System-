@@ -314,3 +314,25 @@ div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-of-type {
 
 st.markdown(custom_css, unsafe_allow_html=True)
 
+# --- Sidebar UI ---
+with st.sidebar:
+    st.markdown("<div class='sidebar-brand'>⚡ ERIS</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sidebar-subtitle'>COMMAND CENTER</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
+    
+    # Navigation
+    nav_selection = st.radio(
+        "",
+        ["Overview", "Fleet Operations", "Node Management", "Analytics Core", "System Logs"],
+        label_visibility="collapsed"
+    )
+    
+    # Large Vertical Gap simulated
+    for _ in range(12):
+        st.write("")
+        
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
+    st.markdown("<div class='sidebar-status'>STATUS: OPTIMAL</div>", unsafe_allow_html=True)
+    st.markdown("<button class='cyber-button'>TERMINATE SESSION</button>", unsafe_allow_html=True)
+
+
