@@ -495,3 +495,122 @@ elif nav_selection == "Fleet Operations":
     
     st.markdown("<button class='cyber-button' style='width: 250px;'>PROVISION NEW UNIT</button>", unsafe_allow_html=True)
 
+elif nav_selection == "Node Management":
+    render_header("Node Management")
+    
+    table_html = """
+    <div class="cyber-table-wrapper">
+    <table class="cyber-table">
+        <thead>
+            <tr>
+                <th>Node ID</th>
+                <th>Sanctuary Name</th>
+                <th>Network Link</th>
+                <th>ICU Pods</th>
+                <th>Med Bays</th>
+                <th>Daily Intakes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>NODE-001</td>
+                <td>City General Hub</td>
+                <td><span style="color:#10b981;">Online</span></td>
+                <td>12</td>
+                <td>48</td>
+                <td>24</td>
+            </tr>
+            <tr>
+                <td>NODE-002</td>
+                <td>St. Mary Medical Hub</td>
+                <td><span style="color:#10b981;">Online</span></td>
+                <td>8</td>
+                <td>35</td>
+                <td>18</td>
+            </tr>
+            <tr>
+                <td>NODE-003</td>
+                <td>Regional Med Complex</td>
+                <td><span style="color:#10b981;">Online</span></td>
+                <td>15</td>
+                <td>62</td>
+                <td>31</td>
+            </tr>
+            <tr>
+                <td>NODE-004</td>
+                <td>Mercy Sanctuary</td>
+                <td><span style="color:#f59e0b;">Limited</span></td>
+                <td>6</td>
+                <td>28</td>
+                <td>12</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
+    
+    st.markdown("<button class='cyber-button' style='width: 250px;'>REGISTER FACILITY</button>", unsafe_allow_html=True)
+
+elif nav_selection == "Analytics Core":
+    render_header("Analytics Core")
+    
+    st.markdown("<h3 style='font-size: 1.25rem; color: #f8fafc; margin-bottom: 16px;'>Neural Performance Core</h3>", unsafe_allow_html=True)
+    
+    # KPIs
+    c1, c2, c3, c4 = st.columns(4)
+    with c1: st.markdown(kpi_card("ROUTING EFFICIENCY", "99.2%"), unsafe_allow_html=True)
+    with c2: st.markdown(kpi_card("SURVIVABILITY", "98.8%"), unsafe_allow_html=True)
+    with c3: st.markdown(kpi_card("PATH DEVIATION", "1.4 km"), unsafe_allow_html=True)
+    with c4: st.markdown(kpi_card("STRESS PEAK", "14:00-18:00"), unsafe_allow_html=True)
+    
+    st.markdown("<div class='sidebar-divider' style='margin: 32px 0;'></div>", unsafe_allow_html=True)
+    
+    # Charts
+    chart_cols = st.columns(2)
+    
+    with chart_cols[0]:
+        st.markdown("<h3 style='font-size: 1.1rem; color: #94a3b8; margin-bottom: 16px;'>Latency Correlation</h3>", unsafe_allow_html=True)
+        # Line chart
+        x_vals = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]
+        y_vals = [4.2, 3.8, 5.1, 6.3, 5.8, 4.9]
+        fig1 = go.Figure()
+        fig1.add_trace(go.Scatter(
+            x=x_vals, y=y_vals,
+            mode='lines+markers',
+            line=dict(color='#8b5cf6', width=3),
+            marker=dict(color='#00f0ff', size=8, line=dict(color='white', width=1))
+        ))
+        fig1.update_layout(
+            margin=dict(l=0, r=0, t=20, b=0),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Space Grotesk', color='#94a3b8'),
+            yaxis_title="Latency (mins)",
+            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+        )
+        st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
+        
+    with chart_cols[1]:
+        st.markdown("<h3 style='font-size: 1.1rem; color: #94a3b8; margin-bottom: 16px;'>Distress Incident Distribution</h3>", unsafe_allow_html=True)
+        categories = ["Cardiac", "Trauma", "Respiratory", "Neurological", "Other"]
+        counts = [45, 38, 31, 22, 18]
+        colors = ["#ec4899", "#ec4899", "#ec4899", "#ec4899", "#ec4899"]
+        
+        fig2 = go.Figure()
+        fig2.add_trace(go.Bar(
+            x=categories, y=counts,
+            marker_color=colors,
+            marker_line_width=0
+        ))
+        fig2.update_layout(
+            margin=dict(l=0, r=0, t=20, b=0),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Space Grotesk', color='#94a3b8'),
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+        )
+        st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
+
