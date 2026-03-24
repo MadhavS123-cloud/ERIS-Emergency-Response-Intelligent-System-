@@ -336,3 +336,30 @@ with st.sidebar:
     st.markdown("<button class='cyber-button'>TERMINATE SESSION</button>", unsafe_allow_html=True)
 
 
+# --- Reusable Components ---
+def kpi_card(label, value, delta=None):
+    delta_html = f"<div class='kpi-delta'>{delta}</div>" if delta else ""
+    html = f"""
+    <div class="kpi-card">
+        <div class="kpi-label">{label}</div>
+        <div class="kpi-value-container">
+            <div class="kpi-value">{value}</div>
+            {delta_html}
+        </div>
+    </div>
+    """
+    return html
+
+def render_header(title, subtitle=None):
+    st.markdown(f"""
+    <div class="main-header-container">
+        <div>
+            <h1 class="header-title">{title}</h1>
+            {f"<p class='header-subtitle'>{subtitle}</p>" if subtitle else ""}
+        </div>
+        <div>
+            <div class="system-badge">SYSTEM ONLINE</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
