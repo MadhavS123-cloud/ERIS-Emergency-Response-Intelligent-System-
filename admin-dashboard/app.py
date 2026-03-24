@@ -430,3 +430,68 @@ if nav_selection == "Overview":
     st.markdown("<h3 style='font-size: 1.25rem; margin-top: 1rem; color: #f8fafc'>🌐 Topographic Overlay Module</h3>", unsafe_allow_html=True)
     st.markdown("<div class='info-panel'>Neural mapping interface awaiting geolocation data stream...</div>", unsafe_allow_html=True)
 
+elif nav_selection == "Fleet Operations":
+    render_header("Fleet Operations")
+    
+    st.markdown("<h3 style='font-size: 1.1rem; color: #94a3b8; margin-bottom: 8px;'>Unit Status Filter</h3>", unsafe_allow_html=True)
+    
+    # Render styled Streamlit Selectbox (we'll rely on native styling overriden by generic css where possible, or keep simple)
+    status_filter = st.selectbox("", ["All", "Active", "Available", "Maintenance"], label_visibility="collapsed")
+    st.write("")
+    
+    table_html = """
+    <div class="cyber-table-wrapper">
+    <table class="cyber-table">
+        <thead>
+            <tr>
+                <th>Unit ID</th>
+                <th>Assigned Pilot</th>
+                <th>Matrix Status</th>
+                <th>Grid Sector</th>
+                <th>Sorties Today</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>AMB-2451</td>
+                <td>Michael Rodriguez</td>
+                <td><span style="color:#00f0ff;">Active</span></td>
+                <td>Sector 7G</td>
+                <td>12</td>
+            </tr>
+            <tr>
+                <td>AMB-1893</td>
+                <td>Lisa Chen</td>
+                <td><span style="color:#00f0ff;">Active</span></td>
+                <td>Sector 4A</td>
+                <td>8</td>
+            </tr>
+            <tr>
+                <td>AMB-3127</td>
+                <td>David Brown</td>
+                <td><span style="color:#00f0ff;">Active</span></td>
+                <td>Sector 9B</td>
+                <td>15</td>
+            </tr>
+            <tr>
+                <td>AMB-5621</td>
+                <td>Sarah Miller</td>
+                <td><span style="color:#10b981;">Available</span></td>
+                <td>Central Hub</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>AMB-7834</td>
+                <td>James Wilson</td>
+                <td><span style="color:#f59e0b;">Maintenance</span></td>
+                <td>Depot</td>
+                <td>0</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
+    
+    st.markdown("<button class='cyber-button' style='width: 250px;'>PROVISION NEW UNIT</button>", unsafe_allow_html=True)
+
