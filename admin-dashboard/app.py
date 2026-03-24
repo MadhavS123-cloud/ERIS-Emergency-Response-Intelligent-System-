@@ -363,3 +363,70 @@ def render_header(title, subtitle=None):
     </div>
     """, unsafe_allow_html=True)
 
+# --- Pages ---
+if nav_selection == "Overview":
+    render_header("Overview", "AI-DRIVEN EMERGENCY FLEET TELEMETRICS")
+    
+    # KPIs
+    c1, c2, c3, c4 = st.columns(4)
+    with c1: st.markdown(kpi_card("SIGNALS (24H)", "154", "12% surge"), unsafe_allow_html=True)
+    with c2: st.markdown(kpi_card("UNITS DEPLOYED", "48"), unsafe_allow_html=True)
+    with c3: st.markdown(kpi_card("AVG LATENCY", "5.2m", "-8% optimize"), unsafe_allow_html=True)
+    with c4: st.markdown(kpi_card("ACTIVE NODES", "52"), unsafe_allow_html=True)
+    
+    st.write("")
+    
+    # Charts
+    chart_cols = st.columns(2)
+    
+    with chart_cols[0]:
+        st.markdown("<h3 style='font-size: 1.1rem; color: #94a3b8; margin-bottom: 16px;'>Temporal Latency Matrix</h3>", unsafe_allow_html=True)
+        # Area chart
+        x_vals = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]
+        y_vals = [4.2, 3.8, 5.1, 6.3, 5.8, 4.9]
+        fig1 = go.Figure()
+        fig1.add_trace(go.Scatter(
+            x=x_vals, y=y_vals,
+            fill='tozeroy',
+            mode='lines+markers',
+            line=dict(color='#00f0ff', width=3),
+            marker=dict(color='#00f0ff', size=8, line=dict(color='white', width=1)),
+            fillcolor='rgba(0, 240, 255, 0.15)'
+        ))
+        fig1.update_layout(
+            margin=dict(l=0, r=0, t=20, b=0),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Space Grotesk', color='#94a3b8'),
+            yaxis_title="Latency (mins)",
+            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+        )
+        st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
+        
+    with chart_cols[1]:
+        st.markdown("<h3 style='font-size: 1.1rem; color: #94a3b8; margin-bottom: 16px;'>Distress Vectors</h3>", unsafe_allow_html=True)
+        categories = ["Cardiac", "Trauma", "Respiratory", "Neurological", "Other"]
+        counts = [45, 38, 31, 22, 18]
+        colors = ["#00f0ff", "#3b82f6", "#8b5cf6", "#ec4899", "#10b981"]
+        
+        fig2 = go.Figure()
+        fig2.add_trace(go.Bar(
+            x=categories, y=counts,
+            marker_color=colors,
+            marker_line_width=0
+        ))
+        fig2.update_layout(
+            margin=dict(l=0, r=0, t=20, b=0),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Space Grotesk', color='#94a3b8'),
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+        )
+        st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
+        
+    st.write("")
+    st.markdown("<h3 style='font-size: 1.25rem; margin-top: 1rem; color: #f8fafc'>🌐 Topographic Overlay Module</h3>", unsafe_allow_html=True)
+    st.markdown("<div class='info-panel'>Neural mapping interface awaiting geolocation data stream...</div>", unsafe_allow_html=True)
+
