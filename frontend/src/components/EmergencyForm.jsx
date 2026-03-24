@@ -14,9 +14,18 @@ function EmergencyForm() {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submittedDispatch, setSubmittedDispatch] = useState(null);
+    const [showPopup, setShowPopup] = useState(false);
     const [isGettingLocation, setIsGettingLocation] = useState(false);
     const [locationError, setLocationError] = useState('');
     const locationFetchedRef = useRef(false);
+
+    useEffect(() => {
+        if (submittedDispatch) {
+            setShowPopup(true);
+            const timer = setTimeout(() => setShowPopup(false), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [submittedDispatch]);
 
     const formatCurrency = (amount) =>
         new Intl.NumberFormat('en-IN', {
@@ -27,6 +36,22 @@ function EmergencyForm() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        
+        if (name === 'contactNumber') {
+            const numbersOnly = value.replace(/\D/g, '');
+            if (numbersOnly.length <= 10) {
+                setFormData(prev => ({ ...prev, [name]: numbersOnly }));
+            }
+            return;
+        }
+
+        if (name === 'patientName') {
+            if (value.length <= 50) {
+                setFormData(prev => ({ ...prev, [name]: value }));
+            }
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -145,12 +170,20 @@ function EmergencyForm() {
                 pickupAddress: '',
                 medicalNotes: ''
             });
+            window.scrollTo(0, 0);
         }, 1500);
     };
 
     if (submittedDispatch) {
         return (
             <div className="emergency-form-wrapper animate-slide-up">
+                {showPopup && (
+                    <div className="toast-popup">
+                        <span className="toast-icon">🚑</span>
+                        Ambulance is getting ready...
+                        <button className="toast-close" onClick={() => setShowPopup(false)}>×</button>
+                    </div>
+                )}
                 <div className="emergency-form-container dispatch-confirmation-card">
                     <div className="dispatch-confirmation-badge">Dispatch Confirmed</div>
                     <h2>
@@ -224,9 +257,10 @@ function EmergencyForm() {
                             type="text"
                             name="patientName"
                             className="form-control"
-                            placeholder="Full Name"
+                            placeholder="Full Name (Max 50 characters)"
                             value={formData.patientName}
                             onChange={handleChange}
+                            maxLength="50"
                             required
                         />
                     </div>
@@ -237,9 +271,11 @@ function EmergencyForm() {
                             type="tel"
                             name="contactNumber"
                             className="form-control"
-                            placeholder="+91 XXXXX XXXXX"
+                            placeholder="10-digit mobile number"
                             value={formData.contactNumber}
                             onChange={handleChange}
+                            pattern="[0-9]{10}"
+                            title="Please enter a valid 10-digit mobile number"
                             required
                         />
                     </div>

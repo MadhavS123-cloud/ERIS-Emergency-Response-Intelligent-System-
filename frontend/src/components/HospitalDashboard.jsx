@@ -5,11 +5,11 @@ import { useEris } from '../context/ErisContext';
 import './HospitalDashboard.css';
 
 const statusLabels = {
-    incoming: 'Awaiting assignment',
-    assigned: 'Unit assigned',
-    en_route: 'Driver responding',
-    arrived: 'Patient pickup in progress',
-    transporting: 'Inbound to hospital',
+    incoming: 'Waiting for Ambulance',
+    assigned: 'Ambulance Assigned',
+    en_route: 'Ambulance En Route',
+    arrived: 'At Pickup Location',
+    transporting: 'Inbound to Hospital',
     completed: 'Closed',
 };
 
@@ -149,18 +149,18 @@ function HospitalDashboard() {
                                 <path d="M16 17H8" />
                                 <path d="M10 9H8" />
                             </svg>
-                            INCOMING AMBULANCE DISPATCH RECORDS
+                            ACTIVE EMERGENCY REQUESTS
                         </div>
 
                         <div className="table-responsive">
                             <table className="queue-table">
                                 <thead>
                                     <tr>
-                                        <th>Patient ID</th>
+                                        <th>Request ID</th>
                                         <th>Priority</th>
-                                        <th>Emergency / Diagnosis</th>
-                                        <th>EMS unit</th>
-                                        <th>ETA (EST)</th>
+                                        <th>Emergency Type</th>
+                                        <th>Ambulance ID</th>
+                                        <th>Arrival Time</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -169,7 +169,7 @@ function HospitalDashboard() {
                                     {dispatches.map((dispatch) => (
                                         <tr
                                             key={dispatch.id}
-                                            className={dispatch.id === activeDispatch?.id ? 'queue-table-row-active' : ''}
+                                            className={`${dispatch.id === activeDispatch?.id ? 'queue-table-row-active ' : ''}${dispatch.priority === 'CRITICAL' ? 'critical-row' : ''}`}
                                             onClick={() => selectDispatch(dispatch.id)}
                                         >
                                             <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{dispatch.requestId}</td>
@@ -193,7 +193,7 @@ function HospitalDashboard() {
                                                         event.stopPropagation();
                                                         handleDispatchAction(dispatch);
                                                     }}>
-                                                        {dispatch.status === 'incoming' ? 'Assign Unit' : dispatch.status === 'transporting' ? 'Confirm Arrival' : 'Monitor'}
+                                                        {dispatch.status === 'incoming' ? 'Assign Ambulance' : dispatch.status === 'transporting' ? 'Confirm Arrival' : 'Track Live'}
                                                     </button>
                                                 )}
                                             </td>
