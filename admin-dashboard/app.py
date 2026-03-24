@@ -614,3 +614,41 @@ elif nav_selection == "Analytics Core":
         )
         st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
+elif nav_selection == "System Logs":
+    render_header("System Logs")
+    
+    st.markdown("<div style='font-family: monospace; color: #94a3b8; font-size: 0.9rem; margin-bottom: 24px;'>[AWAITING LIVE COMPLIANCE STREAM]...</div>", unsafe_allow_html=True)
+    
+    logs_html = """
+    <div class="log-card red">
+        <div class="log-badge red">Emergency</div>
+        <div class="log-message">New distress signal received - REQ-8754</div>
+        <div class="log-time">[2 min ago]</div>
+    </div>
+    
+    <div class="log-card blue">
+        <div class="log-badge blue">Assignment</div>
+        <div class="log-message">Unit AMB-2451 dispatched to REQ-8754</div>
+        <div class="log-time">[2 min ago]</div>
+    </div>
+    
+    <div class="log-card amber">
+        <div class="log-badge amber">Update</div>
+        <div class="log-message">Node capacity matrix updated - NODE-001</div>
+        <div class="log-time">[5 min ago]</div>
+    </div>
+    
+    <div class="log-card green">
+        <div class="log-badge green">Complete</div>
+        <div class="log-message">Signal REQ-8721 classified resolved</div>
+        <div class="log-time">[12 min ago]</div>
+    </div>
+    
+    <div class="log-card neutral">
+        <div class="log-badge neutral">Status</div>
+        <div class="log-message">Pilot Michael Rodriguez status: Standby</div>
+        <div class="log-time">[15 min ago]</div>
+    </div>
+    """
+    
+    st.markdown(logs_html, unsafe_allow_html=True)
