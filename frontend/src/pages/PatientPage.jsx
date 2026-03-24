@@ -21,7 +21,7 @@ function PatientPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                     <BackButton />
                     <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                        <img src="/logo192.png" alt="ERIS Logo" className="app-logo" style={{ height: '40px' }} />
+                        <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '40px' }} />
                     </Link>
                 </div>
             </header>

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useEris } from '../context/ErisContext';
+import { CircleLoader } from 'react-spinners';
 import './HomePage.css';
 
 /**
@@ -21,10 +22,62 @@ function HomePage() {
     const [loadingHospitals, setLoadingHospitals] = useState(true);
     const [showAllHospitals, setShowAllHospitals] = useState(false);
     const [selectedHospitalId, setSelectedHospitalId] = useState(null);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [activeSection, setActiveSection] = useState('');
     const markersRef = useRef([]);
 
     // Determine if the current active dispatch belongs to an actual user session (not a pre-seeded demo dispatch)
     const isPatientSession = activeDispatch && !activeDispatch.id.startsWith('dispatch-seed-');
+
+    // Intersection Observer for Lazy Animations
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    // Unobserve after the animation triggers
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+        const timeout = setTimeout(() => {
+            const lazyElements = document.querySelectorAll('.lazy-fade-in, .lazy-slide-up');
+            lazyElements.forEach(el => observer.observe(el));
+        }, 100);
+
+        return () => {
+            clearTimeout(timeout);
+            observer.disconnect();
+        };
+    }, []);
+
+    // ScrollSpy for Active Links
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollY = window.scrollY;
+            if (scrollY < 200) {
+                setActiveSection('');
+                return;
+            }
+            const sections = ['how', 'hospitals'];
+            let currentStr = '';
+            for (const section of sections) {
+                const el = document.getElementById(section);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top <= 150 && rect.bottom >= 150) {
+                        currentStr = section;
+                    }
+                }
+            }
+            setActiveSection(currentStr);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // 1. Get User Location (Browser Geolocation API)
     useEffect(() => {
@@ -246,18 +299,18 @@ function HomePage() {
     };
 
     return (
-        <div className="landing-page" style={{ height: '100dvh', overflowY: 'auto', scrollSnapType: 'y mandatory', scrollPaddingTop: '70px', backgroundColor: 'var(--bg-main)' }}>
+        <div className="landing-page" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-main)' }}>
             {/* Header */}
             <header className="home-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-                        <img src="/logo192.png" alt="ERIS Logo" className="app-logo home-logo-img" style={{ height: '48px' }} />
+                    <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ display: 'flex', alignItems: 'center' }}>
+                        <img src="/image.png" alt="ERIS Logo" className="app-logo home-logo-img" style={{ height: '48px' }} />
                     </Link>
                 </div>
 
-                <nav className="home-nav">
-                    <a href="#how">How It Works</a>
-                    <a href="#hospitals">Facilities</a>
+                <nav className={`home-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                    <a href="#how" className={activeSection === 'how' ? 'active-link' : ''}>How It Works</a>
+                    <a href="#hospitals" className={activeSection === 'hospitals' ? 'active-link' : ''}>Facilities</a>
                     {isPatientSession ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontWeight: '600', fontSize: 'var(--text-sm)', background: 'var(--bg-card)', padding: '8px 16px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-std)' }}>
@@ -274,11 +327,27 @@ function HomePage() {
                         </Link>
                     )}
                 </nav>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <a href="tel:112" className="nav-helpline">
+                        <div className="nav-helpline-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                        </div>
+                        <div className="nav-helpline-text">
+                            <span style={{ fontSize: '10px', fontWeight: '800', opacity: 0.8, letterSpacing: '0.05em' }}>EMERGENCY</span>
+                            <span style={{ fontSize: '18px', fontWeight: '900', lineHeight: 1 }}>112</span>
+                        </div>
+                    </a>
+
+                    <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                        {mobileMenuOpen ? '✕' : '☰'}
+                    </button>
+                </div>
             </header>
 
             {/* Hero Section */}
-            <main className="hero-section animate-fade-in" style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)' }}>
-                <div className="hero-text animate-slide-up">
+            <main className="hero-section lazy-fade-in">
+                <div className="hero-text lazy-slide-up">
                     <div style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -304,7 +373,7 @@ function HomePage() {
                                     {activeDispatch.status === 'completed' ? 'COMPLETED' : 'IN PROGRESS'}
                                 </span>
                             </div>
-                            
+
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
                                 <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
                                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Assigned EMS Unit</div>
@@ -366,47 +435,29 @@ function HomePage() {
                         </>
                     )}
 
-                    <div className="card-std hero-contact" style={{
-                        padding: '24px 32px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '24px'
-                    }}>
-                        <div style={{ 
-                            color: 'var(--emergency-red)', 
-                            background: 'var(--emergency-red-light)', 
-                            padding: '16px', 
-                            borderRadius: 'var(--radius-full)' 
-                        }}>
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                        </div>
-                        <div>
-                            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase' }}>National Emergency Hotline</div>
-                            <div style={{ fontSize: 'var(--text-2xl)', fontWeight: '900', color: 'var(--text-primary)', marginTop: '4px' }}>112 or 1800-ERIS-112</div>
-                        </div>
-                    </div>
+
                 </div>
 
-                    <div style={{ flex: 1, position: 'relative' }} className="animate-fade-in">
-                        <img
-                            src="/erisimg.jpeg"
-                            alt="ERIS Ambulance Dispatch"
-                            style={{
-                                width: '100%',
-                                borderRadius: 'var(--radius-lg)',
-                                boxShadow: 'var(--shadow-lg)',
-                                position: 'relative',
-                                zIndex: 1,
-                                border: '1px solid var(--border-std)',
-                                objectFit: 'cover',
-                                aspectRatio: '16/9'
-                            }}
-                        />
-                    </div>
+                <div className="lazy-fade-in hero-image-wrapper">
+                    <img
+                        src="/erisimg.jpeg"
+                        alt="ERIS Ambulance Dispatch"
+                        style={{
+                            width: '100%',
+                            borderRadius: 'var(--radius-lg)',
+                            boxShadow: 'var(--shadow-lg)',
+                            position: 'relative',
+                            zIndex: 1,
+                            border: '1px solid var(--border-std)',
+                            objectFit: 'cover',
+                            aspectRatio: '16/9'
+                        }}
+                    />
+                </div>
             </main>
 
             {/* How It Works Section */}
-            <section id="how" className="section-padding" style={{ padding: '100px 40px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-std)', scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <section id="how" className="section-padding lazy-fade-in" style={{ padding: '100px 40px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-std)' }}>
                 <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
                     <div className="stats-grid">
                         <div>
@@ -457,7 +508,7 @@ function HomePage() {
             </section>
 
             {/* Dynamic Real-Time Hospitals Section */}
-            <section id="hospitals" className="section-padding" style={{ padding: '100px 40px', background: 'var(--bg-main)', scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <section id="hospitals" className="section-padding lazy-fade-in" style={{ padding: '100px 40px', background: 'var(--bg-main)' }}>
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
                         <div>
@@ -470,11 +521,9 @@ function HomePage() {
                         {/* Left side: Fetched Hospital List */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {loadingHospitals ? (
-                                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                                    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
-                                        <div className="live-dot" style={{ width: '12px', height: '12px', background: 'var(--dept-blue)' }}></div>
-                                    </div>
-                                    Scanning area for facilities...
+                                <div style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', fontWeight: '600', gap: '24px' }}>
+                                    <img src="/image.png" alt="Loading ERIS Data" className="app-logo" style={{ height: '64px', animation: 'logoPulse 2s infinite ease-in-out' }} />
+                                    <span style={{ animation: 'pulseText 2s infinite ease-in-out', letterSpacing: '0.02em' }}>Establishing secure connection to ERIS network...</span>
                                 </div>
                             ) : hospitals.length > 0 ? (
                                 <>
@@ -505,82 +554,82 @@ function HomePage() {
                                         }
 
                                         return (
-                                        <div key={hospital.id || idx} className="card-std" style={{
-                                            padding: '24px',
-                                            border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-std)',
-                                            transition: 'border-color 0.15s ease'
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                                                <h3 style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>{hospital.name}</h3>
-                                                <span style={{ 
-                                                    background: hospital.status === 'ER Ready' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.1)', 
-                                                    color: hospital.status === 'ER Ready' ? 'var(--emergency-red)' : 'var(--warning-orange)', 
-                                                    fontSize: 'var(--text-xs)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontWeight: '800' 
-                                                }}>{hospital.status}</span>
+                                            <div key={hospital.id || idx} className="card-std" style={{
+                                                padding: '24px',
+                                                border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-std)',
+                                                transition: 'border-color 0.15s ease'
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                                    <h3 style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>{hospital.name}</h3>
+                                                    <span style={{
+                                                        background: hospital.status === 'ER Ready' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.1)',
+                                                        color: hospital.status === 'ER Ready' ? 'var(--emergency-red)' : 'var(--warning-orange)',
+                                                        fontSize: 'var(--text-xs)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontWeight: '800'
+                                                    }}>{hospital.status}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', marginBottom: '12px' }}>
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                                    {calculateDistance(userLocation, hospital.coords)} km away
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: 'var(--text-sm)', marginBottom: '16px', fontWeight: '600' }}>
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                                                    Available beds: {hospital.beds} General
+                                                </div>
+                                                {/* Insurance Section */}
+                                                <div style={{ marginBottom: '16px' }}>
+                                                    <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '8px' }}>Accepted Insurance</div>
+                                                    {hospital.insurance && hospital.insurance.length > 0 ? (
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                                                            {hospital.insurance.slice(0, 3).map((ins, i) => (
+                                                                <span key={i} style={{
+                                                                    background: '#F3F4F6',
+                                                                    color: '#374151',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    padding: '4px 10px',
+                                                                    borderRadius: '999px',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>{ins}</span>
+                                                            ))}
+                                                            {hospital.insurance.length > 3 && (
+                                                                <span style={{
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    color: '#6B7280',
+                                                                    padding: '4px 6px'
+                                                                }}>+{hospital.insurance.length - 3} more</span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span style={{ fontSize: '12px', color: '#9CA3AF', fontStyle: 'italic' }}>No insurance info available</span>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    disabled={isDisabled}
+                                                    onClick={() => {
+                                                        if (!isDisabled) {
+                                                            setSelectedHospitalId(isSelected ? null : hospital.id);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '13px',
+                                                        marginTop: '0',
+                                                        background: btnBg,
+                                                        borderRadius: '8px',
+                                                        fontWeight: '700',
+                                                        fontSize: 'var(--text-sm)',
+                                                        color: btnColor,
+                                                        border: btnBorder,
+                                                        cursor: btnCursor,
+                                                        transition: 'background 0.15s ease, color 0.15s ease',
+                                                        letterSpacing: '0.02em'
+                                                    }}
+                                                >{btnText}</button>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', marginBottom: '12px' }}>
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                                                {calculateDistance(userLocation, hospital.coords)} km away
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: 'var(--text-sm)', marginBottom: '16px', fontWeight: '600' }}>
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                                                Available beds: {hospital.beds} General
-                                            </div>
-                                            {/* Insurance Section */}
-                                            <div style={{ marginBottom: '16px' }}>
-                                                <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '8px' }}>Accepted Insurance</div>
-                                                {hospital.insurance && hospital.insurance.length > 0 ? (
-                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                                                        {hospital.insurance.slice(0, 3).map((ins, i) => (
-                                                            <span key={i} style={{
-                                                                background: '#F3F4F6',
-                                                                color: '#374151',
-                                                                fontSize: '12px',
-                                                                fontWeight: '600',
-                                                                padding: '4px 10px',
-                                                                borderRadius: '999px',
-                                                                whiteSpace: 'nowrap'
-                                                            }}>{ins}</span>
-                                                        ))}
-                                                        {hospital.insurance.length > 3 && (
-                                                            <span style={{
-                                                                fontSize: '12px',
-                                                                fontWeight: '600',
-                                                                color: '#6B7280',
-                                                                padding: '4px 6px'
-                                                            }}>+{hospital.insurance.length - 3} more</span>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span style={{ fontSize: '12px', color: '#9CA3AF', fontStyle: 'italic' }}>No insurance info available</span>
-                                                )}
-                                            </div>
-                                            <button
-                                                disabled={isDisabled}
-                                                onClick={() => {
-                                                    if (!isDisabled) {
-                                                        setSelectedHospitalId(isSelected ? null : hospital.id);
-                                                    }
-                                                }}
-                                                style={{ 
-                                                    width: '100%', 
-                                                    padding: '13px', 
-                                                    marginTop: '0',
-                                                    background: btnBg, 
-                                                    borderRadius: '8px', 
-                                                    fontWeight: '700', 
-                                                    fontSize: 'var(--text-sm)',
-                                                    color: btnColor, 
-                                                    border: btnBorder, 
-                                                    cursor: btnCursor,
-                                                    transition: 'background 0.15s ease, color 0.15s ease',
-                                                    letterSpacing: '0.02em'
-                                                }}
-                                            >{btnText}</button>
-                                        </div>
                                         );
                                     })}
-                                    
+
                                     {/* View More button */}
                                     {hospitals.length > 3 && !showAllHospitals && (
                                         <button
@@ -604,13 +653,13 @@ function HomePage() {
                                             }}
                                         >
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <polyline points="12 6 12 12 16 14"/>
+                                                <circle cx="12" cy="12" r="10" />
+                                                <polyline points="12 6 12 12 16 14" />
                                             </svg>
                                             View {hospitals.length - 3} More Hospitals
                                         </button>
                                     )}
-                                    
+
                                     {/* Show Less button */}
                                     {showAllHospitals && (
                                         <button
@@ -632,8 +681,8 @@ function HomePage() {
                                             }}
                                         >
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <polyline points="12 6 12 12 8 14"/>
+                                                <circle cx="12" cy="12" r="10" />
+                                                <polyline points="12 6 12 12 8 14" />
                                             </svg>
                                             Show Less
                                         </button>
@@ -662,22 +711,16 @@ function HomePage() {
             </section>
 
             {/* Final CTA Banner */}
-            <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always', minHeight: 'calc(100dvh - 70px)', display: 'flex', flexDirection: 'column' }}>
-            <section style={{ 
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                background: 'linear-gradient(135deg, var(--emergency-red) 0%, var(--emergency-red-dark) 100%)', 
-                padding: '80px 40px', 
-                color: 'white', 
+            <section className="lazy-fade-in" style={{
+                background: 'linear-gradient(135deg, var(--emergency-red) 0%, var(--emergency-red-dark) 100%)',
+                padding: '80px 40px',
+                color: 'white',
                 textAlign: 'center',
                 boxShadow: 'inset 0 10px 30px rgba(0,0,0,0.1)'
             }}>
                 <h2 style={{ fontSize: 'var(--text-4xl)', marginBottom: '16px', color: 'white', letterSpacing: '-0.02em' }}>Need Emergency Help Right Now?</h2>
                 <p style={{ fontSize: 'var(--text-xl)', opacity: 0.9, marginBottom: '40px' }}>Don't wait. Every second matters in an emergency.</p>
-                    <Link to="/patient" style={{
+                <Link to="/patient" style={{
                     background: 'white',
                     color: 'var(--emergency-red)',
                     padding: '18px 40px',
@@ -691,8 +734,8 @@ function HomePage() {
                     boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
                     transition: 'transform var(--transition-fast)'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                     Book Ambulance Now
@@ -705,14 +748,15 @@ function HomePage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: '16px',
                 fontSize: 'var(--text-xs)',
                 color: 'rgba(255,255,255,0.7)',
                 fontWeight: '600',
                 letterSpacing: '0.05em'
             }}>
-                © 2026 ERIS NATIONAL EMERGENCY DISPATCH SYSTEM | AUTHORIZED PERSONNEL ONLY
+                <img src="/image.png" alt="ERIS Footer Logo" className="app-logo" style={{ height: '28px', opacity: 0.5, filter: 'grayscale(100%) brightness(2)' }} />
+                <span>© 2026 ERIS NATIONAL EMERGENCY DISPATCH SYSTEM | AUTHORIZED PERSONNEL ONLY</span>
             </footer>
-            </div>
         </div>
     );
 }

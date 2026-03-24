@@ -180,7 +180,7 @@ function TrackPage() {
             <header className="track-header">
                 <div className="track-brand">
                     <Link to="/">
-                        <img src="/logo192.png" alt="ERIS Logo" className="app-logo" style={{ height: '44px' }} />
+                        <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '44px' }} />
                     </Link>
                     <div>
                         <div className="track-brand-title">Ambulance Tracking</div>

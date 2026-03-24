@@ -273,20 +273,53 @@ a:hover {
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Lazy Scroll Animations */
+.lazy-fade-in {
+  opacity: 0;
+}
+.lazy-fade-in.is-visible {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.lazy-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.lazy-slide-up.is-visible {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* App Logo Adaptation for Light and Dark Backgrounds */
 .app-logo {
   object-fit: contain;
   transition: all var(--transition-fast);
+  padding: 8px; /* Minimum breathing room */
 }
 
-/* Light Mode: Use multiply to remove white background making it transparent */
-.app-logo-light {
-  mix-blend-mode: multiply;
-  filter: contrast(1.05); /* slightly boost contrast */
+.app-logo:hover {
+  transform: scale(1.02);
+  filter: drop-shadow(0 4px 8px var(--dept-glow));
 }
 
-/* Dark Mode: Native rendering without blend mode so it shows up on dark backgrounds properly */
-.app-logo-dark {
-  object-fit: contain;
-  border-radius: var(--radius-sm);
+/* Light Mode (or normal background) */
+body:not(.dark-theme) .app-logo,
+.light-theme .app-logo {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+}
+
+/* Dark Mode: Add subtle glow or outline (white/soft blue) and increase brightness/contrast */
+body.dark-theme .app-logo,
+.dark-theme .app-logo {
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)) brightness(1.1) contrast(1.1);
+}
+
+/* Global Logo Pulsing Animation for Loaders */
+@keyframes logoPulse {
+    0% { transform: scale(0.95); filter: drop-shadow(0 0 8px rgba(37,99,235, 0.2)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 24px rgba(37,99,235, 0.8)); }
+    100% { transform: scale(0.95); filter: drop-shadow(0 0 8px rgba(37,99,235, 0.2)); }
+}
+@keyframes pulseText {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }

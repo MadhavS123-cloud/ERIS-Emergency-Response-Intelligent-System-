@@ -70,7 +70,7 @@ function HospitalDashboard() {
         <div className="hospital-dashboard-container">
             <div className="mobile-hospital-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <img src="/logo192.png" alt="ERIS Logo" className="app-logo" style={{ height: '32px' }} />
+                    <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '32px' }} />
                     <span style={{ fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>CITY GENERAL</span>
                 </div>
                 <button
@@ -89,7 +89,7 @@ function HospitalDashboard() {
 
             <aside className={`hospital-sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
                 <div className="hospital-sidebar-header">
-                    <img src="/logo192.png" alt="ERIS Logo" className="app-logo" style={{ height: '56px', marginBottom: '8px' }} />
+                    <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '56px', marginBottom: '8px' }} />
                     <div style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                         CITY GENERAL
                     </div>
