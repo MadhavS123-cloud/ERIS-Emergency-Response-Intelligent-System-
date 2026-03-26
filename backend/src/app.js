@@ -1,19 +1,18 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
 
-const { errorHandler } = require('./middlewares/error.middleware');
+import { errorHandler } from './middlewares/error.middleware.js';
 
 // Route imports
-const authRoutes = require('./modules/auth/auth.routes');
-const userRoutes = require('./modules/user/user.routes');
-const ambulanceRoutes = require('./modules/ambulance/ambulance.routes');
-const hospitalRoutes = require('./modules/hospital/hospital.routes');
-const requestRoutes = require('./modules/request/request.routes');
-const adminRoutes = require('./modules/admin/admin.routes');
-const trackingRoutes = require('./modules/tracking/tracking.routes');
+import authRoutes from './modules/auth/auth.routes.js';
+import userRoutes from './modules/user/user.routes.js';
+import ambulanceRoutes from './modules/ambulance/ambulance.routes.js';
+import hospitalRoutes from './modules/hospital/hospital.routes.js';
+import requestRoutes from './modules/request/request.routes.js';
+import adminRoutes from './modules/admin/admin.routes.js';
+import trackingRoutes from './modules/tracking/tracking.routes.js';
 
 const app = express();
 
@@ -52,4 +51,4 @@ app.use((req, res, next) => {
 // Global Error Handler
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

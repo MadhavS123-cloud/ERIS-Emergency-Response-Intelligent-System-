@@ -8,7 +8,7 @@
  * @returns {number} Distance in kilometers
  */
 function calculateDistance(lat1, lon1, lat2, lon2) {
-  const toRadian = angle => (Math.PI / 180) * angle;
+  const toRadian = (angle) => (Math.PI / 180) * angle;
 
   const R = 6371; // radius of the earth in km
   const dLat = toRadian(lat2 - lat1);
@@ -23,4 +23,4 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
-module.exports = { calculateDistance };
+export { calculateDistance };

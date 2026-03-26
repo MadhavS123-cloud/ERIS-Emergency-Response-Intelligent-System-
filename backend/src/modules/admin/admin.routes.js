@@ -1,8 +1,8 @@
-const express = require('express');
-const adminController = require('./admin.controller');
-const { protect, restrictTo } = require('../../middlewares/auth.middleware');
+import { Router } from 'express';
+import adminController from './admin.controller.js';
+import { protect, restrictTo } from '../../middlewares/auth.middleware.js';
 
-const router = express.Router();
+const router = Router();
 
 // Only admins can access these routes
 router.use(protect);
@@ -12,4 +12,4 @@ router.get('/dashboard-stats', adminController.getDashboardStats);
 router.get('/users', adminController.getAllUsers);
 router.get('/requests', adminController.getAllRequests);
 
-module.exports = router;
+export default router;

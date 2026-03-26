@@ -1,6 +1,6 @@
-const requestRepository = require('./request.repository');
-const { addEmergencyRequestToQueue } = require('../../services/queue.service');
-const { getIO } = require('../../services/socket.service');
+import requestRepository from './request.repository.js';
+import { addEmergencyRequestToQueue } from '../../services/queue.service.js';
+import { getIO } from '../../services/socket.service.js';
 
 class RequestService {
   async createRequest(patientId, data) {
@@ -56,4 +56,4 @@ class RequestService {
   }
 }
 
-module.exports = new RequestService();
+export default new RequestService();

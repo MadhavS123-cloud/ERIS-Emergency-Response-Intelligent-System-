@@ -1,5 +1,5 @@
-const userService = require('./user.service');
-const APIResponse = require('../../utils/response');
+import userService from './user.service.js';
+import APIResponse from '../../utils/response.js';
 
 class UserController {
   async getAllUsers(req, res, next) {
@@ -51,4 +51,4 @@ class UserController {
   }
 }
 
-module.exports = new UserController();
+export default new UserController();

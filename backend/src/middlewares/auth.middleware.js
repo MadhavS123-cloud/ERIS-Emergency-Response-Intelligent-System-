@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const APIResponse = require('../utils/response');
+import jwt from 'jsonwebtoken';
+import APIResponse from '../utils/response.js';
 
 const protect = (req, res, next) => {
   try {
@@ -30,4 +30,4 @@ const restrictTo = (...roles) => {
   };
 };
 
-module.exports = { protect, restrictTo };
+export { protect, restrictTo };

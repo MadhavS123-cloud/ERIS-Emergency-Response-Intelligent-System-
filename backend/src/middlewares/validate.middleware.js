@@ -1,4 +1,4 @@
-const APIResponse = require('../utils/response');
+import APIResponse from '../utils/response.js';
 
 const validate = (schema) => (req, res, next) => {
   const { value, error } = schema.validate(req.body, { abortEarly: false });
@@ -12,4 +12,4 @@ const validate = (schema) => (req, res, next) => {
   return next();
 };
 
-module.exports = { validate };
+export { validate };

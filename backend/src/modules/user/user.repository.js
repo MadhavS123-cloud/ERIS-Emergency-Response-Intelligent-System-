@@ -1,4 +1,4 @@
-const { prisma } = require('../../config/db');
+import { prisma } from '../../config/db.js';
 
 class UserRepository {
   async findAllUsers() {
@@ -49,4 +49,4 @@ class UserRepository {
   }
 }
 
-module.exports = new UserRepository();
+export default new UserRepository();

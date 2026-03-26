@@ -1,5 +1,5 @@
-const ambulanceRepository = require('../ambulance/ambulance.repository');
-const { getIO } = require('../../services/socket.service');
+import ambulanceRepository from '../ambulance/ambulance.repository.js';
+import { getIO } from '../../services/socket.service.js';
 
 class TrackingService {
   async updateLocation(driverId, locationLat, locationLng) {
@@ -30,4 +30,4 @@ class TrackingService {
   }
 }
 
-module.exports = new TrackingService();
+export default new TrackingService();

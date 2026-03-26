@@ -1,5 +1,5 @@
-const trackingService = require('./tracking.service');
-const APIResponse = require('../../utils/response');
+import trackingService from './tracking.service.js';
+import APIResponse from '../../utils/response.js';
 
 class TrackingController {
   async updateLocation(req, res, next) {
@@ -15,4 +15,4 @@ class TrackingController {
   }
 }
 
-module.exports = new TrackingController();
+export default new TrackingController();

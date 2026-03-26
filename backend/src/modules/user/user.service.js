@@ -1,4 +1,4 @@
-const userRepository = require('./user.repository');
+import userRepository from './user.repository.js';
 
 class UserService {
   async getAllUsers() {
@@ -25,4 +25,4 @@ class UserService {
   }
 }
 
-module.exports = new UserService();
+export default new UserService();

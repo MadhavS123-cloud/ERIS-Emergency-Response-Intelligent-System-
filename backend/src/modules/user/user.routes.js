@@ -1,10 +1,10 @@
-const express = require('express');
-const userController = require('./user.controller');
-const { protect, restrictTo } = require('../../middlewares/auth.middleware');
-const { validate } = require('../../middlewares/validate.middleware');
-const { updateUserSchema } = require('./user.validation');
+import { Router } from 'express';
+import userController from './user.controller.js';
+import { protect, restrictTo } from '../../middlewares/auth.middleware.js';
+import { validate } from '../../middlewares/validate.middleware.js';
+import { updateUserSchema } from './user.validation.js';
 
-const router = express.Router();
+const router = Router();
 
 // Protect all routes after this middleware
 router.use(protect);
@@ -23,4 +23,4 @@ router.get('/:id', userController.getUser);
 router.patch('/:id', validate(updateUserSchema), userController.updateUser);
 router.delete('/:id', userController.deleteUser);
 
-module.exports = router;
+export default router;

@@ -1,11 +1,11 @@
-const express = require('express');
-const authController = require('./auth.controller');
-const { validate } = require('../../middlewares/validate.middleware');
-const { registerSchema, loginSchema } = require('./auth.validation');
+import { Router } from 'express';
+import authController from './auth.controller.js';
+import { validate } from '../../middlewares/validate.middleware.js';
+import { registerSchema, loginSchema } from './auth.validation.js';
 
-const router = express.Router();
+const router = Router();
 
 router.post('/register', validate(registerSchema), authController.register);
 router.post('/login', validate(loginSchema), authController.login);
 
-module.exports = router;
+export default router;

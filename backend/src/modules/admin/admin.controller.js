@@ -1,5 +1,5 @@
-const APIResponse = require('../../utils/response');
-const adminService = require('./admin.service');
+import APIResponse from '../../utils/response.js';
+import adminService from './admin.service.js';
 
 class AdminController {
   async getDashboardStats(req, res, next) {
@@ -30,4 +30,4 @@ class AdminController {
   }
 }
 
-module.exports = new AdminController();
+export default new AdminController();

@@ -1,14 +1,19 @@
-const { Server } = require('socket.io');
-const logger = require('../utils/logger');
+import { Server } from 'socket.io';
+import logger from '../utils/logger.js';
 
 let io;
 
+/**
+ * Initialize Socket.IO. Call once during server startup.
+ * @param {import('http').Server} server - The HTTP server instance
+ * @returns {Server} The Socket.IO server instance
+ */
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: '*', // Define specific origins in production
-      methods: ['GET', 'POST']
-    }
+      methods: ['GET', 'POST'],
+    },
   });
 
   io.on('connection', (socket) => {
@@ -35,9 +40,14 @@ const initSocket = (server) => {
     });
   });
 
+  logger.info('Socket.IO initialized');
   return io;
 };
 
+/**
+ * Get the active Socket.IO instance.
+ * @returns {Server} The Socket.IO server instance
+ */
 const getIO = () => {
   if (!io) {
     throw new Error('Socket.io not initialized!');
@@ -45,4 +55,4 @@ const getIO = () => {
   return io;
 };
 
-module.exports = { initSocket, getIO };
+export { initSocket, getIO };

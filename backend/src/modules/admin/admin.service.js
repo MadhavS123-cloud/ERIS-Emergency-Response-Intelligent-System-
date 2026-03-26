@@ -1,5 +1,5 @@
-const userRepository = require('../user/user.repository');
-const requestRepository = require('../request/request.repository');
+import userRepository from '../user/user.repository.js';
+import requestRepository from '../request/request.repository.js';
 
 class AdminService {
   async getDashboardStats() {
@@ -23,4 +23,4 @@ class AdminService {
   }
 }
 
-module.exports = new AdminService();
+export default new AdminService();

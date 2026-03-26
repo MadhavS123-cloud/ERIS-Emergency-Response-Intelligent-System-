@@ -1,5 +1,5 @@
-const logger = require('../utils/logger');
-const APIResponse = require('../utils/response');
+import logger from '../utils/logger.js';
+import APIResponse from '../utils/response.js';
 
 const errorHandler = (err, req, res, next) => {
   logger.error(`${err.name}: ${err.message}`);
@@ -38,4 +38,4 @@ const errorHandler = (err, req, res, next) => {
   return APIResponse.error(res, message, statusCode);
 };
 
-module.exports = { errorHandler };
+export { errorHandler };

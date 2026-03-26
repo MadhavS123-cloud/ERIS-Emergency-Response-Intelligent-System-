@@ -1,5 +1,5 @@
-const ambulanceService = require('./ambulance.service');
-const APIResponse = require('../../utils/response');
+import ambulanceService from './ambulance.service.js';
+import APIResponse from '../../utils/response.js';
 
 class AmbulanceController {
   async createAmbulance(req, res, next) {
@@ -48,4 +48,4 @@ class AmbulanceController {
   }
 }
 
-module.exports = new AmbulanceController();
+export default new AmbulanceController();

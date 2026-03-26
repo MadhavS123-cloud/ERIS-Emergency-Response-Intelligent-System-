@@ -1,4 +1,4 @@
-const hospitalRepository = require('./hospital.repository');
+import hospitalRepository from './hospital.repository.js';
 
 class HospitalService {
   async createHospital(data) {
@@ -29,4 +29,4 @@ class HospitalService {
   }
 }
 
-module.exports = new HospitalService();
+export default new HospitalService();

@@ -1,4 +1,4 @@
-const { prisma } = require('../../config/db');
+import { prisma } from '../../config/db.js';
 
 class AuthRepository {
   async createUser(userData) {
@@ -14,4 +14,4 @@ class AuthRepository {
   }
 }
 
-module.exports = new AuthRepository();
+export default new AuthRepository();

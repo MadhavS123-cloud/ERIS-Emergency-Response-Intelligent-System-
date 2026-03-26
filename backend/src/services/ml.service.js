@@ -1,7 +1,6 @@
-const axios = require('axios');
-const logger = require('../utils/logger');
-
-const FASTAPI_BASE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+import axios from 'axios';
+import logger from '../utils/logger.js';
+import env from '../config/env.js';
 
 class MLService {
   /**
@@ -14,7 +13,7 @@ class MLService {
       logger.info('Calling ML service to predict best ambulance');
       
       // Placeholder: actual endpoint URL depends on the FastAPI backend
-      const response = await axios.post(`${FASTAPI_BASE_URL}/predict/ambulance`, emergencyData);
+      const response = await axios.post(`${env.ML_SERVICE_URL}/predict/ambulance`, emergencyData);
       
       logger.info('ML prediction received successfully');
       return response.data;
@@ -26,4 +25,4 @@ class MLService {
   }
 }
 
-module.exports = MLService;
+export default MLService;

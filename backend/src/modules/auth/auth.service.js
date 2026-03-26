@@ -1,6 +1,6 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const authRepository = require('./auth.repository');
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import authRepository from './auth.repository.js';
 
 class AuthService {
   async registerUser(userData) {
@@ -57,4 +57,4 @@ class AuthService {
   }
 }
 
-module.exports = new AuthService();
+export default new AuthService();

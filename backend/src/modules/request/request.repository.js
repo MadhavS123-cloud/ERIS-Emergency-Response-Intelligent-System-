@@ -1,4 +1,4 @@
-const { prisma } = require('../../config/db');
+import { prisma } from '../../config/db.js';
 
 class RequestRepository {
   async createRequest(data) {
@@ -41,4 +41,4 @@ class RequestRepository {
   }
 }
 
-module.exports = new RequestRepository();
+export default new RequestRepository();

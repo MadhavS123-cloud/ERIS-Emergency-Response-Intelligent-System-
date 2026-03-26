@@ -1,10 +1,10 @@
-const express = require('express');
-const hospitalController = require('./hospital.controller');
-const { protect, restrictTo } = require('../../middlewares/auth.middleware');
-const { validate } = require('../../middlewares/validate.middleware');
-const { createHospitalSchema, updateHospitalSchema } = require('./hospital.validation');
+import { Router } from 'express';
+import hospitalController from './hospital.controller.js';
+import { protect, restrictTo } from '../../middlewares/auth.middleware.js';
+import { validate } from '../../middlewares/validate.middleware.js';
+import { createHospitalSchema, updateHospitalSchema } from './hospital.validation.js';
 
-const router = express.Router();
+const router = Router();
 
 router.use(protect);
 
@@ -18,4 +18,4 @@ router.post('/', validate(createHospitalSchema), hospitalController.createHospit
 router.patch('/:id', validate(updateHospitalSchema), hospitalController.updateHospital);
 router.delete('/:id', hospitalController.deleteHospital);
 
-module.exports = router;
+export default router;

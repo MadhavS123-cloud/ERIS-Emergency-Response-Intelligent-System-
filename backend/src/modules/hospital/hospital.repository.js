@@ -1,4 +1,4 @@
-const { prisma } = require('../../config/db');
+import { prisma } from '../../config/db.js';
 
 class HospitalRepository {
   async createHospital(data) {
@@ -40,4 +40,4 @@ class HospitalRepository {
   }
 }
 
-module.exports = new HospitalRepository();
+export default new HospitalRepository();

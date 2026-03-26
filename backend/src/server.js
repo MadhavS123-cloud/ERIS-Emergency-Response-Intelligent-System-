@@ -1,23 +1,53 @@
-const http = require('http');
-const app = require('./app');
-const { initSocket } = require('./services/socket.service');
-const logger = require('./utils/logger');
+import http from 'http';
+import env from './config/env.js';
+import { connectDB } from './config/db.js';
+import { initRedis } from './config/redis.js';
+import { initQueue } from './services/queue.service.js';
+import { initSocket } from './services/socket.service.js';
+import app from './app.js';
+import logger from './utils/logger.js';
 
-const PORT = process.env.PORT || 5001;
+const startServer = async () => {
+  try {
+    // 1. Connect to Database
+    await connectDB();
 
-const server = http.createServer(app);
+    // 2. Initialize Redis
+    const redisConnection = initRedis();
 
-// Initialize Socket.IO
-initSocket(server);
+    // 3. Initialize Queue (depends on Redis)
+    initQueue(redisConnection);
 
-server.listen(PORT, () => {
-  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+    // 4. Create HTTP server
+    const server = http.createServer(app);
 
-process.on('unhandledRejection', (err) => {
-  logger.error('UNHANDLED REJECTION! 💥 Shutting down...');
-  logger.error(err.name, err.message);
-  server.close(() => {
+    // 5. Initialize Socket.IO (depends on HTTP server)
+    initSocket(server);
+
+    // 6. Start listening
+    server.listen(env.PORT, () => {
+      logger.info(`Server running in ${env.NODE_ENV} mode on port ${env.PORT}`);
+    });
+
+    // Graceful shutdown handlers
+    process.on('unhandledRejection', (err) => {
+      logger.error('UNHANDLED REJECTION! 💥 Shutting down...');
+      logger.error(err.name, err.message);
+      server.close(() => {
+        process.exit(1);
+      });
+    });
+
+    process.on('SIGTERM', () => {
+      logger.info('SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        logger.info('Process terminated.');
+      });
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
     process.exit(1);
-  });
-});
+  }
+};
+
+startServer();

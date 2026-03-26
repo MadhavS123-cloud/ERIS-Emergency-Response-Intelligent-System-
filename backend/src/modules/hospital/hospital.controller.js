@@ -1,5 +1,5 @@
-const hospitalService = require('./hospital.service');
-const APIResponse = require('../../utils/response');
+import hospitalService from './hospital.service.js';
+import APIResponse from '../../utils/response.js';
 
 class HospitalController {
   async createHospital(req, res, next) {
@@ -48,4 +48,4 @@ class HospitalController {
   }
 }
 
-module.exports = new HospitalController();
+export default new HospitalController();

@@ -1,5 +1,5 @@
-const authService = require('./auth.service');
-const APIResponse = require('../../utils/response');
+import authService from './auth.service.js';
+import APIResponse from '../../utils/response.js';
 
 class AuthController {
   async register(req, res, next) {
@@ -20,8 +20,6 @@ class AuthController {
       next(error);
     }
   }
-
-  // Placeholder for logout, refresh token, etc.
 }
 
-module.exports = new AuthController();
+export default new AuthController();

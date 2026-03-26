@@ -1,5 +1,5 @@
-const requestService = require('./request.service');
-const APIResponse = require('../../utils/response');
+import requestService from './request.service.js';
+import APIResponse from '../../utils/response.js';
 
 class RequestController {
   async createRequest(req, res, next) {
@@ -49,4 +49,4 @@ class RequestController {
   }
 }
 
-module.exports = new RequestController();
+export default new RequestController();

@@ -1,4 +1,4 @@
-const ambulanceRepository = require('./ambulance.repository');
+import ambulanceRepository from './ambulance.repository.js';
 
 class AmbulanceService {
   async createAmbulance(data) {
@@ -30,4 +30,4 @@ class AmbulanceService {
   }
 }
 
-module.exports = new AmbulanceService();
+export default new AmbulanceService();

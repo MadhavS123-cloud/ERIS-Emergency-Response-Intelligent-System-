@@ -1,4 +1,4 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 const createHospitalSchema = Joi.object({
   adminId: Joi.string().uuid().required(),
@@ -17,7 +17,4 @@ const updateHospitalSchema = Joi.object({
   bedCapacity: Joi.number().integer().min(0).optional()
 });
 
-module.exports = {
-  createHospitalSchema,
-  updateHospitalSchema
-};
+export { createHospitalSchema, updateHospitalSchema };

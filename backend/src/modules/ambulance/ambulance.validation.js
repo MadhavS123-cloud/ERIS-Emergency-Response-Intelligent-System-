@@ -1,4 +1,4 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 const createAmbulanceSchema = Joi.object({
   driverId: Joi.string().uuid().required(),
@@ -15,7 +15,4 @@ const updateAmbulanceSchema = Joi.object({
   isAvailable: Joi.boolean().optional()
 });
 
-module.exports = {
-  createAmbulanceSchema,
-  updateAmbulanceSchema
-};
+export { createAmbulanceSchema, updateAmbulanceSchema };

@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const logger = require('../utils/logger');
+import { PrismaClient } from '@prisma/client';
+import logger from '../utils/logger.js';
 
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
@@ -15,4 +15,4 @@ const connectDB = async () => {
   }
 };
 
-module.exports = { prisma, connectDB };
+export { prisma, connectDB };
