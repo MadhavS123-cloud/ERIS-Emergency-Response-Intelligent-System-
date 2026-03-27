@@ -35,6 +35,12 @@ const initSocket = (server) => {
       io.to(data.patientId).emit('driver_assigned', data);
     });
 
+    // 🔥 ADD THIS
+    socket.on('update_location', (data) => {
+      logger.info('📍 Ambulance location update', data);
+      io.emit('ambulance_location_update', data);
+    });
+
     socket.on('disconnect', () => {
       logger.info(`Client disconnected: ${socket.id}`);
     });
