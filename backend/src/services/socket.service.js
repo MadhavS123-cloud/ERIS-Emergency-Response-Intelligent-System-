@@ -32,13 +32,22 @@ const initSocket = (server) => {
 
     socket.on('driver_accept', (data) => {
       logger.info('Driver accepted request', data);
-      io.to(data.patientId).emit('driver_assigned', data);
+
+      const payload = {
+        patientId: data.patientId,
+        requestId: data.requestId, // ✅ IMPORTANT
+        driverId: data.driverId,
+      };
+
+      io.to(data.patientId).emit('driver_assigned', payload);
     });
 
     // 🔥 ADD THIS
-    socket.on('update_location', (data) => {
-      logger.info('📍 Ambulance location update', data);
-      io.emit('ambulance_location_update', data);
+    socket.on("update_location", (data) => {
+      logger.info("📍 Location update:", data);
+
+      // ✅ send only to that request room
+      io.to(data.requestId).emit("ambulance_location_update", data);
     });
 
     socket.on('disconnect', () => {
