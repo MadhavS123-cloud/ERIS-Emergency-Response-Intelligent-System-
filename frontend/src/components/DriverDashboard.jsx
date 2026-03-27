@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
+import Map from "./Map";
 import './DriverDashboard.css';
 
 const stepConfig = {
-    incoming: { label: 'ACCEPT DISPATCH', color: 'btn-blue', next: 'en_route', stepLabel: 'Step 1 of 4: Awaiting Acceptance' },
+    incoming: { label: 'START NAVIGATION TO PATIENT', color: 'btn-blue', next: 'en_route', stepLabel: 'Step 1 of 4: Awaiting Acceptance' },
     assigned: { label: 'ACCEPT & NAVIGATE', color: 'btn-blue', next: 'en_route', stepLabel: 'Step 1 of 4: Assigned by Command' },
     en_route: { label: 'ARRIVED AT PICKUP', color: 'btn-orange', next: 'arrived', stepLabel: 'Step 2 of 4: En Route to Patient' },
     arrived: { label: 'START TRANSPORT', color: 'btn-blue', next: 'transporting', stepLabel: 'Step 3 of 4: Patient Pickup' },
@@ -103,7 +104,7 @@ function DriverDashboard() {
         cleanupMap();
 
         mapInstance.current = window.L.map('driver-map', { zoomControl: false, attributionControl: false }).setView(dispatchInfo.patientPosition, 13);
-        
+
         // Carto light map for clean navigation look
         window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19
@@ -163,7 +164,7 @@ function DriverDashboard() {
                 <div style={{ padding: '60px 40px', background: '#1e293b', height: '100%', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     <h2 style={{ fontSize: '24px', marginBottom: '16px' }}>Searching for Emergencies...</h2>
                     <p style={{ color: '#94a3b8', marginBottom: '40px' }}>Stay in your current zone.</p>
-                    
+
                     <div style={{ width: '100%', maxWidth: '400px' }}>
                         <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 800, marginBottom: '16px', letterSpacing: '0.1em' }}>AVAILABLE DISPATCHES (DEMO)</div>
                         {dispatches.filter(d => d.status !== 'completed').slice(0, 3).map(d => (
@@ -204,7 +205,7 @@ function DriverDashboard() {
 
             {/* Menu Toggle */}
             <button className="menu-toggle" onClick={() => setSidebarOpen(true)}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e293b" strokeWidth="2.5"><path d="M4 12h16M4 6h16M4 18h16"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e293b" strokeWidth="2.5"><path d="M4 12h16M4 6h16M4 18h16" /></svg>
             </button>
 
             {/* Top Status Strip */}
@@ -237,12 +238,12 @@ function DriverDashboard() {
             </div>
 
             {/* Bottom Action Sheet */}
-            <div 
-                className="bottom-sheet" 
+            <div
+                className="bottom-sheet"
                 onClick={() => !sheetExpanded && setSheetExpanded(true)}
             >
                 <div className="drag-handle" onClick={(e) => { e.stopPropagation(); setSheetExpanded(!sheetExpanded); }}></div>
-                
+
                 <div className="sheet-header">
                     <div>
                         <div className="dest-label">
@@ -278,8 +279,8 @@ function DriverDashboard() {
                     </div>
                 )}
 
-                <button 
-                    className={`step-button ${currentStep.color}`} 
+                <button
+                    className={`step-button ${currentStep.color}`}
                     onClick={(e) => { e.stopPropagation(); if (currentStep.next) handleAdvance(currentStep.next); }}
                     disabled={!currentStep.next}
                 >

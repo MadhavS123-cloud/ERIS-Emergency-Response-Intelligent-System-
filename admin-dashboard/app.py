@@ -303,8 +303,23 @@ footer {visibility: hidden;}
 div[data-testid="stRadio"] label {
     font-family: 'Space Grotesk', sans-serif !important;
     font-size: 1.1rem !important;
-    padding: 8px 0;
+    padding: 10px 12px !important;
+    color: #94a3b8 !important;
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+div[data-testid="stRadio"] label:hover {
     color: #e2e8f0 !important;
+    background: rgba(0, 240, 255, 0.05);
+}
+/* Active / selected nav item */
+div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) {
+    color: #00f0ff !important;
+    border-left: 3px solid #00f0ff !important;
+    background: rgba(0, 240, 255, 0.08) !important;
+    font-weight: 600 !important;
 }
 div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-of-type {
     display: none; /* Hide standard radio circle */
@@ -339,29 +354,11 @@ with st.sidebar:
 # --- Reusable Components ---
 def kpi_card(label, value, delta=None):
     delta_html = f"<div class='kpi-delta'>{delta}</div>" if delta else ""
-    html = f"""
-    <div class="kpi-card">
-        <div class="kpi-label">{label}</div>
-        <div class="kpi-value-container">
-            <div class="kpi-value">{value}</div>
-            {delta_html}
-        </div>
-    </div>
-    """
-    return html
+    return f"<div class='kpi-card'><div class='kpi-label'>{label}</div><div class='kpi-value-container'><div class='kpi-value'>{value}</div>{delta_html}</div></div>"
 
 def render_header(title, subtitle=None):
-    st.markdown(f"""
-    <div class="main-header-container">
-        <div>
-            <h1 class="header-title">{title}</h1>
-            {f"<p class='header-subtitle'>{subtitle}</p>" if subtitle else ""}
-        </div>
-        <div>
-            <div class="system-badge">SYSTEM ONLINE</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    subtitle_html = f"<p class='header-subtitle'>{subtitle}</p>" if subtitle else ""
+    st.markdown(f"<div class='main-header-container'><div><h1 class='header-title'>{title}</h1>{subtitle_html}</div><div><div class='system-badge'>SYSTEM ONLINE</div></div></div>", unsafe_allow_html=True)
 
 # --- Pages ---
 if nav_selection == "Overview":
