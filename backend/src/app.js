@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { errorHandler } from './middlewares/error.middleware.js';
 
@@ -13,6 +15,10 @@ import hospitalRoutes from './modules/hospital/hospital.routes.js';
 import requestRoutes from './modules/request/request.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import trackingRoutes from './modules/tracking/tracking.routes.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
 
 const app = express();
 
@@ -38,6 +44,13 @@ app.use('/api/v1/tracking', trackingRoutes);
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'ERIS API is running' });
+});
+
+// Frontend static app
+app.use(express.static(frontendDistPath));
+
+app.get(/^\/(?!api|health).*/, (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 // Unknown Routes Handler

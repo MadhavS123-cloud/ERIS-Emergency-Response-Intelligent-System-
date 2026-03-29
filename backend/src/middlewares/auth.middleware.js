@@ -24,6 +24,7 @@ const protect = (req, res, next) => {
 const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
+      console.log(`403 FORBIDDEN: User Role [${req.user.role}] not in allowed roles [${roles.join(', ')}]`);
       return APIResponse.error(res, 'You do not have permission to perform this action', 403);
     }
     next();

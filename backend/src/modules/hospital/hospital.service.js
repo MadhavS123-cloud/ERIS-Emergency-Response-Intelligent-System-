@@ -17,8 +17,13 @@ class HospitalService {
     return hospital;
   }
 
-  async updateHospital(id, data) {
+  async updateHospital(id, data, actor) {
     await this.getHospitalById(id);
+
+    if (actor?.role === 'HOSPITAL' && actor.hospitalId !== id) {
+      throw Object.assign(new Error('You can only update your own hospital profile'), { statusCode: 403 });
+    }
+
     return await hospitalRepository.updateHospital(id, data);
   }
 

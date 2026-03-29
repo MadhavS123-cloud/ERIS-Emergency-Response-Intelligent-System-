@@ -7,6 +7,73 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                String     @id @default(uuid())
+  name              String
+  email             String     @unique
+  password          String
+  phone             String?
+  hospitalId        String?
+  role              Role       @default(PATIENT)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  ambulance         Ambulance? @relation("DriverAmbulance")
+  hospital          Hospital?  @relation("HospitalStaff", fields: [hospitalId], references: [id])
+  requestsAsDriver  Request[]  @relation("DriverRequests")
+  requestsAsPatient Request[]  @relation("PatientRequests")
+}
+
+model Ambulance {
+  id          String    @id @default(uuid())
+  driverId    String?   @unique
+  hospitalId  String
+  plateNumber String
+  locationLat Float?
+  locationLng Float?
+  isAvailable Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  driver      User?     @relation("DriverAmbulance", fields: [driverId], references: [id])
+  hospital    Hospital  @relation("HospitalAmbulances", fields: [hospitalId], references: [id], onDelete: Cascade)
+  request     Request[] @relation("RequestAmbulance")
+}
+
+model Hospital {
+  id                   String      @id @default(uuid())
+  name                 String
+  address              String?
+  locationLat          Float?
+  locationLng          Float?
+  bedCapacity          Int         @default(0)
+  icuBedsAvailable     Int         @default(0)
+  generalBedsAvailable Int         @default(0)
+  ventilatorsAvailable Int         @default(0)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  ambulances           Ambulance[] @relation("HospitalAmbulances")
+  staff                User[]      @relation("HospitalStaff")
+}
+
+model Request {
+  id            String        @id @default(uuid())
+  patientId     String
+  driverId      String?
+  status        RequestStatus @default(PENDING)
+  locationLat   Float
+  locationLng   Float
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  ambulanceId   String?
+  emergencyType String
+  medicalNotes  String?
+  patientName   String        @default("Anonymous")
+  patientPhone  String?
+  pickupAddress String
+  ambulance     Ambulance?    @relation("RequestAmbulance", fields: [ambulanceId], references: [id])
+  driver        User?         @relation("DriverRequests", fields: [driverId], references: [id])
+  patient       User          @relation("PatientRequests", fields: [patientId], references: [id], onDelete: Cascade)
+}
+
 enum Role {
   PATIENT
   DRIVER
@@ -20,57 +87,4 @@ enum RequestStatus {
   EN_ROUTE
   COMPLETED
   CANCELLED
-}
-
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  phone     String?
-  role      Role     @default(PATIENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  requestsAsPatient Request[]  @relation("PatientRequests")
-  requestsAsDriver  Request[]  @relation("DriverRequests")
-  ambulance         Ambulance?
-}
-
-model Ambulance {
-  id          String   @id @default(uuid())
-  driverId    String   @unique
-  driver      User     @relation(fields: [driverId], references: [id])
-  plateNumber String
-  locationLat Float?
-  locationLng Float?
-  isAvailable Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Hospital {
-  id String @id @default(uuid())
-
-  name        String
-  address     String?
-  locationLat Float?
-  locationLng Float?
-  bedCapacity Int     @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Request {
-  id          String        @id @default(uuid())
-  patientId   String
-  patient     User          @relation("PatientRequests", fields: [patientId], references: [id])
-  driverId    String?
-  driver      User?         @relation("DriverRequests", fields: [driverId], references: [id])
-  status      RequestStatus @default(PENDING)
-  locationLat Float
-  locationLng Float
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
 }

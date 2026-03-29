@@ -11,13 +11,14 @@ router.use(protect);
 // Patients can create and view their requests
 router.post('/', restrictTo('PATIENT'), validate(createRequestSchema), requestController.createRequest);
 router.get('/me', restrictTo('PATIENT'), requestController.getMyRequests);
+router.get('/driver/me', restrictTo('DRIVER'), requestController.getMyDriverRequests);
 
-// Drivers can update request status
-router.patch('/:id/status', restrictTo('DRIVER', 'ADMIN'), validate(updateRequestStatusSchema), requestController.updateRequestStatus);
+// Staff can update request status
+router.patch('/:id/status', restrictTo('DRIVER', 'ADMIN', 'HOSPITAL'), validate(updateRequestStatusSchema), requestController.updateRequestStatus);
 
 router.get('/:id', requestController.getRequest);
 
-// Only admins can see all requests
-router.get('/', restrictTo('ADMIN'), requestController.getAllRequests);
+// Staff dashboards need access to the live request queue
+router.get('/', restrictTo('ADMIN', 'HOSPITAL'), requestController.getAllRequests);
 
 export default router;

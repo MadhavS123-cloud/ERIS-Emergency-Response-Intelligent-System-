@@ -12,6 +12,19 @@ class AuthRepository {
       where: { email }
     });
   }
+
+  async findUserById(id) {
+    return await prisma.user.findUnique({
+      where: { id }
+    });
+  }
+
+  async updateUser(id, userData) {
+    return await prisma.user.update({
+      where: { id },
+      data: userData
+    });
+  }
 }
 
 export default new AuthRepository();

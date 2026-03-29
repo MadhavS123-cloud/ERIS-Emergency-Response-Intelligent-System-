@@ -13,4 +13,16 @@ const loginSchema = Joi.object({
   password: Joi.string().required()
 });
 
-export { registerSchema, loginSchema };
+const patientSessionSchema = Joi.object({
+  name: Joi.string().required().min(3),
+  phone: Joi.string().required().min(10),
+  email: Joi.string().email().optional()
+});
+
+const resetPasswordSchema = Joi.object({
+  userId: Joi.string().uuid().optional(),
+  email: Joi.string().email().optional(),
+  newPassword: Joi.string().min(6).required()
+}).or('userId', 'email');
+
+export { registerSchema, loginSchema, patientSessionSchema, resetPasswordSchema };

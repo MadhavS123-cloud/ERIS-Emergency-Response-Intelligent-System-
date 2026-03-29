@@ -1,12 +1,14 @@
 import Joi from 'joi';
 
 const createHospitalSchema = Joi.object({
-  adminId: Joi.string().uuid().required(),
   name: Joi.string().required(),
   address: Joi.string().required(),
   locationLat: Joi.number().optional(),
   locationLng: Joi.number().optional(),
-  bedCapacity: Joi.number().integer().min(0).optional()
+  bedCapacity: Joi.number().integer().min(0).optional(),
+  icuBedsAvailable: Joi.number().integer().min(0).optional(),
+  generalBedsAvailable: Joi.number().integer().min(0).optional(),
+  ventilatorsAvailable: Joi.number().integer().min(0).optional()
 });
 
 const updateHospitalSchema = Joi.object({
@@ -14,7 +16,10 @@ const updateHospitalSchema = Joi.object({
   address: Joi.string().optional(),
   locationLat: Joi.number().optional(),
   locationLng: Joi.number().optional(),
-  bedCapacity: Joi.number().integer().min(0).optional()
+  bedCapacity: Joi.number().integer().min(0).optional(),
+  icuBedsAvailable: Joi.number().integer().min(0).optional(),
+  generalBedsAvailable: Joi.number().integer().min(0).optional(),
+  ventilatorsAvailable: Joi.number().integer().min(0).optional()
 });
 
 export { createHospitalSchema, updateHospitalSchema };

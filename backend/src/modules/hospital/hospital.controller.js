@@ -31,7 +31,7 @@ class HospitalController {
 
   async updateHospital(req, res, next) {
     try {
-      const hospital = await hospitalService.updateHospital(req.params.id, req.body);
+      const hospital = await hospitalService.updateHospital(req.params.id, req.body, req.user);
       return APIResponse.success(res, hospital, 'Hospital updated successfully');
     } catch (error) {
       next(error);

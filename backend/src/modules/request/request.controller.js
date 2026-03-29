@@ -13,7 +13,7 @@ class RequestController {
 
   async getAllRequests(req, res, next) {
     try {
-      const requests = await requestService.getAllRequests();
+      const requests = await requestService.getAllRequests(req.user);
       return APIResponse.success(res, requests, 'Requests retrieved successfully');
     } catch (error) {
       next(error);
@@ -24,6 +24,15 @@ class RequestController {
     try {
       const requests = await requestService.getUserRequests(req.user.id);
       return APIResponse.success(res, requests, 'User requests retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getMyDriverRequests(req, res, next) {
+    try {
+      const requests = await requestService.getDriverRequests(req.user.id);
+      return APIResponse.success(res, requests, 'Driver requests retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -40,8 +49,9 @@ class RequestController {
 
   async updateRequestStatus(req, res, next) {
     try {
-      const driverId = req.user.role === 'DRIVER' ? req.user.id : null;
-      const request = await requestService.updateRequestStatus(req.params.id, req.body.status, driverId);
+      const request = await requestService.updateRequestStatus(req.params.id, req.body.status, req.user, {
+        ambulanceId: req.body.ambulanceId || null
+      });
       return APIResponse.success(res, request, 'Request status updated successfully');
     } catch (error) {
       next(error);

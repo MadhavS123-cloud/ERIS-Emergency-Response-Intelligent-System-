@@ -8,8 +8,12 @@ class HospitalRepository {
   async findAllHospitals() {
     return await prisma.hospital.findMany({
       include: {
-        admin: {
-          select: { id: true, name: true, phone: true }
+        ambulances: {
+          include: {
+            driver: {
+              select: { id: true, name: true, phone: true, email: true }
+            }
+          }
         }
       }
     });
@@ -19,8 +23,15 @@ class HospitalRepository {
     return await prisma.hospital.findUnique({
       where: { id },
       include: {
-        admin: {
-          select: { id: true, name: true, phone: true }
+        ambulances: {
+          include: {
+            driver: {
+              select: { id: true, name: true, phone: true, email: true }
+            }
+          }
+        },
+        staff: {
+          select: { id: true, name: true, email: true, role: true }
         }
       }
     });

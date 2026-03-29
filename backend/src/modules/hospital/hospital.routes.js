@@ -10,12 +10,8 @@ router.use(protect);
 
 router.get('/', hospitalController.getAllHospitals);
 router.get('/:id', hospitalController.getHospital);
-
-// Restrict to admins
-router.use(restrictTo('ADMIN'));
-
-router.post('/', validate(createHospitalSchema), hospitalController.createHospital);
-router.patch('/:id', validate(updateHospitalSchema), hospitalController.updateHospital);
-router.delete('/:id', hospitalController.deleteHospital);
+router.post('/', restrictTo('ADMIN'), validate(createHospitalSchema), hospitalController.createHospital);
+router.patch('/:id', restrictTo('ADMIN', 'HOSPITAL'), validate(updateHospitalSchema), hospitalController.updateHospital);
+router.delete('/:id', restrictTo('ADMIN'), hospitalController.deleteHospital);
 
 export default router;

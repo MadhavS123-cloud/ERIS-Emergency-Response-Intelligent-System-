@@ -1,59 +1,92 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import authRepository from './auth.repository.js';
 
 class AuthService {
   async registerUser(userData) {
-    // Check if user exists
-    const existingUser = await authRepository.findUserByEmail(userData.email);
-    if (existingUser) {
+    if (await authRepository.findUserByEmail(userData.email)) {
       throw Object.assign(new Error('Email already in use'), { statusCode: 400 });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(userData.password, salt);
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-    // Create User
     const user = await authRepository.createUser({
       ...userData,
       password: hashedPassword
     });
 
-    // Generate Token
-    const token = this.generateToken(user.id, user.role);
-
-    // Remove password from response
-    delete user.password;
-
-    return { user, token };
+    return this.buildAuthResponse(user);
   }
 
   async loginUser(email, password) {
-    // Find User
     const user = await authRepository.findUserByEmail(email);
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw Object.assign(new Error('Invalid credentials'), { statusCode: 401 });
+    }
+
+    return this.buildAuthResponse(user);
+  }
+
+  async createPatientSession({ name, phone, email }) {
+    const normalizedPhone = phone.replace(/\D/g, '');
+    const patientEmail = (email || `patient-${normalizedPhone}@eris.local`).toLowerCase();
+    const existingUser = await authRepository.findUserByEmail(patientEmail);
+
+    if (existingUser && existingUser.role !== 'PATIENT') {
+      throw Object.assign(new Error('This email is already in use by a staff account'), { statusCode: 409 });
+    }
+
+    if (existingUser) {
+      const updatedUser = await authRepository.updateUser(existingUser.id, {
+        name,
+        phone: normalizedPhone
+      });
+      return this.buildAuthResponse(updatedUser);
+    }
+
+    const placeholderPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+    const patient = await authRepository.createUser({
+      name,
+      email: patientEmail,
+      phone: normalizedPhone,
+      password: placeholderPassword,
+      role: 'PATIENT'
+    });
+
+    return this.buildAuthResponse(patient);
+  }
+
+  async resetUserPassword({ userId, email, newPassword }) {
+    const user = userId
+      ? await authRepository.findUserById(userId)
+      : await authRepository.findUserByEmail(email.toLowerCase());
+
     if (!user) {
-      throw Object.assign(new Error('Invalid credentials'), { statusCode: 401 });
+      throw Object.assign(new Error('User not found'), { statusCode: 404 });
     }
 
-    // Check Password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw Object.assign(new Error('Invalid credentials'), { statusCode: 401 });
-    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const updatedUser = await authRepository.updateUser(user.id, {
+      password: hashedPassword
+    });
 
-    // Generate Token
-    const token = this.generateToken(user.id, user.role);
+    delete updatedUser.password;
+
+    return updatedUser;
+  }
+
+  buildAuthResponse(user) {
+    const token = jwt.sign(
+      { id: user.id, role: user.role, hospitalId: user.hospitalId || null },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+    );
 
     delete user.password;
 
     return { user, token };
-  }
-
-  generateToken(id, role) {
-    return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN || '1d',
-    });
   }
 }
 

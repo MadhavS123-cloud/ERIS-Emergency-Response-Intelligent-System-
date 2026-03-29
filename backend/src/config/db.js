@@ -1,8 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import logger from '../utils/logger.js';
 
+const prismaLogLevels = ['warn', 'error'];
+
+if (process.env.PRISMA_LOG_QUERIES === 'true') {
+  prismaLogLevels.unshift('query', 'info');
+}
+
 const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
+  log: prismaLogLevels,
 });
 
 const connectDB = async () => {
@@ -11,7 +17,7 @@ const connectDB = async () => {
     logger.info('Database connected successfully');
   } catch (error) {
     logger.error('Database connection failed', error);
-    process.exit(1);
+    throw error;
   }
 };
 
