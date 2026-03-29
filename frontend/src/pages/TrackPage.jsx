@@ -1,24 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 import { useEris } from '../context/ErisContext';
 import './TrackPage.css';
 
 const STATUS_STEPS = [
     { key: 'incoming', label: 'Request received' },
-    { key: 'assigned', label: 'Driver assigned' },
+    { key: 'assigned', label: 'Ambulance assigned' },
     { key: 'en_route', label: 'Ambulance en route' },
-    { key: 'arrived', label: 'Reached pickup' },
-    { key: 'transporting', label: 'Going to hospital' },
     { key: 'completed', label: 'Arrived at hospital' },
 ];
 
 const STATUS_COPY = {
-    incoming: 'We have received your emergency request and are notifying nearby EMS units.',
-    assigned: 'A driver has been assigned and is preparing to reach your pickup location.',
+    incoming: 'We have received your emergency request. The hospital desk is assigning the nearest available ambulance now.',
+    assigned: 'A hospital dispatcher has assigned an ambulance and driver. The unit is preparing to reach your pickup location.',
     en_route: 'Your ambulance is on the way. Please keep your phone nearby and be ready at the pickup point.',
-    arrived: 'The ambulance has reached your location. The crew is assisting the patient now.',
-    transporting: 'The patient is being taken to the hospital. The reception team is preparing intake.',
     completed: 'The ambulance has reached the hospital and reception handover is complete.',
 };
 
@@ -50,7 +45,7 @@ function TrackPage() {
         const fallbackDriverPosition = [12.9684, 77.6021];
 
         const getDestination = () => {
-            if (dispatch.status === 'transporting' || dispatch.status === 'completed') {
+            if (dispatch.status === 'completed') {
                 return dispatch.hospitalPosition;
             }
 

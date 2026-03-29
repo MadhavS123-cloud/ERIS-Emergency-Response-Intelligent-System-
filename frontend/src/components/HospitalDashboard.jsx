@@ -1,35 +1,39 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 import { useEris } from '../context/ErisContext';
+import authService from '../services/authService';
 import './HospitalDashboard.css';
 
 const statusLabels = {
     incoming: 'Waiting for Ambulance',
     assigned: 'Ambulance Assigned',
     en_route: 'Ambulance En Route',
-    arrived: 'At Pickup Location',
-    transporting: 'Inbound to Hospital',
     completed: 'Closed',
 };
 
 function HospitalDashboard() {
-    const navigate = useNavigate();
     const {
         dispatches,
         activeDispatch,
+        currentHospital,
+        hospitalFleet,
         hospitalCapacity,
         assignDispatch,
         updateDispatchStatus,
         selectDispatch,
         updateHospitalCapacity,
-        resetDemoState,
+        logout,
     } = useEris();
 
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [capacityForm, setCapacityForm] = useState(hospitalCapacity);
     const [syncMessage, setSyncMessage] = useState('');
+    const [assignmentSelections, setAssignmentSelections] = useState({});
+    const currentUser = authService.getUser();
+    const hospitalName = currentHospital?.name || `Hospital Account: ${currentUser?.hospitalId || 'Unlinked'}`;
+    const hospitalId = currentHospital?.id || currentUser?.hospitalId || 'Unlinked';
+    const availableFleet = hospitalFleet.filter((ambulance) => ambulance.isAvailable).length;
+    const availableFleetOptions = hospitalFleet.filter((ambulance) => ambulance.isAvailable);
 
     useEffect(() => {
         setCapacityForm(hospitalCapacity);
@@ -43,27 +47,53 @@ function HospitalDashboard() {
         }));
     };
 
-    const handleUpdateCapacity = () => {
-        updateHospitalCapacity({
+    const handleUpdateCapacity = async () => {
+        const result = await updateHospitalCapacity({
             icuAvailable: Number(capacityForm.icuAvailable),
             generalAvailable: Number(capacityForm.generalAvailable),
             ventilatorsAvailable: Number(capacityForm.ventilatorsAvailable),
         });
-        setSyncMessage('Capacity records synced to the dispatch network.');
+        setSyncMessage(result.ok ? 'Capacity records synced to the dispatch network.' : result.message);
     };
 
-    const handleDispatchAction = (dispatch) => {
+    const handleDispatchAction = async (dispatch) => {
         if (dispatch.status === 'incoming') {
-            assignDispatch(dispatch.id);
+            const selectedAmbulanceId = assignmentSelections[dispatch.id];
+            if (!selectedAmbulanceId) {
+                setSyncMessage('Choose an available ambulance from your hospital fleet before assigning the request.');
+                return;
+            }
+
+            const result = await assignDispatch(dispatch.id, selectedAmbulanceId);
+            if (!result?.ok) {
+                setSyncMessage(result?.message || 'Unable to assign an ambulance right now.');
+            } else {
+                setAssignmentSelections((current) => {
+                    const next = { ...current };
+                    delete next[dispatch.id];
+                    return next;
+                });
+            }
             return;
         }
 
-        if (dispatch.status === 'transporting') {
-            updateDispatchStatus(dispatch.id, 'completed', 'Emergency desk completed hospital intake and handover.', 'hospital');
+        if (dispatch.status === 'en_route') {
+            const result = await updateDispatchStatus(dispatch.id, 'completed', 'Emergency desk completed hospital intake and handover.');
+            if (!result?.ok) {
+                setSyncMessage(result?.message || 'Unable to close the request right now.');
+            }
             return;
         }
 
         selectDispatch(dispatch.id);
+    };
+
+    const handleAssignmentSelection = (dispatchId, ambulanceId) => {
+        setSyncMessage('');
+        setAssignmentSelections((current) => ({
+            ...current,
+            [dispatchId]: ambulanceId,
+        }));
     };
 
     return (
@@ -71,7 +101,7 @@ function HospitalDashboard() {
             <div className="mobile-hospital-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '32px' }} />
-                    <span style={{ fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>CITY GENERAL</span>
+                    <span style={{ fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>{hospitalName}</span>
                 </div>
                 <button
                     className="mobile-sidebar-toggle"
@@ -91,7 +121,7 @@ function HospitalDashboard() {
                 <div className="hospital-sidebar-header">
                     <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '56px', marginBottom: '8px' }} />
                     <div style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-                        CITY GENERAL
+                        {hospitalName}
                     </div>
                 </div>
                 <nav className="hospital-nav">
@@ -113,10 +143,7 @@ function HospitalDashboard() {
                     >
                         Bed Coordination
                     </div>
-                    <button type="button" className="hospital-reset-btn" onClick={resetDemoState}>
-                        Reset Demo State
-                    </button>
-                    <div className="hospital-nav-item" style={{ color: 'var(--emergency-red)', marginTop: 'auto' }} onClick={() => navigate('/')}>
+                    <div className="hospital-nav-item" style={{ color: 'var(--emergency-red)', marginTop: 'auto' }} onClick={logout}>
                         System Logout
                     </div>
                 </nav>
@@ -127,7 +154,7 @@ function HospitalDashboard() {
                     <div>
                         <h1>EMERGENCY COMMAND PORTAL</h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '500' }}>
-                            FACILITY: CITY GENERAL HOSPITAL | DISPATCH PROTOCOL: ALPHA
+                            FACILITY: {hospitalName.toUpperCase()} | FACILITY ID: {hospitalId} | AVAILABLE AMBULANCES: {availableFleet}
                         </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -160,6 +187,7 @@ function HospitalDashboard() {
                                         <th>Priority</th>
                                         <th>Emergency Type</th>
                                         <th>Ambulance ID</th>
+                                        <th>Driver</th>
                                         <th>Arrival Time</th>
                                         <th>Status</th>
                                         <th>Actions</th>
@@ -182,7 +210,18 @@ function HospitalDashboard() {
                                                 </span>
                                             </td>
                                             <td>{dispatch.emergencyType}</td>
-                                            <td style={{ fontFamily: 'monospace', fontWeight: '500' }}>{dispatch.ambulanceId}</td>
+                                            <td style={{ fontFamily: 'monospace', fontWeight: '500' }}>
+                                                <div>{dispatch.ambulanceId}</div>
+                                                {dispatch.ambulanceInternalId ? (
+                                                    <div className="queue-cell-subtext">{dispatch.ambulanceInternalId.slice(0, 8).toUpperCase()}</div>
+                                                ) : null}
+                                            </td>
+                                            <td>
+                                                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{dispatch.driverName}</div>
+                                                <div className="queue-cell-subtext">
+                                                    {dispatch.driverId ? `ID: ${dispatch.driverId.slice(0, 8).toUpperCase()}` : 'No driver assigned yet'}
+                                                </div>
+                                            </td>
                                             <td style={{ fontWeight: 800, color: 'var(--dept-blue-dark)' }}>{dispatch.eta}</td>
                                             <td>{statusLabels[dispatch.status] || dispatch.status}</td>
                                             <td>
@@ -193,7 +232,7 @@ function HospitalDashboard() {
                                                         event.stopPropagation();
                                                         handleDispatchAction(dispatch);
                                                     }}>
-                                                        {dispatch.status === 'incoming' ? 'Assign Ambulance' : dispatch.status === 'transporting' ? 'Confirm Arrival' : 'Track Live'}
+                                                        {dispatch.status === 'incoming' ? 'Assign Ambulance' : dispatch.status === 'en_route' ? 'Confirm Arrival' : 'Track Live'}
                                                     </button>
                                                 )}
                                             </td>
@@ -228,10 +267,85 @@ function HospitalDashboard() {
                                 </div>
                             </div>
 
+                            <div className="hospital-fleet-card">
+                                <div className="section-label" style={{ marginBottom: '20px' }}>
+                                    FACILITY FLEET ROSTER
+                                </div>
+                                <div className="fleet-meta-line">
+                                    This hospital account controls only: <strong>{hospitalName}</strong>
+                                </div>
+                                <div className="fleet-meta-line">
+                                    Hospital ID: <span className="fleet-code">{hospitalId}</span>
+                                </div>
+                                <div className="table-responsive">
+                                    <table className="fleet-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Ambulance</th>
+                                                <th>Driver</th>
+                                                <th>Driver ID</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {hospitalFleet.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="4">No ambulances are linked to this hospital account.</td>
+                                                </tr>
+                                            ) : (
+                                                hospitalFleet.map((ambulance) => (
+                                                    <tr key={ambulance.id}>
+                                                        <td>
+                                                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{ambulance.plateNumber}</div>
+                                                            <div className="queue-cell-subtext">{ambulance.id.slice(0, 8).toUpperCase()}</div>
+                                                        </td>
+                                                        <td>
+                                                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{ambulance.driver?.name || 'No driver linked'}</div>
+                                                            <div className="queue-cell-subtext">{ambulance.driver?.email || 'No driver email'}</div>
+                                                        </td>
+                                                        <td className="fleet-code">
+                                                            {ambulance.driver?.id ? ambulance.driver.id.slice(0, 8).toUpperCase() : 'UNLINKED'}
+                                                        </td>
+                                                        <td>
+                                                            <span className={`fleet-status-pill ${ambulance.isAvailable ? 'available' : 'busy'}`}>
+                                                                {ambulance.isAvailable ? 'Available' : 'Busy'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             <div className="hospital-briefing-card">
                                 <div className="section-label" style={{ marginBottom: '20px' }}>
                                     DISPATCH BRIEFING FEED
                                 </div>
+                                {activeDispatch?.status === 'incoming' ? (
+                                    <div className="assignment-panel">
+                                        <div className="assignment-panel-title">Manual Ambulance Assignment</div>
+                                        <div className="assignment-panel-copy">
+                                            Pick one available ambulance from <strong>{hospitalName}</strong> for request <strong>{activeDispatch.requestId}</strong>.
+                                        </div>
+                                        <select
+                                            className="assignment-select"
+                                            value={assignmentSelections[activeDispatch.id] || ''}
+                                            onChange={(event) => handleAssignmentSelection(activeDispatch.id, event.target.value)}
+                                        >
+                                            <option value="">Choose ambulance and driver</option>
+                                            {availableFleetOptions.map((ambulance) => (
+                                                <option key={ambulance.id} value={ambulance.id}>
+                                                    {ambulance.plateNumber} - {ambulance.driver?.name || 'No Driver'} - {ambulance.driver?.id?.slice(0, 8).toUpperCase() || 'UNLINKED'}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="assignment-panel-copy">
+                                            Selected hospital ID: <span className="fleet-code">{hospitalId}</span>
+                                        </div>
+                                    </div>
+                                ) : null}
                                 {activeDispatch?.logs?.slice().reverse().map((log) => (
                                     <div key={log.id} className="hospital-feed-item">
                                         <div className={`hospital-feed-type ${log.type}`}>{log.type}</div>
@@ -293,6 +407,13 @@ function HospitalDashboard() {
                                     <div className="selected-dispatch-meta">
                                         <span>{activeDispatch.requestId}</span>
                                         <span>{statusLabels[activeDispatch.status]}</span>
+                                    </div>
+                                    <div className="selected-dispatch-notes">
+                                        <div className="section-label" style={{ marginBottom: '8px' }}>Assigned Unit</div>
+                                        <div>Hospital: {activeDispatch.hospitalName}</div>
+                                        <div>Ambulance: {activeDispatch.ambulanceId}</div>
+                                        <div>Driver: {activeDispatch.driverName}</div>
+                                        <div>{activeDispatch.driverEmail || 'Driver email will appear after assignment.'}</div>
                                     </div>
                                     <div className="selected-dispatch-notes">
                                         <div className="section-label" style={{ marginBottom: '8px' }}>Pickup Address</div>

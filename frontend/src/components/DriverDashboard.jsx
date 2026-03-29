@@ -1,21 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
-import Map from "./Map";
 import './DriverDashboard.css';
 
 const stepConfig = {
-    incoming: { label: 'START NAVIGATION TO PATIENT', color: 'btn-blue', next: 'en_route', stepLabel: 'Step 1 of 4: Awaiting Acceptance' },
-    assigned: { label: 'ACCEPT & NAVIGATE', color: 'btn-blue', next: 'en_route', stepLabel: 'Step 1 of 4: Assigned by Command' },
-    en_route: { label: 'ARRIVED AT PICKUP', color: 'btn-orange', next: 'arrived', stepLabel: 'Step 2 of 4: En Route to Patient' },
-    arrived: { label: 'START TRANSPORT', color: 'btn-blue', next: 'transporting', stepLabel: 'Step 3 of 4: Patient Pickup' },
-    transporting: { label: 'COMPLETE HANDOVER', color: 'btn-green', next: 'completed', stepLabel: 'Step 4 of 4: Inbound to Hospital' },
+    incoming: { label: 'WAIT FOR DISPATCH', color: 'btn-blue', next: null, stepLabel: 'Awaiting hospital assignment' },
+    assigned: { label: 'START NAVIGATION', color: 'btn-blue', next: 'en_route', stepLabel: 'Step 1 of 2: Ambulance assigned' },
+    en_route: { label: 'COMPLETE HANDOVER', color: 'btn-green', next: 'completed', stepLabel: 'Step 2 of 2: En route to patient' },
     completed: { label: 'CASE CLOSED', color: 'btn-blue', next: null, stepLabel: 'Standby' },
 };
 
 function DriverDashboard() {
     const navigate = useNavigate();
-    const { activeDispatch, dispatches, updateDispatchStatus, selectDispatch, resetDemoState } = useEris();
+    const { activeDispatch, dispatches, updateDispatchStatus, selectDispatch, logout } = useEris();
     const [sheetExpanded, setSheetExpanded] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -40,7 +37,7 @@ function DriverDashboard() {
 
     const getDestinationPosition = () => {
         if (!dispatchInfo) return null;
-        if (dispatchInfo.status === 'transporting' || dispatchInfo.status === 'completed') {
+        if (dispatchInfo.status === 'completed') {
             return dispatchInfo.hospitalPosition;
         }
         return dispatchInfo.patientPosition;
@@ -116,7 +113,7 @@ function DriverDashboard() {
             const driverPosition = [position.coords.latitude, position.coords.longitude];
             renderRoute(driverPosition);
 
-            if (dispatchInfo.status === 'en_route' || dispatchInfo.status === 'transporting') {
+            if (dispatchInfo.status === 'en_route') {
                 mapInstance.current.panTo(driverPosition);
             }
         };
@@ -150,11 +147,9 @@ function DriverDashboard() {
         if (!dispatchInfo) return;
         const msg = {
             en_route: 'Unit moving to pickup.',
-            arrived: 'Unit arrived at scene.',
-            transporting: 'Patient loaded, routing to hospital.',
             completed: 'Handover complete.',
         };
-        updateDispatchStatus(dispatchInfo.id, nextStatus, msg[nextStatus], 'driver');
+        updateDispatchStatus(dispatchInfo.id, nextStatus, msg[nextStatus]);
         setSheetExpanded(false);
     };
 
@@ -198,8 +193,7 @@ function DriverDashboard() {
                             <div style={{ color: '#94a3b8', fontSize: '14px' }}>{d.priority} • {d.eta}</div>
                         </button>
                     ))}
-                    <button className="queue-btn" style={{ marginTop: '40px', background: 'transparent', borderColor: '#ef4444', color: '#ef4444' }} onClick={resetDemoState}>Reset System State</button>
-                    <button className="queue-btn" style={{ color: '#94a3b8', background: 'transparent', border: 'none' }} onClick={() => navigate('/')}>Exit Driver Portal</button>
+                    <button className="queue-btn" style={{ marginTop: 'auto', background: 'transparent', borderColor: '#ef4444', color: '#ef4444' }} onClick={logout}>System Logout</button>
                 </div>
             </div>
 
@@ -218,13 +212,11 @@ function DriverDashboard() {
             </div>
 
             {/* Navigation Hint */}
-            {['en_route', 'transporting'].includes(dispatchInfo.status) && (
+            {dispatchInfo.status === 'en_route' && (
                 <div className="nav-hint-card">
                     <span className="nav-arrow">⬆️</span>
                     <div>
-                        <div className="nav-instruction">
-                            {dispatchInfo.status === 'en_route' ? 'Proceed to pickup' : 'Head to hospital'}
-                        </div>
+                        <div className="nav-instruction">Proceed to pickup</div>
                         <div className="nav-dist">Continue straight on route</div>
                     </div>
                 </div>
@@ -246,11 +238,9 @@ function DriverDashboard() {
 
                 <div className="sheet-header">
                     <div>
-                        <div className="dest-label">
-                            {['transporting', 'completed'].includes(dispatchInfo.status) ? 'DESTINATION: HOSPITAL' : 'DESTINATION: PICKUP'}
-                        </div>
+                        <div className="dest-label">DESTINATION: PICKUP</div>
                         <div className="dest-address">
-                            {['transporting', 'completed'].includes(dispatchInfo.status) ? dispatchInfo.hospitalName : dispatchInfo.pickupAddress}
+                            {dispatchInfo.pickupAddress}
                         </div>
                     </div>
                     <div className="sheet-eta-large">{dispatchInfo.eta}</div>

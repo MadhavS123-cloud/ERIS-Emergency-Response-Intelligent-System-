@@ -7,10 +7,13 @@ function EmergencyForm() {
     const { submitEmergencyRequest } = useEris();
     const [formData, setFormData] = useState({
         patientName: '',
+        patientEmail: '',
         contactNumber: '',
         emergencyType: '',
         pickupAddress: '',
-        medicalNotes: ''
+        medicalNotes: '',
+        locationLat: null,
+        locationLng: null
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submittedDispatch, setSubmittedDispatch] = useState(null);
@@ -102,12 +105,19 @@ function EmergencyForm() {
             if (data && data.display_name) {
                 // Format the address to be more readable
                 const formattedAddress = formatAddress(data);
-                setFormData(prev => ({ ...prev, pickupAddress: formattedAddress }));
+                setFormData(prev => ({ 
+                    ...prev, 
+                    pickupAddress: formattedAddress,
+                    locationLat: latitude,
+                    locationLng: longitude
+                }));
             } else {
                 // Fallback to coordinates if no address found
                 setFormData(prev => ({ 
                     ...prev, 
-                    pickupAddress: `Current Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}` 
+                    pickupAddress: `Current Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+                    locationLat: latitude,
+                    locationLng: longitude
                 }));
             }
         } catch (error) {
@@ -155,23 +165,28 @@ function EmergencyForm() {
         getCurrentLocationAddress();
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        setTimeout(() => {
-            const newDispatch = submitEmergencyRequest(formData);
-            setSubmittedDispatch(newDispatch);
+            const newDispatch = await submitEmergencyRequest(formData);
+            if (newDispatch) {
+                setSubmittedDispatch(newDispatch);
+                setFormData({
+                    patientName: '',
+                    patientEmail: '',
+                    contactNumber: '',
+                    emergencyType: '',
+                    pickupAddress: '',
+                    medicalNotes: '',
+                    locationLat: null,
+                    locationLng: null
+                });
+                window.scrollTo(0, 0);
+            } else {
+                alert('Failed to dispatch emergency request. Please try again.');
+            }
             setIsSubmitting(false);
-            setFormData({
-                patientName: '',
-                contactNumber: '',
-                emergencyType: '',
-                pickupAddress: '',
-                medicalNotes: ''
-            });
-            window.scrollTo(0, 0);
-        }, 1500);
     };
 
     if (submittedDispatch) {
@@ -224,7 +239,7 @@ function EmergencyForm() {
                     <div className="dispatch-note">
                         <div className="dispatch-note-title">What happens next</div>
                         <div className="dispatch-note-body">
-                            The nearest EMS unit will accept the case, proceed to your location, and coordinate handover with the hospital emergency desk.
+                            The hospital emergency desk will assign an ambulance and driver, then the assigned unit will navigate to your pickup location.
                         </div>
                     </div>
 
@@ -277,6 +292,18 @@ function EmergencyForm() {
                             pattern="[0-9]{10}"
                             title="Please enter a valid 10-digit mobile number"
                             required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Email Address</label>
+                        <input
+                            type="email"
+                            name="patientEmail"
+                            className="form-control"
+                            placeholder="Optional email for future account linking"
+                            value={formData.patientEmail}
+                            onChange={handleChange}
                         />
                     </div>
 

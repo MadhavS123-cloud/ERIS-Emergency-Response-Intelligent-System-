@@ -1,313 +1,451 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
-const ERIS_STORAGE_KEY = 'eris-demo-state-v1';
-
-const formatTimestamp = (date = new Date()) =>
-  new Intl.DateTimeFormat('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(date);
-
-const createLogEntry = (message, type = 'system', timestamp = formatTimestamp()) => ({
-  id: `${timestamp}-${message}`,
-  message,
-  type,
-  timestamp,
-});
-
-const createSeedDispatches = () => [
-  {
-    id: 'dispatch-seed-1',
-    requestId: 'REQ-8754-ALPHA',
-    patientName: 'Sarah Johnson',
-    contactNumber: '+91 98765 12345',
-    emergencyType: 'Cardiac Arrest',
-    pickupAddress: '456 Oak Street, Downtown',
-    medicalNotes: 'Patient experiencing chest pain and shortness of breath.',
-    hospitalName: 'City General Emergency Dept',
-    hospitalPosition: [12.9635, 77.6032],
-    patientPosition: [12.9716, 77.5946],
-    ambulanceId: 'AMB-2451',
-    priority: 'CRITICAL',
-    eta: '4 min',
-    estimatedCharge: 3500,
-    status: 'incoming',
-    createdAt: formatTimestamp(),
-    updatedAt: formatTimestamp(),
-    logs: [
-      createLogEntry('Incident received by central dispatch.', 'system'),
-      createLogEntry('Awaiting EMS driver acceptance.', 'system'),
-    ],
-  },
-  {
-    id: 'dispatch-seed-2',
-    requestId: 'REQ-8812-BRAVO',
-    patientName: 'Priya Raman',
-    contactNumber: '+91 99881 11442',
-    emergencyType: 'Trauma/Accident',
-    pickupAddress: 'Old Airport Road Junction',
-    medicalNotes: 'Multiple vehicle collision reported by caller.',
-    hospitalName: 'City General Emergency Dept',
-    hospitalPosition: [12.9635, 77.6032],
-    patientPosition: [12.9498, 77.6681],
-    ambulanceId: 'AMB-1893',
-    priority: 'HIGH',
-    eta: '8 min',
-    estimatedCharge: 3000,
-    status: 'assigned',
-    createdAt: formatTimestamp(),
-    updatedAt: formatTimestamp(),
-    logs: [
-      createLogEntry('Hospital acknowledged incoming trauma case.', 'hospital'),
-      createLogEntry('EMS unit assigned and briefed.', 'driver'),
-    ],
-  },
-  {
-    id: 'dispatch-seed-3',
-    requestId: 'REQ-8840-CHARLIE',
-    patientName: 'Amaan Khan',
-    contactNumber: '+91 97000 78121',
-    emergencyType: 'Stroke',
-    pickupAddress: 'Metro Station Exit B, East District',
-    medicalNotes: 'Possible facial droop reported by bystander.',
-    hospitalName: 'City General Emergency Dept',
-    hospitalPosition: [12.9635, 77.6032],
-    patientPosition: [12.9861, 77.7112],
-    ambulanceId: 'AMB-3127',
-    priority: 'CRITICAL',
-    eta: '12 min',
-    estimatedCharge: 3200,
-    status: 'incoming',
-    createdAt: formatTimestamp(),
-    updatedAt: formatTimestamp(),
-    logs: [
-      createLogEntry('New stroke alert created from hotline intake.', 'system'),
-    ],
-  },
-];
-
-const createInitialState = () => ({
-  hospitalCapacity: {
-    icuAvailable: 12,
-    generalAvailable: 48,
-    ventilatorsAvailable: 5,
-  },
-  dispatches: createSeedDispatches(),
-  selectedDispatchId: 'dispatch-seed-1',
-});
-
-const loadStoredState = () => {
-  if (typeof window === 'undefined') {
-    return createInitialState();
-  }
-
-  try {
-    const stored = window.localStorage.getItem(ERIS_STORAGE_KEY);
-    if (!stored) {
-      return createInitialState();
-    }
-
-    const parsed = JSON.parse(stored);
-    if (!parsed?.dispatches?.length) {
-      return createInitialState();
-    }
-
-    return {
-      ...parsed,
-      dispatches: parsed.dispatches.map((dispatch) => ({
-        ...dispatch,
-        estimatedCharge: dispatch.estimatedCharge ?? getEstimatedCharge(dispatch.emergencyType),
-      })),
-    };
-  } catch (error) {
-    console.error('Failed to load ERIS demo state, resetting store.', error);
-    return createInitialState();
-  }
-};
-
-const getPriorityFromEmergency = (emergencyType) => {
-  if (['Cardiac Arrest', 'Stroke', 'Respiratory'].includes(emergencyType)) {
-    return 'CRITICAL';
-  }
-
-  if (emergencyType === 'Trauma/Accident') {
-    return 'HIGH';
-  }
-
-  return 'MODERATE';
-};
-
-const getEtaFromEmergency = (emergencyType) => {
-  const etaMap = {
-    'Cardiac Arrest': '4 min',
-    Stroke: '6 min',
-    Respiratory: '7 min',
-    'Trauma/Accident': '8 min',
-    Other: '10 min',
-  };
-
-  return etaMap[emergencyType] || '9 min';
-};
-
-const getEstimatedCharge = (emergencyType) => {
-  const fareMap = {
-    'Cardiac Arrest': 3500,
-    Stroke: 3200,
-    Respiratory: 2800,
-    'Trauma/Accident': 3000,
-    Other: 2200,
-  };
-
-  return fareMap[emergencyType] || 2500;
-};
-
-const getRandomOffset = () => (Math.random() - 0.5) * 0.06;
-
-const createDispatchFromForm = (formData) => {
-  const timestamp = formatTimestamp();
-  const id = `dispatch-${Date.now()}`;
-  const requestNumber = String(Date.now()).slice(-4);
-
-  return {
-    id,
-    requestId: `REQ-${requestNumber}-LIVE`,
-    patientName: formData.patientName,
-    contactNumber: formData.contactNumber,
-    emergencyType: formData.emergencyType,
-    pickupAddress: formData.pickupAddress,
-    medicalNotes: formData.medicalNotes,
-    hospitalName: 'City General Emergency Dept',
-    hospitalPosition: [12.9635, 77.6032],
-    patientPosition: [12.9716 + getRandomOffset(), 77.5946 + getRandomOffset()],
-    ambulanceId: `AMB-${Math.floor(1000 + Math.random() * 8000)}`,
-    priority: getPriorityFromEmergency(formData.emergencyType),
-    eta: getEtaFromEmergency(formData.emergencyType),
-    estimatedCharge: getEstimatedCharge(formData.emergencyType),
-    status: 'incoming',
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    logs: [
-      createLogEntry('Emergency request submitted from patient portal.', 'patient', timestamp),
-      createLogEntry('Dispatch broadcast sent to the nearest available EMS unit.', 'system', timestamp),
-    ],
-  };
-};
-
-const createUpdatedDispatch = (dispatch, updates, message, type = 'system') => {
-  const timestamp = formatTimestamp();
-
-  return {
-    ...dispatch,
-    ...updates,
-    updatedAt: timestamp,
-    logs: message ? [...dispatch.logs, createLogEntry(message, type, timestamp)] : dispatch.logs,
-  };
-};
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import API_BASE_URL from '../config/api';
+import authService from '../services/authService';
+import { socket } from '../socket';
 
 const ErisContext = createContext(null);
 
+const mapBackendStatusToUi = (status) => {
+  switch (status) {
+    case 'PENDING':
+      return 'incoming';
+    case 'ACCEPTED':
+      return 'assigned';
+    case 'EN_ROUTE':
+      return 'en_route';
+    case 'COMPLETED':
+    case 'CANCELLED':
+      return 'completed';
+    default:
+      return 'incoming';
+  }
+};
+
+const mapUiStatusToBackend = (status) => {
+  switch (status) {
+    case 'incoming':
+    case 'PENDING':
+      return 'PENDING';
+    case 'assigned':
+    case 'ACCEPTED':
+      return 'ACCEPTED';
+    case 'en_route':
+    case 'EN_ROUTE':
+      return 'EN_ROUTE';
+    case 'completed':
+    case 'COMPLETED':
+    case 'CANCELLED':
+      return 'COMPLETED';
+    default:
+      return status;
+  }
+};
+
+const getRequestsUrlForRole = (role) => {
+  if (role === 'PATIENT') {
+    return `${API_BASE_URL}/requests/me`;
+  }
+
+  if (role === 'DRIVER') {
+    return `${API_BASE_URL}/requests/driver/me`;
+  }
+
+  if (role === 'ADMIN' || role === 'HOSPITAL') {
+    return `${API_BASE_URL}/requests`;
+  }
+
+  return null;
+};
+
+const getPriority = (emergencyType = '') => (
+  /cardiac|heart|stroke/i.test(emergencyType) ? 'CRITICAL' : 'HIGH'
+);
+
+const getLogMessage = (request) => {
+  if (request.status === 'COMPLETED') {
+    return 'Emergency request closed in the dispatch system.';
+  }
+
+  if (request.status === 'EN_ROUTE') {
+    return 'Assigned ambulance is now heading to the pickup location.';
+  }
+
+  if (request.status === 'ACCEPTED') {
+    return 'Hospital staff assigned an ambulance and driver to this case.';
+  }
+
+  return 'Emergency request received and waiting for hospital assignment.';
+};
+
+const mapRequestToDispatch = (request) => ({
+  ...request,
+  requestId: request.id.slice(0, 8).toUpperCase(),
+  status: mapBackendStatusToUi(request.status),
+  patientName: request.patientName || request.patient?.name || 'Unknown Patient',
+  contactNumber: request.patientPhone || request.patient?.phone || 'No Contact',
+  hospitalName: request.ambulance?.hospital?.name || 'Awaiting hospital assignment',
+  hospitalId: request.ambulance?.hospital?.id || null,
+  hospitalPosition: [
+    request.ambulance?.hospital?.locationLat ?? 12.9635,
+    request.ambulance?.hospital?.locationLng ?? 77.6032
+  ],
+  patientPosition: [request.locationLat, request.locationLng],
+  priority: getPriority(request.emergencyType),
+  ambulanceId: request.ambulance?.plateNumber || 'Awaiting assignment',
+  ambulanceInternalId: request.ambulance?.id || null,
+  driverName: request.driver?.name || request.ambulance?.driver?.name || 'Awaiting assignment',
+  driverId: request.driver?.id || request.ambulance?.driver?.id || null,
+  driverEmail: request.driver?.email || request.ambulance?.driver?.email || null,
+  driverPhone: request.driver?.phone || request.ambulance?.driver?.phone || null,
+  eta: request.status === 'COMPLETED'
+    ? 'Arrived'
+    : request.status === 'EN_ROUTE'
+      ? '8 mins'
+      : request.status === 'ACCEPTED'
+        ? '12 mins'
+        : 'Awaiting assignment',
+  estimatedCharge: 3000,
+  logs: [
+    {
+      id: `log-${request.id}`,
+      message: getLogMessage(request),
+      type: 'system',
+      timestamp: new Date(request.updatedAt || request.createdAt).toLocaleTimeString(),
+    }
+  ]
+});
+
 export function ErisProvider({ children }) {
-  const [state, setState] = useState(() => loadStoredState());
+  const [dispatches, setDispatches] = useState([]);
+  const [hospitals, setHospitals] = useState([]);
+  const [selectedDispatchId, setSelectedDispatchId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    const token = authService.getToken();
+    const user = authService.getUser();
+
+    if (!token || !user) {
+      setDispatches([]);
+      setHospitals([]);
+      setSelectedDispatchId(null);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const requestsUrl = getRequestsUrlForRole(user.role);
+
+      let requestsData = { status: 'success', data: [] };
+      if (requestsUrl) {
+        const requestsResponse = await fetch(requestsUrl, { headers });
+        requestsData = await requestsResponse.json();
+      }
+
+      const hospitalsResponse = await fetch(`${API_BASE_URL}/hospitals`, { headers });
+      const hospitalsData = await hospitalsResponse.json();
+
+      if (requestsData.status === 'success') {
+        setDispatches(requestsData.data.map(mapRequestToDispatch));
+      } else {
+        console.warn('Unable to fetch requests:', requestsData.message);
+        setDispatches([]);
+      }
+
+      if (hospitalsData.status === 'success') {
+        setHospitals(hospitalsData.data);
+      } else {
+        setHospitals([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data from backend:', error);
+      setDispatches([]);
+      setHospitals([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(ERIS_STORAGE_KEY, JSON.stringify(state));
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const user = authService.getUser();
+    const token = authService.getToken();
+
+    if (!user || !token) {
+      socket.disconnect();
+      return undefined;
     }
-  }, [state]);
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit('join_room', user.id);
+    if (user.hospitalId) {
+      socket.emit('join_room', user.hospitalId);
+    }
+
+    const handleRequestChange = () => {
+      fetchData();
+    };
+
+    socket.on('new_emergency', handleRequestChange);
+    socket.on('request_updated', handleRequestChange);
+    socket.on('driver_assigned', handleRequestChange);
+
+    return () => {
+      socket.off('new_emergency', handleRequestChange);
+      socket.off('request_updated', handleRequestChange);
+      socket.off('driver_assigned', handleRequestChange);
+    };
+  }, [fetchData]);
+
+  const ensurePatientAccess = useCallback(async ({ patientName, patientPhone, patientEmail }) => {
+    const currentUser = authService.getUser();
+    const currentToken = authService.getToken();
+    const normalizedPhone = patientPhone.replace(/\D/g, '');
+    const normalizedEmail = patientEmail?.trim().toLowerCase();
+
+    const samePatient =
+      currentUser?.role === 'PATIENT' &&
+      (currentUser.phone === normalizedPhone || (normalizedEmail && currentUser.email === normalizedEmail));
+
+    if (currentToken && samePatient) {
+      return currentToken;
+    }
+
+    const sessionResponse = await authService.createPatientSession({
+      name: patientName,
+      phone: normalizedPhone,
+      email: normalizedEmail
+    });
+
+    if (sessionResponse.status === 'success') {
+      return sessionResponse.data.token;
+    }
+
+    console.error('CRITICAL: Patient session creation failed.');
+    return null;
+  }, []);
 
   const selectDispatch = (dispatchId) => {
-    setState((current) => ({
-      ...current,
-      selectedDispatchId: dispatchId,
-    }));
+    setSelectedDispatchId(dispatchId);
   };
 
-  const submitEmergencyRequest = (formData) => {
-    const newDispatch = createDispatchFromForm(formData);
+  const submitEmergencyRequest = async (formData) => {
+    const token = await ensurePatientAccess({
+      patientName: formData.patientName || 'Emergency Patient',
+      patientPhone: formData.contactNumber || '0000000000',
+      patientEmail: formData.patientEmail
+    });
 
-    setState((current) => ({
-      ...current,
-      dispatches: [newDispatch, ...current.dispatches],
-      selectedDispatchId: newDispatch.id,
-    }));
-
-    return newDispatch;
-  };
-
-  const updateDispatchStatus = (dispatchId, status, message, type = 'system') => {
-    setState((current) => ({
-      ...current,
-      dispatches: current.dispatches.map((dispatch) =>
-        dispatch.id === dispatchId
-          ? createUpdatedDispatch(dispatch, { status }, message, type)
-          : dispatch
-      ),
-    }));
-  };
-
-  const assignDispatch = (dispatchId) => {
-    updateDispatchStatus(dispatchId, 'assigned', 'Hospital command has assigned an EMS unit.', 'hospital');
-    setState((current) => ({
-      ...current,
-      selectedDispatchId: dispatchId,
-    }));
-  };
-
-  const updateHospitalCapacity = (nextCapacity) => {
-    const timestamp = formatTimestamp();
-
-    setState((current) => ({
-      ...current,
-      hospitalCapacity: {
-        ...current.hospitalCapacity,
-        ...nextCapacity,
-      },
-      dispatches: current.dispatches.map((dispatch, index) =>
-        dispatch.id === current.selectedDispatchId || (!current.selectedDispatchId && index === 0)
-          ? createUpdatedDispatch(
-              dispatch,
-              {},
-              `Hospital capacity was synced at ${timestamp}.`,
-              'hospital'
-            )
-          : dispatch
-      ),
-    }));
-  };
-
-  const resetDemoState = () => {
-    setState(createInitialState());
-  };
-
-  const activeDispatch = React.useMemo(() => {
-    // First try to find the selected dispatch by ID
-    if (state.selectedDispatchId) {
-      const selected = state.dispatches.find((dispatch) => dispatch.id === state.selectedDispatchId);
-      if (selected) return selected;
+    if (!token) {
+      return null;
     }
-    
-    // If no selected dispatch, find the first non-completed dispatch
-    const activeDispatch = state.dispatches.find((dispatch) => dispatch.status !== 'completed');
-    if (activeDispatch) return activeDispatch;
-    
-    // Finally, return the first dispatch if available
-    return state.dispatches[0] || null;
-  }, [state.dispatches, state.selectedDispatchId]);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          emergencyType: formData.emergencyType,
+          pickupAddress: formData.pickupAddress,
+          medicalNotes: formData.medicalNotes,
+          locationLat: formData.locationLat || 12.9716,
+          locationLng: formData.locationLng || 77.5946,
+          patientName: formData.patientName || 'Emergency Patient',
+          patientPhone: formData.contactNumber || 'Not Provided'
+        })
+      });
+
+      const data = await response.json();
+      if (data.status !== 'success') {
+        console.error('SERVER ERROR:', data.message || 'Unknown error');
+        return null;
+      }
+
+      const newDispatch = {
+        ...mapRequestToDispatch(data.data),
+        eta: 'Awaiting assignment',
+        logs: [
+          {
+            id: `log-initial-${data.data.id}`,
+            message: 'Emergency request submitted and stored in the database.',
+            type: 'system',
+            timestamp: new Date().toLocaleTimeString()
+          }
+        ]
+      };
+
+      setDispatches(prev => [newDispatch, ...prev]);
+      setSelectedDispatchId(newDispatch.id);
+      return newDispatch;
+    } catch (error) {
+      console.error('NETWORK/FETCH ERROR:', error.message);
+      return null;
+    }
+  };
+
+  const updateDispatchStatus = async (dispatchId, status, message = 'Status updated by system', options = {}) => {
+    const token = authService.getToken();
+    if (!token) {
+      return { ok: false, message: 'You are not logged in.' };
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/requests/${dispatchId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: mapUiStatusToBackend(status),
+          ambulanceId: options.ambulanceId || null
+        })
+      });
+
+      const data = await response.json();
+      if (data.status !== 'success') {
+        return { ok: false, message: data.message || 'Unable to update request status.' };
+      }
+
+      const updatedDispatch = mapRequestToDispatch(data.data);
+      setDispatches(prev => prev.map(dispatch =>
+        dispatch.id === dispatchId
+          ? {
+              ...dispatch,
+              ...updatedDispatch,
+              logs: [
+                ...(dispatch.logs || []),
+                {
+                  id: `log-${dispatchId}-${Date.now()}`,
+                  message,
+                  type: 'system',
+                  timestamp: new Date().toLocaleTimeString()
+                }
+              ]
+            }
+          : dispatch
+      ));
+      setSelectedDispatchId(dispatchId);
+
+      return { ok: true, data: updatedDispatch };
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      return { ok: false, message: 'Network error while updating request status.' };
+    }
+  };
+
+  const assignDispatch = async (dispatchId, ambulanceId = null) => (
+    updateDispatchStatus(
+      dispatchId,
+      'assigned',
+      'Hospital staff assigned an ambulance and driver.',
+      { ambulanceId }
+    )
+  );
+
+  const logout = () => {
+    authService.logout();
+    setDispatches([]);
+    setHospitals([]);
+    setSelectedDispatchId(null);
+  };
+
+  const activeDispatch = useMemo(() => {
+    if (selectedDispatchId) {
+      return dispatches.find(dispatch => dispatch.id === selectedDispatchId) || dispatches[0] || null;
+    }
+
+    return dispatches.find(dispatch => dispatch.status !== 'completed') || dispatches[0] || null;
+  }, [dispatches, selectedDispatchId]);
+
+  const currentHospital = useMemo(() => {
+    const user = authService.getUser();
+    if (!user?.hospitalId) {
+      return null;
+    }
+
+    return hospitals.find(hospital => hospital.id === user.hospitalId) || null;
+  }, [hospitals]);
+
+  const hospitalCapacity = useMemo(() => ({
+    icuAvailable: currentHospital?.icuBedsAvailable ?? 0,
+    generalAvailable: currentHospital?.generalBedsAvailable ?? 0,
+    ventilatorsAvailable: currentHospital?.ventilatorsAvailable ?? 0,
+  }), [currentHospital]);
+
+  const hospitalFleet = useMemo(
+    () => currentHospital?.ambulances ?? [],
+    [currentHospital]
+  );
+
+  const updateHospitalCapacity = useCallback(async (nextCapacity) => {
+    const token = authService.getToken();
+
+    if (!token || !currentHospital?.id) {
+      return { ok: false, message: 'No hospital profile is linked to this account.' };
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/hospitals/${currentHospital.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          icuBedsAvailable: Number(nextCapacity.icuAvailable),
+          generalBedsAvailable: Number(nextCapacity.generalAvailable),
+          ventilatorsAvailable: Number(nextCapacity.ventilatorsAvailable),
+          bedCapacity: Number(nextCapacity.icuAvailable) + Number(nextCapacity.generalAvailable)
+        })
+      });
+
+      const data = await response.json();
+      if (data.status !== 'success') {
+        return { ok: false, message: data.message || 'Unable to update hospital capacity.' };
+      }
+
+      setHospitals(prev => prev.map(hospital =>
+        hospital.id === currentHospital.id
+          ? { ...hospital, ...data.data }
+          : hospital
+      ));
+
+      return { ok: true };
+    } catch (error) {
+      console.error('Failed to update hospital capacity:', error);
+      return { ok: false, message: 'Network error while updating hospital capacity.' };
+    }
+  }, [currentHospital]);
 
   return (
     <ErisContext.Provider
       value={{
-        dispatches: state.dispatches,
+        dispatches,
         activeDispatch,
-        hospitalCapacity: state.hospitalCapacity,
-        selectedDispatchId: state.selectedDispatchId,
+        currentHospital,
+        hospitalFleet,
+        hospitalCapacity,
+        selectedDispatchId,
+        isLoading,
         submitEmergencyRequest,
         updateDispatchStatus,
         assignDispatch,
         selectDispatch,
         updateHospitalCapacity,
-        resetDemoState,
+        resetDemoState: logout,
+        logout,
+        refreshData: fetchData
       }}
     >
       {children}

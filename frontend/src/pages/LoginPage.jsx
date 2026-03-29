@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import './LoginPage.css';
+import authService from '../services/authService';
+import { useEris } from '../context/ErisContext';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -9,16 +11,51 @@ function LoginPage() {
     const [role, setRole] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const { refreshData } = useEris();
 
-    const handleSignIn = (e) => {
+    const roleMatchesSelection = (selectedRole, userRole) => {
+        if (selectedRole === 'driver') {
+            return userRole === 'DRIVER';
+        }
+
+        if (selectedRole === 'hospital') {
+            return ['ADMIN', 'HOSPITAL'].includes(userRole);
+        }
+
+        return true;
+    };
+
+    const handleSignIn = async (e) => {
         e.preventDefault();
-        // Redirect based on selected role
-        if (role === 'hospital') {
-            navigate('/hospital');
-        } else if (role === 'driver') {
-            navigate('/driver');
-        } else {
-            alert('Please select a valid role to continue.');
+        setIsLoggingIn(true);
+
+        try {
+            const data = await authService.login(username, password);
+            if (data.status === 'success') {
+                const userRole = data.data.user?.role;
+                if (!roleMatchesSelection(role, userRole)) {
+                    authService.logout();
+                    alert(`This account has role ${userRole}. Please choose the matching portal.`);
+                    return;
+                }
+
+                await refreshData();
+                if (userRole === 'DRIVER') {
+                    navigate('/driver');
+                } else if (userRole === 'ADMIN' || userRole === 'HOSPITAL') {
+                    navigate('/hospital');
+                } else {
+                    navigate('/');
+                }
+            } else {
+                alert(`Login Failed: ${data.message}`);
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('An error occurred during login. Please ensure the backend is running.');
+        } finally {
+            setIsLoggingIn(false);
         }
     };
 
@@ -58,7 +95,7 @@ function LoginPage() {
                                 required
                             >
                                 <option value="" disabled hidden>Choose your access clearance</option>
-                                <option value="hospital">Hospital Authority / Admin</option>
+                                <option value="hospital">Hospital Authority </option>
                                 <option value="driver">EMS Unit / Ambulance Driver</option>
                             </select>
                         </div>
@@ -101,7 +138,9 @@ function LoginPage() {
                         <a href="#forgot" className="forgot-password">Reset Network Pin?</a>
                     </div>
 
-                    <button type="submit" className="btn-signin">Sign In</button>
+                    <button type="submit" className="btn-signin" disabled={isLoggingIn}>
+                        {isLoggingIn ? 'Verifying...' : 'Sign In'}
+                    </button>
                 </form>
             </div>
         </div>
