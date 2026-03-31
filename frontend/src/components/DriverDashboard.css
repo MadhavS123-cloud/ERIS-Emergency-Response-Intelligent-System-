@@ -56,7 +56,9 @@
     top: 24px;
     left: 50%;
     transform: translateX(-50%);
-    background: #1e293b;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: white;
     display: flex;
     align-items: center;
@@ -77,6 +79,8 @@
     text-transform: uppercase;
     font-size: 13px;
     letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
 }
 
 .priority-critical { background: #fee2e2; color: #b91c1c; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
@@ -112,8 +116,10 @@
 }
 
 .nav-arrow {
-    font-size: 32px;
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav-instruction {
@@ -142,18 +148,20 @@
 }
 
 .fab {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
-    background: white;
-    border: none;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: all 0.2s;
 }
 
 .fab:active {
@@ -165,17 +173,20 @@
     position: absolute;
     top: 24px;
     left: 24px;
-    width: 48px;
-    height: 48px;
-    background: white;
+    width: 52px;
+    height: 52px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     z-index: 10;
     cursor: pointer;
-    border: none;
+    transition: all 0.2s;
 }
 
 /* Bottom Action Sheet */
@@ -184,10 +195,12 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    background: white;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+    background: #0f172a; /* Sleek Dark Theme */
+    color: white;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    box-shadow: 0 -10px 50px rgba(0,0,0,0.8);
     z-index: 20;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     padding: 12px 24px calc(40px + env(safe-area-inset-bottom, 0px));
@@ -196,9 +209,9 @@
 .drag-handle {
     width: 48px;
     height: 5px;
-    background: #cbd5e1;
+    background: #475569;
     border-radius: 999px;
-    margin: 0 auto 20px;
+    margin: 0 auto 24px;
     cursor: grab;
 }
 
@@ -210,18 +223,18 @@
 }
 
 .dest-label {
-    font-size: 12px;
-    color: #64748b;
+    font-size: 11px;
+    color: #94a3b8;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .dest-address {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 900;
-    color: #1e293b;
+    color: #f8fafc;
     letter-spacing: -0.02em;
     line-height: 1.2;
 }
@@ -229,48 +242,50 @@
 .sheet-eta-large {
     font-size: 32px;
     font-weight: 900;
-    color: #2563eb;
-    background: #eff6ff;
-    padding: 8px 16px;
-    border-radius: 12px;
+    color: #60a5fa;
+    background: rgba(37, 99, 235, 0.15);
+    padding: 10px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 /* Extended Sheet Content */
 .sheet-extended {
     margin-bottom: 24px;
     padding-top: 20px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid rgba(255,255,255,0.1);
     animation: fadeIn 0.2s ease-out;
 }
 
 .info-row {
     display: flex;
     gap: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     align-items: flex-start;
 }
 
 .info-icon {
     font-size: 20px;
     margin-top: 2px;
+    color: #cbd5e1;
 }
 
 .info-bold {
     font-weight: 800;
-    color: #1e293b;
+    color: #f1f5f9;
     font-size: 16px;
     margin-bottom: 4px;
 }
 
 .info-sub {
-    color: #64748b;
+    color: #94a3b8;
     font-size: 14px;
     line-height: 1.4;
 }
 
 .alert-item {
-    background: #fef2f2;
-    color: #991b1b;
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 14px;
@@ -278,8 +293,8 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid #fecaca;
-    margin-top: 4px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    margin-top: 6px;
 }
 
 /* Primary Step Button */

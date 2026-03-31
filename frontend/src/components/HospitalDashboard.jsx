@@ -58,22 +58,15 @@ function HospitalDashboard() {
 
     const handleDispatchAction = async (dispatch) => {
         if (dispatch.status === 'incoming') {
-            const selectedAmbulanceId = assignmentSelections[dispatch.id];
-            if (!selectedAmbulanceId) {
-                setSyncMessage('Choose an available ambulance from your hospital fleet before assigning the request.');
-                return;
-            }
-
-            const result = await assignDispatch(dispatch.id, selectedAmbulanceId);
-            if (!result?.ok) {
-                setSyncMessage(result?.message || 'Unable to assign an ambulance right now.');
-            } else {
-                setAssignmentSelections((current) => {
-                    const next = { ...current };
-                    delete next[dispatch.id];
-                    return next;
-                });
-            }
+            selectDispatch(dispatch.id);
+            setTimeout(() => {
+                const panel = document.querySelector('.assignment-panel');
+                if (panel) {
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const select = panel.querySelector('select');
+                    if (select) select.focus();
+                }
+            }, 100);
             return;
         }
 
@@ -170,6 +163,32 @@ function HospitalDashboard() {
                     <>
                         <div className="section-label">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                            </svg>
+                            LIVE CAPACITY SNAPSHOT
+                        </div>
+                        <div className="hospital-kpi-grid dashboard-top-kpis">
+                            <div className="hospital-kpi-card" style={{ borderLeft: '4px solid var(--emergency-red)' }}>
+                                <span>Active Requests</span>
+                                <strong>{dispatches.filter(d => d.status !== 'completed').length}</strong>
+                            </div>
+                            <div className="hospital-kpi-card" style={{ borderLeft: '4px solid var(--dept-blue)' }}>
+                                <span>ICU Available</span>
+                                <strong>{hospitalCapacity.icuAvailable}</strong>
+                            </div>
+                            <div className="hospital-kpi-card" style={{ borderLeft: '4px solid var(--dept-blue)' }}>
+                                <span>General Available</span>
+                                <strong>{hospitalCapacity.generalAvailable}</strong>
+                            </div>
+                            <div className="hospital-kpi-card" style={{ borderLeft: '4px solid var(--success-green)' }}>
+                                <span>Available Fleet</span>
+                                <strong>{availableFleet}</strong>
+                            </div>
+                        </div>
+
+                        <div className="section-label">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                 <path d="M14 2v6h6" />
                                 <path d="M16 13H8" />
@@ -178,95 +197,75 @@ function HospitalDashboard() {
                             </svg>
                             ACTIVE EMERGENCY REQUESTS
                         </div>
-
-                        <div className="table-responsive">
+                        <div className="table-responsive" style={{ marginBottom: '32px' }}>
                             <table className="queue-table">
                                 <thead>
                                     <tr>
-                                        <th>Request ID</th>
-                                        <th>Priority</th>
-                                        <th>Emergency Type</th>
-                                        <th>Ambulance ID</th>
-                                        <th>Driver</th>
-                                        <th>Arrival Time</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
+                                        <th>Case Details</th>
+                                        <th>Assigned Unit</th>
+                                        <th>Timeline</th>
+                                        <th style={{ textAlign: 'right' }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {dispatches.map((dispatch) => (
-                                        <tr
-                                            key={dispatch.id}
-                                            className={`${dispatch.id === activeDispatch?.id ? 'queue-table-row-active ' : ''}${dispatch.priority === 'CRITICAL' ? 'critical-row' : ''}`}
-                                            onClick={() => selectDispatch(dispatch.id)}
-                                        >
-                                            <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{dispatch.requestId}</td>
-                                            <td>
-                                                <span className="priority-cell" style={{
-                                                    background: dispatch.priority === 'CRITICAL' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.15)',
-                                                    color: dispatch.priority === 'CRITICAL' ? 'var(--emergency-red-dark)' : '#d97706'
-                                                }}>
-                                                    {dispatch.priority}
-                                                </span>
-                                            </td>
-                                            <td>{dispatch.emergencyType}</td>
-                                            <td style={{ fontFamily: 'monospace', fontWeight: '500' }}>
-                                                <div>{dispatch.ambulanceId}</div>
-                                                {dispatch.ambulanceInternalId ? (
-                                                    <div className="queue-cell-subtext">{dispatch.ambulanceInternalId.slice(0, 8).toUpperCase()}</div>
-                                                ) : null}
-                                            </td>
-                                            <td>
-                                                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{dispatch.driverName}</div>
-                                                <div className="queue-cell-subtext">
-                                                    {dispatch.driverId ? `ID: ${dispatch.driverId.slice(0, 8).toUpperCase()}` : 'No driver assigned yet'}
-                                                </div>
-                                            </td>
-                                            <td style={{ fontWeight: 800, color: 'var(--dept-blue-dark)' }}>{dispatch.eta}</td>
-                                            <td>{statusLabels[dispatch.status] || dispatch.status}</td>
-                                            <td>
-                                                {dispatch.status === 'completed' ? (
-                                                    <span className="table-status-pill complete">Closed</span>
-                                                ) : (
-                                                    <button className="action-cell-btn" onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        handleDispatchAction(dispatch);
-                                                    }}>
-                                                        {dispatch.status === 'incoming' ? 'Assign Ambulance' : dispatch.status === 'en_route' ? 'Confirm Arrival' : 'Track Live'}
-                                                    </button>
-                                                )}
+                                    {dispatches.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="4" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                                                Queue is clear. No active emergencies right now.
                                             </td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        dispatches.map((dispatch) => (
+                                            <tr
+                                                key={dispatch.id}
+                                                className={`${dispatch.id === activeDispatch?.id ? 'queue-table-row-active ' : ''}${dispatch.priority === 'CRITICAL' ? 'critical-row' : ''}`}
+                                                onClick={() => selectDispatch(dispatch.id)}
+                                            >
+                                                <td>
+                                                    <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>{dispatch.requestId}</div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span className="priority-cell" style={{
+                                                            padding: '2px 8px',
+                                                            fontSize: '10px',
+                                                            background: dispatch.priority === 'CRITICAL' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.15)',
+                                                            color: dispatch.priority === 'CRITICAL' ? 'var(--emergency-red-dark)' : '#d97706'
+                                                        }}>
+                                                            {dispatch.priority}
+                                                        </span>
+                                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{dispatch.emergencyType}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{dispatch.ambulanceId}</div>
+                                                    <div className="queue-cell-subtext" style={{ color: 'var(--text-secondary)' }}>
+                                                        {dispatch.driverName}
+                                                        {dispatch.driverId ? ` (ID: ${dispatch.driverId.slice(0, 8).toUpperCase()})` : ''}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ fontWeight: 800, color: 'var(--dept-blue-dark)', fontSize: '13px' }}>{dispatch.eta}</div>
+                                                    <div className="queue-cell-subtext">{statusLabels[dispatch.status] || dispatch.status}</div>
+                                                </td>
+                                                <td style={{ textAlign: 'right' }}>
+                                                    {dispatch.status === 'completed' ? (
+                                                        <span className="table-status-pill complete">Closed</span>
+                                                    ) : (
+                                                        <button className="action-cell-btn" onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            handleDispatchAction(dispatch);
+                                                        }}>
+                                                            {dispatch.status === 'incoming' ? 'Dispatch' : dispatch.status === 'en_route' ? 'Confirm Arrival' : 'Track'}
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
 
-                        <div className="capacity-grid">
-                            <div>
-                                <div className="section-label">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                                    </svg>
-                                    LIVE CAPACITY SNAPSHOT
-                                </div>
-                                <div className="hospital-kpi-grid">
-                                    <div className="hospital-kpi-card">
-                                        <span>ICU</span>
-                                        <strong>{hospitalCapacity.icuAvailable}</strong>
-                                    </div>
-                                    <div className="hospital-kpi-card">
-                                        <span>General</span>
-                                        <strong>{hospitalCapacity.generalAvailable}</strong>
-                                    </div>
-                                    <div className="hospital-kpi-card">
-                                        <span>Ventilators</span>
-                                        <strong>{hospitalCapacity.ventilatorsAvailable}</strong>
-                                    </div>
-                                </div>
-                            </div>
-
+                        <div className="capacity-grid dashboard-bottom-grid">
                             <div className="hospital-fleet-card">
                                 <div className="section-label" style={{ marginBottom: '20px' }}>
                                     FACILITY FLEET ROSTER
@@ -290,7 +289,7 @@ function HospitalDashboard() {
                                         <tbody>
                                             {hospitalFleet.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="4">No ambulances are linked to this hospital account.</td>
+                                                    <td colSpan="4" style={{ padding: '24px', textAlign: 'center' }}>No ambulances are linked to this hospital account.</td>
                                                 </tr>
                                             ) : (
                                                 hospitalFleet.map((ambulance) => (
@@ -324,37 +323,74 @@ function HospitalDashboard() {
                                     DISPATCH BRIEFING FEED
                                 </div>
                                 {activeDispatch?.status === 'incoming' ? (
-                                    <div className="assignment-panel">
-                                        <div className="assignment-panel-title">Manual Ambulance Assignment</div>
-                                        <div className="assignment-panel-copy">
-                                            Pick one available ambulance from <strong>{hospitalName}</strong> for request <strong>{activeDispatch.requestId}</strong>.
+                                    <div className="assignment-panel" style={{ background: 'var(--dept-blue-light)', border: '1px solid var(--dept-blue)' }}>
+                                        <div className="assignment-panel-title" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '24px' }}>🚨</span> Action Required: Assign Ambulance
+                                        </div>
+                                        <div className="assignment-panel-copy" style={{ color: 'var(--text-primary)', marginBottom: '16px' }}>
+                                            Emergency Request <strong>{activeDispatch.requestId}</strong> is currently unassigned. Please dispatch an available unit immediately.
                                         </div>
                                         <select
                                             className="assignment-select"
                                             value={assignmentSelections[activeDispatch.id] || ''}
                                             onChange={(event) => handleAssignmentSelection(activeDispatch.id, event.target.value)}
+                                            style={{ padding: '14px', fontSize: '16px', boxShadow: 'var(--shadow-sm)' }}
                                         >
-                                            <option value="">Choose ambulance and driver</option>
+                                            <option value="">-- Click to choose ambulance and driver --</option>
                                             {availableFleetOptions.map((ambulance) => (
                                                 <option key={ambulance.id} value={ambulance.id}>
-                                                    {ambulance.plateNumber} - {ambulance.driver?.name || 'No Driver'} - {ambulance.driver?.id?.slice(0, 8).toUpperCase() || 'UNLINKED'}
+                                                    {ambulance.plateNumber} (Driver: {ambulance.driver?.name || 'Unknown'})
                                                 </option>
                                             ))}
                                         </select>
-                                        <div className="assignment-panel-copy">
-                                            Selected hospital ID: <span className="fleet-code">{hospitalId}</span>
+                                        <div className="assignment-panel-copy" style={{ marginBottom: '20px', fontSize: '12px' }}>
+                                            Facility: <span className="fleet-code">{hospitalId}</span>
                                         </div>
+                                        <button 
+                                            className="btn-update" 
+                                            disabled={!assignmentSelections[activeDispatch.id]}
+                                            style={{ 
+                                                opacity: !assignmentSelections[activeDispatch.id] ? 0.6 : 1, 
+                                                cursor: !assignmentSelections[activeDispatch.id] ? 'not-allowed' : 'pointer',
+                                                padding: '16px',
+                                                fontSize: '16px',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em'
+                                            }}
+                                            onClick={async () => {
+                                                const selectedAmbulanceId = assignmentSelections[activeDispatch.id];
+                                                const result = await assignDispatch(activeDispatch.id, selectedAmbulanceId);
+                                                if (!result?.ok) {
+                                                    alert(result?.message || 'Unable to assign an ambulance right now.');
+                                                } else {
+                                                    setAssignmentSelections((current) => {
+                                                        const next = { ...current };
+                                                        delete next[activeDispatch.id];
+                                                        return next;
+                                                    });
+                                                }
+                                            }}
+                                        >
+                                            Confirm Assignment
+                                        </button>
                                     </div>
                                 ) : null}
-                                {activeDispatch?.logs?.slice().reverse().map((log) => (
-                                    <div key={log.id} className="hospital-feed-item">
-                                        <div className={`hospital-feed-type ${log.type}`}>{log.type}</div>
-                                        <div>
-                                            <strong>{log.message}</strong>
-                                            <div className="hospital-feed-time">{log.timestamp}</div>
+                                <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
+                                    {activeDispatch?.logs?.slice().reverse().map((log) => (
+                                        <div key={log.id} className="hospital-feed-item">
+                                            <div className={`hospital-feed-type ${log.type}`}>{log.type}</div>
+                                            <div>
+                                                <strong>{log.message}</strong>
+                                                <div className="hospital-feed-time">{log.timestamp}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                    {(!activeDispatch || !activeDispatch.logs?.length) && (
+                                        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px' }}>
+                                            Select a dispatch to view timeline logs.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </>
@@ -401,9 +437,9 @@ function HospitalDashboard() {
                                 SELECTED DISPATCH
                             </div>
                             {activeDispatch ? (
-                                <div className="selected-dispatch-card">
-                                    <h3>{activeDispatch.patientName}</h3>
-                                    <p>{activeDispatch.emergencyType}</p>
+                                <div className="selected-dispatch-card" style={{ borderTop: '4px solid var(--dept-blue)' }}>
+                                    <h3 style={{ fontSize: '24px', color: 'var(--text-primary)', marginBottom: '4px' }}>{activeDispatch.patientName}</h3>
+                                    <p style={{ fontWeight: '600', color: 'var(--emergency-red)' }}>{activeDispatch.emergencyType}</p>
                                     <div className="selected-dispatch-meta">
                                         <span>{activeDispatch.requestId}</span>
                                         <span>{statusLabels[activeDispatch.status]}</span>

@@ -205,7 +205,10 @@ function DriverDashboard() {
             {/* Top Status Strip */}
             <div className="top-status-strip">
                 <span className={`priority-badge priority-${dispatchInfo.priority.toLowerCase()}`}>
-                    🚨 {dispatchInfo.priority}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginRight: '6px' }}>
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    {dispatchInfo.priority}
                 </span>
                 <span className="eta-text">• {dispatchInfo.eta} Away •</span>
                 <span className="emergency-tag">{dispatchInfo.emergencyType}</span>
@@ -214,7 +217,11 @@ function DriverDashboard() {
             {/* Navigation Hint */}
             {dispatchInfo.status === 'en_route' && (
                 <div className="nav-hint-card">
-                    <span className="nav-arrow">⬆️</span>
+                    <span className="nav-arrow">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M12 2L2 22l10-4 10 4z" />
+                        </svg>
+                    </span>
                     <div>
                         <div className="nav-instruction">Proceed to pickup</div>
                         <div className="nav-dist">Continue straight on route</div>
@@ -224,9 +231,15 @@ function DriverDashboard() {
 
             {/* Floating Actions */}
             <div className="floating-actions-right">
-                <button className="fab" title="Call Patient">📞</button>
-                <button className="fab" title="Call Hospital">🏥</button>
-                <button className="fab" title="Recalculate Route" onClick={() => initMap()}>🔄</button>
+                <button className="fab" title="Call Patient">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                </button>
+                <button className="fab" title="Call Hospital">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 21h18 M5 21V7l8-4v18 M19 21V11l-6-4 M9 9v.01 M9 12v.01 M9 15v.01 M9 18v.01 M13 9v.01 M13 12v.01 M13 15v.01 M17 15v.01 M17 18v.01"/></svg>
+                </button>
+                <button className="fab" title="Recalculate Route" onClick={() => initMap()}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5" /></svg>
+                </button>
             </div>
 
             {/* Bottom Action Sheet */}
@@ -249,19 +262,24 @@ function DriverDashboard() {
                 {sheetExpanded && (
                     <div className="sheet-extended">
                         <div className="info-row">
-                            <span className="info-icon">👤</span>
+                            <span className="info-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 20a6 6 0 0 0-12 0 M12 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
+                            </span>
                             <div>
                                 <div className="info-bold">{dispatchInfo.patientName}</div>
                                 <div className="info-sub">{dispatchInfo.contactNumber}</div>
                             </div>
                         </div>
                         <div className="info-row">
-                            <span className="info-icon">⚠️</span>
+                            <span className="info-icon" style={{ color: '#ef4444' }}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z M12 9v4 M12 17h.01"/></svg>
+                            </span>
                             <div>
                                 <div className="info-bold">{dispatchInfo.emergencyType}</div>
                                 {dispatchInfo.medicalNotes && (
                                     <div className="alert-item">
-                                        ⚠️ {dispatchInfo.medicalNotes.length > 50 ? dispatchInfo.medicalNotes.substring(0, 50) + '...' : dispatchInfo.medicalNotes}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ flexShrink: 0 }}><path d="M12 9v4 M12 17h.01 M12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12C22 17.52 17.52 22 12 22Z"/></svg>
+                                        <span>{dispatchInfo.medicalNotes.length > 50 ? dispatchInfo.medicalNotes.substring(0, 50) + '...' : dispatchInfo.medicalNotes}</span>
                                     </div>
                                 )}
                             </div>
