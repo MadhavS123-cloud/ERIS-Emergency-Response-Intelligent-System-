@@ -66,7 +66,7 @@ const getLogMessage = (request) => {
     return 'Emergency request closed in the dispatch system.';
   }
 
-  if (request.status === 'EN_ROUTE') {
+  if (request.status === 'IN_ROUTE') {
     return 'Assigned ambulance is now heading to the pickup location.';
   }
 
