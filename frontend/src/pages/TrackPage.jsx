@@ -38,6 +38,12 @@ function TrackPage() {
     const currentIndex = Math.max(STATUS_STEPS.findIndex((step) => step.key === dispatch?.status), 0);
 
     useEffect(() => {
+        document.title = dispatch 
+            ? `Track Case #${dispatch.requestId} | ERIS` 
+            : "Ambulance Tracking | ERIS System";
+    }, [dispatch]);
+
+    useEffect(() => {
         if (!dispatch || !window.L || !mapContainerRef.current) {
             return undefined;
         }
@@ -54,7 +60,10 @@ function TrackPage() {
 
         const renderMarkers = (driverPosition) => {
             if (!mapRef.current) {
-                mapRef.current = window.L.map(mapContainerRef.current, { zoomControl: false }).setView(dispatch.patientPosition, 13);
+                mapRef.current = window.L.map(mapContainerRef.current, { 
+                    zoomControl: false,
+                    scrollWheelZoom: false 
+                }).setView(dispatch.patientPosition, 13);
                 window.L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
                 window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {

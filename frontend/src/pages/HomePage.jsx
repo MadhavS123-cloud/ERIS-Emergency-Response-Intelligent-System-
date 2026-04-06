@@ -52,6 +52,10 @@ function HomePage() {
         };
     }, []);
 
+    useEffect(() => {
+        document.title = "ERIS | Fast Emergency Response System";
+    }, []);
+
     // ScrollSpy for Active Links
     useEffect(() => {
         const handleScroll = () => {
@@ -206,7 +210,8 @@ function HomePage() {
         // Init map if it doesn't exist
         if (!mapRef.current) {
             mapRef.current = window.L.map(mapContainer.current, {
-                zoomControl: false // Professional look
+                zoomControl: false, // Professional look
+                scrollWheelZoom: false // Prevent accidental zoom on scroll
             }).setView(userLocation, 13);
 
             window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {

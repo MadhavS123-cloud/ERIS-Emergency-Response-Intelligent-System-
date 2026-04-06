@@ -100,7 +100,11 @@ function DriverDashboard() {
 
         cleanupMap();
 
-        mapInstance.current = window.L.map('driver-map', { zoomControl: false, attributionControl: false }).setView(dispatchInfo.patientPosition, 13);
+        mapInstance.current = window.L.map('driver-map', { 
+            zoomControl: false, 
+            attributionControl: false,
+            scrollWheelZoom: false 
+        }).setView(dispatchInfo.patientPosition, 13);
 
         // Carto light map for clean navigation look
         window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -231,12 +235,12 @@ function DriverDashboard() {
 
             {/* Floating Actions */}
             <div className="floating-actions-right">
-                <button className="fab" title="Call Patient">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                </button>
-                <button className="fab" title="Call Hospital">
+                <a href={`tel:${dispatchInfo.contactNumber}`} className="fab" title={`Call Patient: ${dispatchInfo.contactNumber}`}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                </a>
+                <a href="tel:102" className="fab" title="Call Hospital Desk (102)">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 21h18 M5 21V7l8-4v18 M19 21V11l-6-4 M9 9v.01 M9 12v.01 M9 15v.01 M9 18v.01 M13 9v.01 M13 12v.01 M13 15v.01 M17 15v.01 M17 18v.01"/></svg>
-                </button>
+                </a>
                 <button className="fab" title="Recalculate Route" onClick={() => initMap()}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5" /></svg>
                 </button>

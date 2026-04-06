@@ -215,7 +215,7 @@ a:hover {
 .theme-toggle-btn {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  left: 24px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
