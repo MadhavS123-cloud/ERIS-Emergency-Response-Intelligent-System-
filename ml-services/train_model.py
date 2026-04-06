@@ -6,7 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier, XGBRegressor
 from sklearn.metrics import accuracy_score, classification_report, mean_absolute_error, mean_squared_error
 import warnings
 warnings.filterwarnings('ignore')
@@ -28,7 +29,10 @@ def train_and_save_models():
     X = df.drop(['delay_minutes', 'delay_risk'], axis=1)
     
     # Target 1: Classification (Delay Risk)
-    y_class = df['delay_risk']
+    # XGBoost requires target classes to be numeric (0, 1, 2)
+    # We will encode them
+    risk_mapping = {'No Delay': 0, 'Moderate Delay': 1, 'Severe Delay': 2}
+    y_class = df['delay_risk'].map(risk_mapping)
     
     # Target 2: Regression (Delay Minutes)
     y_reg = df['delay_minutes']
@@ -52,16 +56,15 @@ def train_and_save_models():
         ])
 
     # 3. Train Test Split
-    # We use the same split for both models to be consistent
     X_train, X_test, y_class_train, y_class_test, y_reg_train, y_reg_test = train_test_split(
         X, y_class, y_reg, test_size=0.2, random_state=42
     )
 
     # --- PROBLEM 1: Classification (Delay Risk) ---
-    print("\n--- Training Classification Model (Random Forest) ---")
+    print("\n--- Training Classification Model (XGBoost) ---")
     classifier_pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
-        ('classifier', RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced'))
+        ('classifier', XGBClassifier(n_estimators=100, learning_rate=0.1, random_state=42, use_label_encoder=False, eval_metric='mlogloss'))
     ])
 
     classifier_pipeline.fit(X_train, y_class_train)
@@ -75,14 +78,15 @@ def train_and_save_models():
     joblib.dump(classifier_pipeline, 'models/delay_classifier.pkl')
     print("Classification model saved to models/delay_classifier.pkl")
 
+    # Save the mapping for the FastAPI server to reverse
+    joblib.dump({v: k for k, v in risk_mapping.items()}, 'models/risk_mapping.pkl')
 
     # --- PROBLEM 2: Regression (Delay Time Prediction) ---
-    print("\n--- Training Regression Model (Random Forest) ---")
+    print("\n--- Training Regression Model (XGBoost) ---")
     
-    # Using RandomForestRegressor for regression
     regressor_pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
-        ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
+        ('regressor', XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42))
     ])
 
     regressor_pipeline.fit(X_train, y_reg_train)
@@ -97,18 +101,14 @@ def train_and_save_models():
 
     # --- PROBLEM 3: Feature Importance (Root Cause Analysis) ---
     print("\n--- Extracting Feature Importance ---")
-    # For tree based models, we can extract feature importances
-    # Let's extract from the Random Forest Classifier
-    rf_model = classifier_pipeline.named_steps['classifier']
+    xgb_model = classifier_pipeline.named_steps['classifier']
     
-    # Get feature names from preprocessor
     ohe = classifier_pipeline.named_steps['preprocessor'].named_transformers_['cat'].named_steps['onehot']
     cat_feature_names = ohe.get_feature_names_out(categorical_features)
     all_feature_names = numeric_features + list(cat_feature_names)
     
-    importances = rf_model.feature_importances_
+    importances = xgb_model.feature_importances_
     
-    # Create a DataFrame for visualization
     feature_importance_df = pd.DataFrame({
         'Feature': all_feature_names,
         'Importance': importances
