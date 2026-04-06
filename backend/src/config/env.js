@@ -13,9 +13,13 @@ const env = {
   DATABASE_URL: process.env.DATABASE_URL,
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
+  REDIS_URL: process.env.REDIS_URL || process.env.REDIS_EXTERNAL_URL,
   REDIS_HOST: process.env.REDIS_HOST || '127.0.0.1',
   REDIS_PORT: parseInt(process.env.REDIS_PORT, 10) || 6379,
   ML_SERVICE_URL: process.env.ML_SERVICE_URL || 'http://localhost:8000',
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+  WEATHER_API_KEY: process.env.WEATHER_API_KEY,
 };
 
 export default env;

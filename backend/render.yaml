@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: eris-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npx prisma generate
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false          # Set manually in Render dashboard
+      - key: JWT_SECRET
+        sync: false          # Set manually in Render dashboard
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: REDIS_URL
+        sync: false          # Set manually in Render dashboard (Internal Redis URL)
+      - key: CORS_ORIGIN
+        sync: false          # Set to your Vercel URL e.g. https://eris.vercel.app
+      - key: ML_SERVICE_URL
+        sync: false          # Set after ML service is deployed
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false          # Optional
+      - key: WEATHER_API_KEY
+        sync: false          # Optional

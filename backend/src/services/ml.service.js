@@ -4,17 +4,15 @@ import env from '../config/env.js';
 
 class MLService {
   /**
-   * Calls the external FastAPI endpoint to predict the best ambulance
-   * @param {Object} emergencyData - Details of the emergency (location, severity, etc.)
-   * @returns {Promise<Object>} The ML prediction result
+   * Request delay inference from FastAPI ML Service.
+   * @param {Object} payload 
+   * @returns {Promise<Object>}
    */
-  static async predictBestAmbulance(emergencyData) {
+  static async predictDelay(payload) {
     try {
-      logger.info('Calling ML service to predict best ambulance');
-      
-      // Placeholder: actual endpoint URL depends on the FastAPI backend
-      const response = await axios.post(`${env.ML_SERVICE_URL}/predict/ambulance`, emergencyData);
-      
+      logger.info('Calling ML service for delay prediction');
+      const ML_URL = env.ML_SERVICE_URL || 'http://localhost:8000';
+      const response = await axios.post(`${ML_URL}/predict`, payload);
       logger.info('ML prediction received successfully');
       return response.data;
     } catch (error) {

@@ -1,5 +1,9 @@
 import { Queue, Worker } from 'bullmq';
 import logger from '../utils/logger.js';
+import { getRouteDetails, getWeather } from './externalApi.service.js';
+import MLService from './ml.service.js';
+import { prisma } from '../config/db.js';
+import { getIO } from './socket.service.js';
 
 let emergencyQueue = null;
 let emergencyWorker = null;
@@ -9,7 +13,7 @@ let emergencyWorker = null;
  * Call once during server startup AFTER Redis is initialized.
  * @param {import('ioredis').default} connection - The IORedis connection instance
  */
-const initQueue = (connection) => {
+export const initQueue = (connection) => {
   // Create Queue
   emergencyQueue = new Queue('emergencyQueue', { connection });
 
@@ -18,13 +22,71 @@ const initQueue = (connection) => {
     'emergencyQueue',
     async (job) => {
       logger.info(`Processing job ${job.id}`);
-
-      // Placeholder business logic for processing an emergency
-      // In actual implementation, find nearby ambulances, notify them, etc.
       const requestData = job.data;
+      
+      try {
+        // Find nearest hospital for destination coordinates
+        const hospitals = await prisma.hospital.findMany();
+        let destLat = requestData.locationLat + 0.01; // Mock slight offset if no hospital
+        let destLng = requestData.locationLng + 0.01;
+        
+        if (hospitals.length > 0) {
+          destLat = hospitals[0].locationLat || destLat;
+          destLng = hospitals[0].locationLng || destLng;
+        }
 
-      // Simulate processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+        // 1. Fetch External APIs Context
+        const route = await getRouteDetails(requestData.locationLat, requestData.locationLng, destLat, destLng);
+        const weatherInfo = await getWeather(requestData.locationLat, requestData.locationLng);
+        
+        const now = new Date();
+        const mlPayload = {
+          distance_km: route.distance_km,
+          time_of_day: now.getHours(),
+          day_of_week: now.getDay(), // 0=Sun, 6=Sat
+          traffic_level: route.traffic_level,
+          weather: weatherInfo.weather,
+          area_type: 'Urban', // Defaulting for MVP
+          driver_response_time_mins: 2.0, // Default for new requests
+          available_ambulances_nearby: await prisma.ambulance.count({ where: { isAvailable: true } })
+        };
+
+        logger.info(`ML Payload constructed for job ${job.id}`, mlPayload);
+
+        // 2. Query ML Service
+        const prediction = await MLService.predictDelay(mlPayload);
+
+        // 3. Update Database with ML Context
+        let updateData = {};
+        if (prediction) {
+          updateData = {
+            distanceKm: route.distance_km,
+            trafficLevel: route.traffic_level,
+            weather: weatherInfo.weather,
+            mlDelayRisk: prediction.delay_risk,
+            mlExpectedDelay: prediction.expected_delay_minutes,
+            mlReasons: JSON.stringify(prediction.all_reasons || []),
+            mlSuggestedActions: JSON.stringify([prediction.main_cause, prediction.suggested_action])
+          };
+          
+          await prisma.request.update({
+            where: { id: requestData.id },
+            data: updateData
+          });
+        }
+        
+        // 4. Broadcast Real-Time System Intelligence Update
+        const io = getIO();
+        io.emit('admin_dashboard_update', {
+          id: requestData.id,
+          patientId: requestData.patientId,
+          mlContext: prediction || {},
+          routeContext: route
+        });
+
+      } catch (error) {
+        logger.error(`Error during ML or API inference for job ${job.id}: ${error.message}`);
+      }
 
       logger.info(`Successfully processed job ${job.id} for patient ${requestData.patientId}`);
     },
@@ -47,7 +109,7 @@ const initQueue = (connection) => {
  * @param {Object} requestData - The emergency request data
  * @returns {Promise<import('bullmq').Job>}
  */
-const addEmergencyRequestToQueue = async (requestData) => {
+export const addEmergencyRequestToQueue = async (requestData) => {
   if (!emergencyQueue) {
     throw new Error('Queue not initialized! Call initQueue() first.');
   }
@@ -68,5 +130,3 @@ const addEmergencyRequestToQueue = async (requestData) => {
     throw error;
   }
 };
-
-export { initQueue, addEmergencyRequestToQueue };

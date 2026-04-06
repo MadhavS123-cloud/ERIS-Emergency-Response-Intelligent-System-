@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 import { errorHandler } from './middlewares/error.middleware.js';
 
@@ -22,13 +23,31 @@ const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
 
 const app = express();
 
-// Global Middlewares
+// Security headers
 app.use(helmet());
-app.use(cors());
+
+// CORS — allow Vercel frontend and any origin configured via env
+const allowedOrigins = [
+  process.env.CORS_ORIGIN,
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow server-to-server (no origin) and listed origins
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: ${origin} not allowed`));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
@@ -47,11 +66,20 @@ app.get('/health', (req, res) => {
 });
 
 // Frontend static app
-app.use(express.static(frontendDistPath));
-
-app.get(/^\/(?!api|health).*/, (req, res) => {
-  res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get(/^\/(?!api|health).*/, (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+} else {
+  // Graceful fallback for decoupled deployments (Backend on Render, Frontend on Vercel)
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      status: 'success',
+      message: 'ERIS API Backend is running. Frontend is actively deployed on a separate service (Vercel).'
+    });
+  });
+}
 
 // Unknown Routes Handler
 app.use((req, res, next) => {

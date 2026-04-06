@@ -4,6 +4,14 @@ import { protect, restrictTo } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// Allow Dashboard App to fetch stats using an internal secret
+router.get('/dashboard-stats', (req, res, next) => {
+  if (req.headers['x-internal-token'] === 'ERIS_INTERNAL') {
+    return adminController.getDashboardStats(req, res, next);
+  }
+  next();
+});
+
 // Only admins can access these routes
 router.use(protect);
 router.use(restrictTo('ADMIN'));

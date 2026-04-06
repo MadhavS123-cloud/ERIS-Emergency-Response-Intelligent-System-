@@ -69,6 +69,16 @@ model Request {
   patientName   String        @default("Anonymous")
   patientPhone  String?
   pickupAddress String
+  
+  // ML Fields & External API Context
+  distanceKm          Float?
+  trafficLevel        String?
+  weather             String?
+  mlDelayRisk         String?
+  mlExpectedDelay     Float?
+  mlReasons           String?   // JSON Stringified
+  mlSuggestedActions  String?   // JSON Stringified
+
   ambulance     Ambulance?    @relation("RequestAmbulance", fields: [ambulanceId], references: [id])
   driver        User?         @relation("DriverRequests", fields: [driverId], references: [id])
   patient       User          @relation("PatientRequests", fields: [patientId], references: [id], onDelete: Cascade)

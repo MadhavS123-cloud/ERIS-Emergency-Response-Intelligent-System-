@@ -9,11 +9,17 @@ let redisConnection = null;
  * @returns {IORedis} The Redis connection instance
  */
 const initRedis = () => {
-  redisConnection = new IORedis({
-    host: env.REDIS_HOST,
-    port: env.REDIS_PORT,
-    maxRetriesPerRequest: null,
-  });
+  if (env.REDIS_URL) {
+    redisConnection = new IORedis(env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+    });
+  } else {
+    redisConnection = new IORedis({
+      host: env.REDIS_HOST,
+      port: env.REDIS_PORT,
+      maxRetriesPerRequest: null,
+    });
+  }
 
   redisConnection.on('connect', () => {
     logger.info('Redis connected successfully');
