@@ -53,10 +53,20 @@ if nav_selection == "Overview":
     st.divider()
     
     st.subheader("Received Dispatch Signals")
-    df = pd.DataFrame(recent_requests)
+    
+    # Pre-process for DataFrame to ensure keys exist
+    processed_requests = []
+    for r in recent_requests:
+        processed_requests.append({
+            'ID': r.get('id', '')[:8],
+            'Incident': r.get('emergencyType', ''),
+            'Status': 'FAKE/CANCELED' if r.get('isFake') else r.get('status', ''),
+            'Suspicious': '⚠️ YES' if r.get('isSuspicious') else 'NO',
+            'AI Risk Level': r.get('mlRisk', ''),
+        })
+        
+    df = pd.DataFrame(processed_requests)
     if not df.empty:
-        df = df[['id', 'emergencyType', 'status', 'mlRisk', 'mlDelayMins']]
-        df.columns = ["ID", "Incident", "Status", "AI Risk Level", "ETA (mins)"]
         st.dataframe(df, use_container_width=True, hide_index=True)
     else:
         st.write("No recent signals.")
@@ -74,7 +84,16 @@ elif nav_selection == "Live Emergencies":
             with col1:
                 st.subheader(f"REQ: {r['id'][:8]} | {r['emergencyType']}")
             with col2:
-                st.subheader(f"[{r['status']}]")
+                st.subheader(f"[{'FAKE' if r.get('isFake') else r.get('status', 'N/A')}]")
+            
+            if r.get('isFake'):
+                st.error("🚨 MARKED AS FALSE REQUEST / SPAM BY SYSTEM OR DRIVER")
+            if r.get('isSuspicious'):
+                st.warning(f"⚠️ SUSPICIOUS SYSTEM FLAG: {r.get('suspiciousReason', 'Unknown')}")
+            
+            guest_tag = "🌐 GUEST " if r.get('isGuest') else "👤 USER "
+            device_score = r.get('trustScoreAtRequest', 0)
+            st.caption(f"{guest_tag}| Device Trust Score (Historical): {device_score}")
             
             metric_col1, metric_col2 = st.columns(2)
             with metric_col1:

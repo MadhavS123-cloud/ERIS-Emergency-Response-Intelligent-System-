@@ -157,6 +157,12 @@ function DriverDashboard() {
         setSheetExpanded(false);
     };
 
+    const handleMarkFake = () => {
+        if (!dispatchInfo || !window.confirm("Are you sure this is a fake request? This will cancel the dispatch and penalize the user.")) return;
+        updateDispatchStatus(dispatchInfo.id, 'completed', 'Marked as False Request by Driver', { driverFeedback: 'False Request' });
+        setSheetExpanded(false);
+    };
+
     if (!dispatchInfo || dispatchInfo.status === 'completed') {
         return (
             <div className="uber-driver-layout">
@@ -287,6 +293,15 @@ function DriverDashboard() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+                            <button 
+                                onClick={handleMarkFake}
+                                style={{ width: '100%', padding: '12px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: '8px', fontWeight: 'bold' }}
+                            >
+                                ⚠️ Mark as False Request
+                            </button>
                         </div>
                     </div>
                 )}

@@ -17,6 +17,8 @@ model User {
   role              Role       @default(PATIENT)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+  trustScore        Int        @default(0)
+  isBlacklisted     Boolean    @default(false)
   ambulance         Ambulance? @relation("DriverAmbulance")
   hospital          Hospital?  @relation("HospitalStaff", fields: [hospitalId], references: [id])
   requestsAsDriver  Request[]  @relation("DriverRequests")
@@ -56,7 +58,7 @@ model Hospital {
 
 model Request {
   id            String        @id @default(uuid())
-  patientId     String
+  patientId     String?
   driverId      String?
   status        RequestStatus @default(PENDING)
   locationLat   Float
@@ -79,9 +81,31 @@ model Request {
   mlReasons           String?   // JSON Stringified
   mlSuggestedActions  String?   // JSON Stringified
 
+  // Anti-Spam / Guest Flow Additions
+  isGuest           Boolean   @default(false)
+  guestSessionId    String?
+  ipAddress         String?
+  userAgent         String?
+  deviceId          String?
+  isSuspicious      Boolean   @default(false)
+  suspiciousReason  String?
+  trustScoreAtRequest Int?
+  isFake            Boolean   @default(false)
+  driverFeedback    String?
+
   ambulance     Ambulance?    @relation("RequestAmbulance", fields: [ambulanceId], references: [id])
   driver        User?         @relation("DriverRequests", fields: [driverId], references: [id])
-  patient       User          @relation("PatientRequests", fields: [patientId], references: [id], onDelete: Cascade)
+  patient       User?         @relation("PatientRequests", fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model DeviceTrust {
+  deviceId      String   @id
+  trustScore    Int      @default(0)
+  totalFake     Int      @default(0)
+  totalValid    Int      @default(0)
+  isBlacklisted Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 enum Role {

@@ -6,6 +6,7 @@ import FloatingBookButton from './components/FloatingBookButton';
 import authService from './services/authService';
 import { Navigate } from 'react-router-dom';
 
+import EmergencyPage from './pages/EmergencyPage';
 import HomePage from './pages/HomePage';
 import PatientPage from './pages/PatientPage';
 import DriverPage from './pages/DriverPage';
@@ -37,7 +38,8 @@ function App() {
           <div className="app-container">
             <FloatingBookButton />
             <Routes>
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<EmergencyPage />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/patient" element={<PatientPage />} />
               <Route path="/track" element={<TrackPage />} />

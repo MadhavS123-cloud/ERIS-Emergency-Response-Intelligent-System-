@@ -16,7 +16,7 @@ import hospitalRoutes from './modules/hospital/hospital.routes.js';
 import requestRoutes from './modules/request/request.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import trackingRoutes from './modules/tracking/tracking.routes.js';
-
+import emergencyRoutes from './modules/request/emergency.routes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
@@ -72,6 +72,7 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/ambulances', ambulanceRoutes);
 app.use('/api/v1/hospitals', hospitalRoutes);
 app.use('/api/v1/requests', requestRoutes);
+app.use('/api/v1/emergency', emergencyRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/tracking', trackingRoutes);
 

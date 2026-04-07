@@ -73,6 +73,43 @@ class RequestRepository {
       orderBy: { createdAt: 'desc' }
     });
   }
+
+  async getDeviceTrust(deviceId) {
+    if (!deviceId) return null;
+    return await prisma.deviceTrust.findUnique({ where: { deviceId } });
+  }
+
+  async updateDeviceTrustScore(deviceId, scoreChange, isFake = false) {
+    if (!deviceId) return null;
+    
+    const incrementFields = { trustScore: scoreChange };
+    if (isFake) {
+       incrementFields.totalFake = 1;
+    } else if (scoreChange > 0) {
+       incrementFields.totalValid = 1;
+    }
+
+    let record = await prisma.deviceTrust.findUnique({ where: { deviceId }});
+    if (!record) {
+      return await prisma.deviceTrust.create({
+         data: { 
+            deviceId, 
+            trustScore: scoreChange,
+            totalFake: isFake ? 1 : 0,
+            totalValid: (!isFake && scoreChange > 0) ? 1 : 0
+         }
+      });
+    }
+    
+    return await prisma.deviceTrust.update({
+      where: { deviceId },
+      data: {
+        trustScore: { increment: scoreChange },
+        totalFake: isFake ? { increment: 1 } : undefined,
+        totalValid: (!isFake && scoreChange > 0) ? { increment: 1 } : undefined
+      }
+    });
+  }
 }
 
 export default new RequestRepository();

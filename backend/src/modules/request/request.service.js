@@ -35,6 +35,75 @@ class RequestService {
     return request;
   }
 
+  async createGuestEmergency(data) {
+    let trustScore = 0;
+    if (data.deviceId) {
+       const deviceTrust = await requestRepository.getDeviceTrust(data.deviceId);
+       if (deviceTrust) trustScore = deviceTrust.trustScore;
+    }
+
+    let isSuspicious = data.isSuspicious;
+    let suspiciousReason = data.suspiciousReason;
+
+    // Reject extremely low trust strictly or flag them
+    if (trustScore <= -4) {
+       isSuspicious = true;
+       suspiciousReason = (suspiciousReason ? suspiciousReason + '; ' : '') + 'Extremely low trust score (Bot likely)';
+    }
+
+    const request = await requestRepository.createRequest({
+      isGuest: true,
+      locationLat: data.locationLat,
+      locationLng: data.locationLng,
+      emergencyType: data.emergencyType || 'General Emergency',
+      pickupAddress: data.pickupAddress || 'Unknown GPS Location',
+      patientName: 'Guest User',
+      patientPhone: null,
+      medicalNotes: '',
+      status: 'PENDING',
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+      deviceId: data.deviceId,
+      isSuspicious: isSuspicious,
+      suspiciousReason: suspiciousReason,
+      trustScoreAtRequest: trustScore
+    });
+
+    // Act first, verify later: Auto dispatch via queue
+    await addEmergencyRequestToQueue(request);
+    
+    // Direct assignment logic for lightning-fast dispatch inline if needed, but queue does it cleanly!
+    try {
+      if (!isSuspicious) {
+        // Just trigger standard queue/admin accept directly
+         const assignedAmbulance = await this.assignAmbulance(request, { role: 'ADMIN' });
+         await requestRepository.updateRequest(request.id, { 
+            status: 'ACCEPTED', 
+            ambulanceId: assignedAmbulance.id, 
+            driverId: assignedAmbulance.driverId 
+         });
+      }
+    } catch (e) {
+      console.error('Instant assign failed, queue might pick it up', e.message);
+    }
+
+    const finalRequest = await requestRepository.findRequestById(request.id);
+    const io = getIO();
+    io.emit('new_emergency', finalRequest);
+    io.emit('request_updated', finalRequest);
+
+    return finalRequest;
+  }
+
+  async linkPhoneToRequest(requestId, phone) {
+    // Soft identity
+    const request = await requestRepository.updateRequest(requestId, { patientPhone: phone });
+    // Emit the update so dashboards see the new valid phone
+    const io = getIO();
+    io.emit('request_updated', request);
+    return request;
+  }
+
   async getRequestById(id) {
     const request = await requestRepository.findRequestById(id);
     if (!request) {
@@ -132,10 +201,24 @@ class RequestService {
     const request = await this.getRequestById(id);
     const actorRole = actor?.role;
     const requestHospitalId = request.ambulance?.hospital?.id || null;
-    const updateData = { status };
-    const { ambulanceId = null } = options;
+    let newStatus = status;
+    const updateData = {};
+    const { ambulanceId = null, driverFeedback = null } = options;
 
-    if (status === 'ACCEPTED') {
+    if (driverFeedback === 'False Request') {
+       updateData.isFake = true;
+       updateData.driverFeedback = driverFeedback;
+       newStatus = 'CANCELLED'; // Force cancel
+       if (request.deviceId) {
+          await requestRepository.updateDeviceTrustScore(request.deviceId, -2, true);
+       }
+    } else if (newStatus === 'COMPLETED' && request.deviceId) {
+       await requestRepository.updateDeviceTrustScore(request.deviceId, 1, false);
+    }
+    
+    updateData.status = newStatus;
+
+    if (newStatus === 'ACCEPTED') {
       if (!['ADMIN', 'HOSPITAL'].includes(actorRole)) {
         throw Object.assign(new Error('Only hospital staff can assign ambulances'), { statusCode: 403 });
       }
@@ -146,8 +229,8 @@ class RequestService {
     }
 
     if (actorRole === 'DRIVER') {
-      if (!['EN_ROUTE', 'COMPLETED'].includes(status)) {
-        throw Object.assign(new Error('Drivers can only start navigation or complete handover'), { statusCode: 403 });
+      if (!['EN_ROUTE', 'COMPLETED', 'CANCELLED'].includes(newStatus)) {
+        throw Object.assign(new Error('Drivers can only start navigation or complete/cancel handover'), { statusCode: 403 });
       }
 
       if (!request.driverId || request.driverId !== actor.id) {
@@ -159,7 +242,7 @@ class RequestService {
       throw Object.assign(new Error('You can only manage requests assigned to your own hospital'), { statusCode: 403 });
     }
 
-    if (['COMPLETED', 'CANCELLED'].includes(status) && request.ambulanceId) {
+    if (['COMPLETED', 'CANCELLED'].includes(newStatus) && request.ambulanceId) {
       await ambulanceRepository.updateAmbulance(request.ambulanceId, { isAvailable: true });
     }
 
