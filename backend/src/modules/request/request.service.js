@@ -72,6 +72,19 @@ class RequestService {
     // Act first, verify later: Auto dispatch via queue
     await addEmergencyRequestToQueue(request);
     
+    // Background Reverse Geocoding
+    if (data.locationLat && data.locationLng && request.pickupAddress === 'Unknown GPS Location') {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.locationLat}&lon=${data.locationLng}`)
+        .then(r => r.json())
+        .then(async geo => {
+          if (geo && geo.display_name) {
+             await requestRepository.updateRequest(request.id, { pickupAddress: geo.display_name });
+          }
+        }).catch(err => {
+          // ignore background geocode errors
+        });
+    }
+    
     // Direct assignment logic for lightning-fast dispatch inline if needed, but queue does it cleanly!
     try {
       if (!isSuspicious) {

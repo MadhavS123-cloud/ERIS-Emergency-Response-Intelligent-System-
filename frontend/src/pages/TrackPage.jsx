@@ -48,6 +48,10 @@ function TrackPage() {
                             patientName: req.patientName || 'Guest Patient',
                             contactNumber: req.patientPhone,
                             hospitalName: req.ambulance?.hospital?.name || 'Awaiting assignment',
+                            driverName: req.driver?.name || req.ambulance?.driver?.name || 'Awaiting assignment',
+                            driverPhone: req.driver?.phone || req.ambulance?.driver?.phone || 'Awaiting assignment',
+                            vehicleNumber: req.ambulance?.plateNumber || req.ambulanceId || 'Awaiting assignment',
+                            pickupAddress: req.pickupAddress || 'Unknown GPS Location',
                             patientPosition: [req.locationLat, req.locationLng],
                             hospitalPosition: [req.ambulance?.hospital?.locationLat || 12.9684, req.ambulance?.hospital?.locationLng || 77.6021],
                             eta: req.status === 'EN_ROUTE' ? '8 mins' : 'Awaiting assignment',
@@ -269,8 +273,12 @@ function TrackPage() {
                             <strong>{dispatch.eta}</strong>
                         </div>
                         <div>
-                            <span>Assigned Unit</span>
-                            <strong>{dispatch.ambulanceId}</strong>
+                            <span>Driver Name</span>
+                            <strong>{dispatch.driverName}</strong>
+                        </div>
+                        <div>
+                            <span>Vehicle / Driver Contact</span>
+                            <strong>{dispatch.vehicleNumber} | {dispatch.driverPhone}</strong>
                         </div>
                     </div>
                 </section>
