@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
+import API_BASE_URL from '../config/api';
 import './TrackPage.css';
 
 const STATUS_STEPS = [
@@ -35,7 +36,7 @@ function TrackPage() {
 
     useEffect(() => {
         if (!activeDispatch && urlId && !guestDispatch) {
-            fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/emergency/${urlId}`)
+            fetch(`${API_BASE_URL}/emergency/${urlId}`)
                 .then(r => r.json())
                 .then(res => {
                     if (res.status === 'success') {
@@ -66,7 +67,7 @@ function TrackPage() {
         if (otpStep) {
             // Verify
             try {
-                await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/emergency/otp`, {
+                await fetch(`${API_BASE_URL}/emergency/otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ requestId: dispatch.id, phone: phoneInput, otp: '1234' })

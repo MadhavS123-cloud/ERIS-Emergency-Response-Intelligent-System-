@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOrGenerateDeviceId } from '../utils/fingerprint';
+import API_BASE_URL from '../config/api';
 import './EmergencyPage.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
 export default function EmergencyPage() {
   const navigate = useNavigate();
@@ -42,7 +41,7 @@ export default function EmergencyPage() {
          });
       }
 
-      const response = await fetch(`${API_URL}/emergency`, {
+      const response = await fetch(`${API_BASE_URL}/emergency`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
