@@ -7,7 +7,9 @@ import './TrackPage.css';
 const STATUS_STEPS = [
     { key: 'incoming', label: 'Request received' },
     { key: 'assigned', label: 'Ambulance assigned' },
-    { key: 'en_route', label: 'Ambulance en route' },
+    { key: 'en_route', label: 'Ambulance headed to pickup' },
+    { key: 'arrived', label: 'Ambulance arrived at pickup' },
+    { key: 'in_transit', label: 'In transit to hospital' },
     { key: 'completed', label: 'Arrived at hospital' },
 ];
 
@@ -15,6 +17,8 @@ const STATUS_COPY = {
     incoming: 'We have received your emergency request. The hospital desk is assigning the nearest available ambulance now.',
     assigned: 'A hospital dispatcher has assigned an ambulance and driver. The unit is preparing to reach your pickup location.',
     en_route: 'Your ambulance is on the way. Please keep your phone nearby and be ready at the pickup point.',
+    arrived: 'The ambulance has arrived at your location. Please board the vehicle.',
+    in_transit: 'The ambulance is heading to the hospital with the patient.',
     completed: 'The ambulance has reached the hospital and reception handover is complete.',
 };
 
@@ -124,7 +128,7 @@ function TrackPage() {
                 }).setView(dispatch.patientPosition, 13);
                 window.L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-                window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                     attribution: '© OpenStreetMap contributors © CARTO'
                 }).addTo(mapRef.current);
             }
@@ -143,12 +147,10 @@ function TrackPage() {
             const patientIcon = window.L.divIcon({
                 className: 'track-patient-icon',
                 html: `
-                    <div style="background: white; border: 3px solid #dc2626; padding: 4px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#dc2626" stroke="#dc2626" stroke-width="1.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </div>
+                    <div class="pulse-ring"></div><div class="pulse-dot"></div>
                 `,
-                iconSize: [38, 38],
-                iconAnchor: [19, 19]
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
             });
 
             const hospitalIcon = window.L.divIcon({

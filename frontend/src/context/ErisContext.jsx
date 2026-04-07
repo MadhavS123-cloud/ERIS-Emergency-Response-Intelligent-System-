@@ -13,6 +13,10 @@ const mapBackendStatusToUi = (status) => {
       return 'assigned';
     case 'EN_ROUTE':
       return 'en_route';
+    case 'ARRIVED':
+      return 'arrived';
+    case 'IN_TRANSIT':
+      return 'in_transit';
     case 'COMPLETED':
     case 'CANCELLED':
       return 'completed';
@@ -32,6 +36,12 @@ const mapUiStatusToBackend = (status) => {
     case 'en_route':
     case 'EN_ROUTE':
       return 'EN_ROUTE';
+    case 'arrived':
+    case 'ARRIVED':
+      return 'ARRIVED';
+    case 'in_transit':
+    case 'IN_TRANSIT':
+      return 'IN_TRANSIT';
     case 'completed':
     case 'COMPLETED':
     case 'CANCELLED':
@@ -99,11 +109,15 @@ const mapRequestToDispatch = (request) => ({
   driverPhone: request.driver?.phone || request.ambulance?.driver?.phone || null,
   eta: request.status === 'COMPLETED'
     ? 'Arrived'
-    : request.status === 'EN_ROUTE'
-      ? '8 mins'
-      : request.status === 'ACCEPTED'
-        ? '12 mins'
-        : 'Awaiting assignment',
+    : request.status === 'IN_TRANSIT'
+      ? 'Heading to hospital'
+      : request.status === 'ARRIVED'
+        ? 'Ambulance is at pickup'
+        : request.status === 'EN_ROUTE'
+          ? '8 mins'
+          : request.status === 'ACCEPTED'
+            ? '12 mins'
+            : 'Awaiting assignment',
   estimatedCharge: 3000,
   logs: [
     {

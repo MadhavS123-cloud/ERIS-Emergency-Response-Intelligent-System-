@@ -11,7 +11,7 @@ const createRequestSchema = Joi.object({
 });
 
 const updateRequestStatusSchema = Joi.object({
-  status: Joi.string().valid('PENDING', 'ACCEPTED', 'EN_ROUTE', 'COMPLETED', 'CANCELLED').required(),
+  status: Joi.string().valid('PENDING', 'ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'IN_TRANSIT', 'COMPLETED', 'CANCELLED').required(),
   ambulanceId: Joi.string().optional().allow(null, '')
 });
 

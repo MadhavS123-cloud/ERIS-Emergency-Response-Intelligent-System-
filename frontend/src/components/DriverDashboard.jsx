@@ -5,8 +5,10 @@ import './DriverDashboard.css';
 
 const stepConfig = {
     incoming: { label: 'WAIT FOR DISPATCH', color: 'btn-blue', next: null, stepLabel: 'Awaiting hospital assignment' },
-    assigned: { label: 'START NAVIGATION', color: 'btn-blue', next: 'en_route', stepLabel: 'Step 1 of 2: Ambulance assigned' },
-    en_route: { label: 'COMPLETE HANDOVER', color: 'btn-green', next: 'completed', stepLabel: 'Step 2 of 2: En route to patient' },
+    assigned: { label: 'START NAVIGATION', color: 'btn-blue', next: 'en_route', stepLabel: 'STEP 1 OF 3: AMBULANCE ASSIGNED' },
+    en_route: { label: 'ARRIVED AT PICKUP', color: 'btn-blue', next: 'arrived', stepLabel: 'STEP 2 OF 3: GO TO PICKUP' },
+    arrived:  { label: 'START TRANSIT', color: 'btn-orange', next: 'in_transit', stepLabel: 'STEP 3 OF 3: PATIENT BOARDING' },
+    in_transit: { label: 'COMPLETE HANDOVER', color: 'btn-green', next: 'completed', stepLabel: 'STEP 4 OF 4: HEADING TO HOSPITAL' },
     completed: { label: 'CASE CLOSED', color: 'btn-blue', next: null, stepLabel: 'Standby' },
 };
 
@@ -37,7 +39,7 @@ function DriverDashboard() {
 
     const getDestinationPosition = () => {
         if (!dispatchInfo) return null;
-        if (dispatchInfo.status === 'completed') {
+        if (dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') {
             return dispatchInfo.hospitalPosition;
         }
         return dispatchInfo.patientPosition;
@@ -59,9 +61,9 @@ function DriverDashboard() {
 
             const patientIcon = window.L.divIcon({
                 className: 'uber-patient-icon',
-                html: `<div></div>`,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
+                html: `<div class="pulse-ring"></div><div class="pulse-dot"></div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
             });
 
             const hospitalIcon = window.L.divIcon({
@@ -106,8 +108,8 @@ function DriverDashboard() {
             scrollWheelZoom: false 
         }).setView(dispatchInfo.patientPosition, 13);
 
-        // Carto light map for clean navigation look
-        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        // Dark map engine
+        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19
         }).addTo(mapInstance.current);
 
@@ -151,6 +153,8 @@ function DriverDashboard() {
         if (!dispatchInfo) return;
         const msg = {
             en_route: 'Unit moving to pickup.',
+            arrived: 'Unit arrived at pickup.',
+            in_transit: 'Unit heading to hospital with patient.',
             completed: 'Handover complete.',
         };
         updateDispatchStatus(dispatchInfo.id, nextStatus, msg[nextStatus]);
@@ -261,9 +265,9 @@ function DriverDashboard() {
 
                 <div className="sheet-header">
                     <div>
-                        <div className="dest-label">DESTINATION: PICKUP</div>
+                        <div className="dest-label">DESTINATION: {(dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') ? 'HOSPITAL' : 'PICKUP'}</div>
                         <div className="dest-address">
-                            {dispatchInfo.pickupAddress}
+                            {(dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') ? dispatchInfo.hospitalName : dispatchInfo.pickupAddress}
                         </div>
                     </div>
                     <div className="sheet-eta-large">{dispatchInfo.eta}</div>

@@ -30,13 +30,41 @@
     align-items: center;
 }
 
-.uber-patient-icon div {
-    background: #ef4444;
-    border: 3px solid white;
-    width: 16px;
-    height: 16px;
+.uber-patient-icon {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.uber-patient-icon .pulse-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #ef4444; /* Red core */
     border-radius: 50%;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3), 0 4px 10px rgba(0,0,0,0.4);
+    z-index: 2;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+.uber-patient-icon .pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+    z-index: 1;
+    animation: pulsar 2s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
+}
+
+@keyframes pulsar {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
 }
 
 .uber-hospital-icon div {

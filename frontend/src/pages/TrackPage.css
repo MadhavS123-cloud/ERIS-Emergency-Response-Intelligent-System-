@@ -296,3 +296,40 @@
         min-height: 320px;
     }
 }
+
+.track-patient-icon {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.track-patient-icon .pulse-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #ef4444; 
+    border-radius: 50%;
+    z-index: 2;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+.track-patient-icon .pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+    z-index: 1;
+    animation: track-pulsar 2s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
+}
+
+@keyframes track-pulsar {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
