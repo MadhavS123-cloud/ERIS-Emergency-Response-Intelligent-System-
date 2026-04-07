@@ -78,50 +78,69 @@
     align-items: center;
 }
 
-/* Top Status Strip */
+/* Top Status Strip Pill */
 .top-status-strip {
     position: absolute;
     top: 24px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: #0f172ab3; /* dark alpha */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: white;
     display: flex;
     align-items: center;
     border-radius: 999px;
-    padding: 8px 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    padding: 6px 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     z-index: 10;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
     white-space: nowrap;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
-.priority-badge {
-    padding: 4px 10px;
-    border-radius: 999px;
-    margin-right: 12px;
-    text-transform: uppercase;
-    font-size: 13px;
-    letter-spacing: 0.05em;
-    display: inline-flex;
-    align-items: center;
+.emergency-alert-icon {
+    font-size: 14px;
+    margin-right: 8px;
 }
 
-.priority-critical { background: #fee2e2; color: #b91c1c; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
-.priority-high { background: #ffedd5; color: #c2410c; }
-.priority-moderate { background: #e0f2fe; color: #0369a1; }
-
-.eta-text {
-    margin-right: 12px;
-    color: #94a3b8;
-}
-
-.emergency-tag {
+.emergency-title {
     color: #f8fafc;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.emergency-divider {
+    color: #475569;
+    margin: 0 10px;
+}
+
+.emergency-priority {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.2);
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+/* Floating ETA Tooltip */
+.floating-eta-badge {
+    position: absolute;
+    top: calc(50% - 60px); 
+    left: 50%;
+    transform: translateX(20px);
+    background: #0f172a;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 800;
+    z-index: 400; /* over Leaflet layers */
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.5);
 }
 
 /* Navigation Hint */
@@ -243,38 +262,85 @@
     cursor: grab;
 }
 
-.sheet-header {
+.step-progress-header {
+    font-size: 14px;
+    font-weight: 800;
+    color: #e2e8f0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.progress-segments {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.segment {
+    flex: 1;
+    height: 4px;
+    background: #334155;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.segment.active {
+    background: #3b82f6;
+}
+
+.dest-info-block {
     margin-bottom: 24px;
 }
 
 .dest-label {
-    font-size: 11px;
     color: #94a3b8;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 15px;
     margin-bottom: 6px;
 }
 
 .dest-address {
-    font-size: 24px;
-    font-weight: 900;
-    color: #f8fafc;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
+    color: #94a3b8;
+    font-size: 15px;
+    line-height: 1.4;
 }
 
-.sheet-eta-large {
-    font-size: 32px;
-    font-weight: 900;
-    color: #60a5fa;
-    background: rgba(37, 99, 235, 0.15);
-    padding: 10px 18px;
-    border-radius: 16px;
-    border: 1px solid rgba(59, 130, 246, 0.2);
+.dest-info-block strong {
+    color: #f8fafc;
+}
+
+.action-buttons-row {
+    display: flex;
+    gap: 12px;
+}
+
+.action-sub-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.sub-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    color: #cbd5e1;
+    width: 64px;
+    height: 64px;
+    font-size: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sub-btn:hover {
+    background: #334155;
+    color: white;
 }
 
 /* Extended Sheet Content */
@@ -327,15 +393,19 @@
 
 /* Primary Step Button */
 .step-button {
-    width: 100%;
-    padding: 20px;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
     border: none;
-    border-radius: 16px;
-    font-size: 20px;
-    font-weight: 900;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 800;
     color: white;
     cursor: pointer;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     transition: transform 0.1s;
     letter-spacing: 0.02em;
 }
@@ -348,16 +418,7 @@
 .btn-green { background: #10b981; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4); }
 .btn-orange { background: #f59e0b; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4); }
 
-/* Progress Indicator */
-.step-progress {
-    text-align: center;
-    font-size: 12px;
-    color: #94a3b8;
-    font-weight: 700;
-    margin-top: 12px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
+/* Progress Indicator removed */
 
 /* Empty State / Side Menu */
 .sidebar-overlay {

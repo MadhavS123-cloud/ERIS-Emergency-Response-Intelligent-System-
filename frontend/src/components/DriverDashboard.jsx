@@ -114,29 +114,50 @@ function DriverDashboard() {
         }).addTo(mapInstance.current);
 
         const fallbackDriverPosition = [12.9684, 77.6021];
+        let currentPos = [...fallbackDriverPosition];
 
         const updateDriverLocation = (position) => {
             const driverPosition = [position.coords.latitude, position.coords.longitude];
-            renderRoute(driverPosition);
-
-            if (dispatchInfo.status === 'en_route') {
-                mapInstance.current.panTo(driverPosition);
-            }
+            // Initialize if starting
+            if (!driverMarker.current) currentPos = [...driverPosition];
+            renderRoute(currentPos);
+             if (dispatchInfo.status === 'en_route') {
+                 mapInstance.current.panTo(currentPos);
+             }
         };
 
         const useFallbackLocation = () => renderRoute(fallbackDriverPosition);
 
-        if (navigator.geolocation) {
+        if (navigator.geolocation && dispatchInfo.status === 'assigned') {
             navigator.geolocation.getCurrentPosition(updateDriverLocation, useFallbackLocation, { enableHighAccuracy: true });
-            watchId.current = navigator.geolocation.watchPosition(updateDriverLocation, useFallbackLocation, { enableHighAccuracy: true });
         } else {
             useFallbackLocation();
+        }
+
+        // --- GPS SIMULATION LOOP ---
+        if (dispatchInfo.status === 'en_route' || dispatchInfo.status === 'in_transit') {
+           watchId.current = setInterval(() => {
+               const dest = getDestinationPosition();
+               if (!dest) return;
+               
+               // Interpolate 1% of distance every second
+               const latDiff = dest[0] - currentPos[0];
+               const lngDiff = dest[1] - currentPos[1];
+               
+               currentPos[0] += latDiff * 0.05;
+               currentPos[1] += lngDiff * 0.05;
+               
+               renderRoute(currentPos);
+               if (mapInstance.current) {
+                 mapInstance.current.panTo(currentPos);
+               }
+           }, 1000);
         }
     };
 
     const cleanupMap = () => {
         if (watchId.current) {
-            navigator.geolocation.clearWatch(watchId.current);
+            clearInterval(watchId.current);
             watchId.current = null;
         }
         if (mapInstance.current) {
@@ -216,16 +237,12 @@ function DriverDashboard() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e293b" strokeWidth="2.5"><path d="M4 12h16M4 6h16M4 18h16" /></svg>
             </button>
 
-            {/* Top Status Strip */}
+            {/* Top Status Strip Redesigned */}
             <div className="top-status-strip">
-                <span className={`priority-badge priority-${dispatchInfo.priority.toLowerCase()}`}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginRight: '6px' }}>
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                    {dispatchInfo.priority}
-                </span>
-                <span className="eta-text">• {dispatchInfo.eta} Away •</span>
-                <span className="emergency-tag">{dispatchInfo.emergencyType}</span>
+                <span className="emergency-alert-icon">🚨</span>
+                <span className="emergency-title">EMERGENCY: {dispatchInfo.emergencyType}</span>
+                <span className="emergency-divider">|</span>
+                <span className="emergency-priority">$ {dispatchInfo.priority}</span>
             </div>
 
             {/* Navigation Hint */}
@@ -243,17 +260,22 @@ function DriverDashboard() {
                 </div>
             )}
 
-            {/* Floating Actions */}
+            {/* Floating ETA Badge */}
+            {dispatchInfo.status !== 'incoming' && dispatchInfo.status !== 'completed' && (
+                <div className="floating-eta-badge">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2"/></svg>
+                    {dispatchInfo.eta}
+                </div>
+            )}
+
+            {/* Floating Actions on Map */}
             <div className="floating-actions-right">
-                <a href={`tel:${dispatchInfo.contactNumber}`} className="fab" title={`Call Patient: ${dispatchInfo.contactNumber}`}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                </a>
-                <a href="tel:102" className="fab" title="Call Hospital Desk (102)">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 21h18 M5 21V7l8-4v18 M19 21V11l-6-4 M9 9v.01 M9 12v.01 M9 15v.01 M9 18v.01 M13 9v.01 M13 12v.01 M13 15v.01 M17 15v.01 M17 18v.01"/></svg>
-                </a>
                 <button className="fab" title="Recalculate Route" onClick={() => initMap()}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5" /></svg>
                 </button>
+                <a href="tel:102" className="fab" title="Call Hospital Desk (102)">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 21h18 M5 21V7l8-4v18 M19 21V11l-6-4 M9 9v.01 M9 12v.01 M9 15v.01 M9 18v.01 M13 9v.01 M13 12v.01 M13 15v.01 M17 15v.01 M17 18v.01"/></svg>
+                </a>
             </div>
 
             {/* Bottom Action Sheet */}
@@ -263,14 +285,41 @@ function DriverDashboard() {
             >
                 <div className="drag-handle" onClick={(e) => { e.stopPropagation(); setSheetExpanded(!sheetExpanded); }}></div>
 
-                <div className="sheet-header">
-                    <div>
-                        <div className="dest-label">DESTINATION: {(dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') ? 'HOSPITAL' : 'PICKUP'}</div>
-                        <div className="dest-address">
-                            {(dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') ? dispatchInfo.hospitalName : dispatchInfo.pickupAddress}
-                        </div>
+                <div className="step-progress-header">
+                    <span>{currentStep.stepLabel}</span>
+                </div>
+                
+                <div className="progress-segments">
+                    <div className={`segment ${dispatchInfo.status !== 'incoming' ? 'active' : ''}`}></div>
+                    <div className={`segment ${(dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') ? 'active' : ''}`}></div>
+                    <div className={`segment ${dispatchInfo.status === 'completed' ? 'active' : ''}`}></div>
+                </div>
+
+                <div className="dest-info-block">
+                    <div className="dest-label">Destination: <strong>{(dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') ? 'HOSPITAL' : 'PICKUP'}</strong></div>
+                    <div className="dest-address">
+                        Location: <strong>{(dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') ? dispatchInfo.hospitalName : dispatchInfo.pickupAddress}</strong>
                     </div>
-                    <div className="sheet-eta-large">{dispatchInfo.eta}</div>
+                </div>
+
+                <div className="action-buttons-row">
+                    <button
+                        className={`step-button ${currentStep.color}`}
+                        onClick={(e) => { e.stopPropagation(); if (currentStep.next) handleAdvance(currentStep.next); }}
+                        disabled={!currentStep.next}
+                    >
+                        {currentStep.label} {currentStep.next && '➔'}
+                    </button>
+                    <div className="action-sub-buttons">
+                        <a href={`tel:${dispatchInfo.contactNumber}`} className="sub-btn" onClick={(e) => e.stopPropagation()}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <span>Call Dispatch</span>
+                        </a>
+                        <button className="sub-btn" onClick={(e) => e.stopPropagation()}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            <span>View Notes</span>
+                        </button>
+                    </div>
                 </div>
 
                 {sheetExpanded && (
@@ -309,15 +358,6 @@ function DriverDashboard() {
                         </div>
                     </div>
                 )}
-
-                <button
-                    className={`step-button ${currentStep.color}`}
-                    onClick={(e) => { e.stopPropagation(); if (currentStep.next) handleAdvance(currentStep.next); }}
-                    disabled={!currentStep.next}
-                >
-                    {currentStep.label}
-                </button>
-                <div className="step-progress">{currentStep.stepLabel}</div>
             </div>
         </div>
     );
