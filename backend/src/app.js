@@ -23,8 +23,23 @@ const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers — CSP tuned to allow Leaflet CDN and map tiles
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:     ["'self'"],
+      scriptSrc:      ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+      scriptSrcElem:  ["'self'", "https://unpkg.com"],
+      styleSrc:       ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://fonts.googleapis.com"],
+      styleSrcElem:   ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://fonts.googleapis.com"],
+      fontSrc:        ["'self'", "https://fonts.gstatic.com"],
+      imgSrc:         ["'self'", "data:", "blob:", "https://*.cartocdn.com", "https://*.openstreetmap.org", "https://unpkg.com"],
+      connectSrc:     ["'self'", "wss:", "ws:", "https:"],
+      workerSrc:      ["'self'", "blob:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // needed for map tiles / third-party resources
+}));
 
 // CORS — allow Vercel frontend and any origin configured via env
 const allowedOrigins = [
