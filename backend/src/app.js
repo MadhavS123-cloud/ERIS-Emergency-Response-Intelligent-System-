@@ -80,19 +80,15 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'ERIS API is running' });
 });
 
-// Frontend static app
-if (fs.existsSync(frontendDistPath)) {
+// Static frontend — ONLY serve locally (dev). In production, frontend is on Vercel.
+if (process.env.NODE_ENV !== 'production' && fs.existsSync(frontendDistPath)) {
   app.use(express.static(frontendDistPath));
   app.get(/^\/(?!api|health).*/, (req, res) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
-} else {
-  // Graceful fallback for decoupled deployments (Backend on Render, Frontend on Vercel)
+} else if (process.env.NODE_ENV !== 'production') {
   app.get('/', (req, res) => {
-    res.status(200).json({
-      status: 'success',
-      message: 'ERIS API Backend is running. Frontend is actively deployed on a separate service (Vercel).'
-    });
+    res.status(200).json({ status: 'success', message: 'ERIS API Backend is running.' });
   });
 }
 
