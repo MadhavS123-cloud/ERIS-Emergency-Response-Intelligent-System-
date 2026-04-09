@@ -242,7 +242,7 @@ class RequestService {
     }
 
     if (actorRole === 'DRIVER') {
-      if (!['EN_ROUTE', 'COMPLETED', 'CANCELLED'].includes(newStatus)) {
+      if (!['EN_ROUTE', 'ARRIVED', 'IN_TRANSIT', 'COMPLETED', 'CANCELLED'].includes(newStatus)) {
         throw Object.assign(new Error('Drivers can only start navigation or complete/cancel handover'), { statusCode: 403 });
       }
 

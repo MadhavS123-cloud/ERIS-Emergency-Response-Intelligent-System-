@@ -70,7 +70,7 @@ function HospitalDashboard() {
             return;
         }
 
-        if (dispatch.status === 'en_route') {
+        if (dispatch.status === 'in_transit') {
             const result = await updateDispatchStatus(dispatch.id, 'completed', 'Emergency desk completed hospital intake and handover.');
             if (!result?.ok) {
                 setSyncMessage(result?.message || 'Unable to close the request right now.');
@@ -254,7 +254,7 @@ function HospitalDashboard() {
                                                             event.stopPropagation();
                                                             handleDispatchAction(dispatch);
                                                         }}>
-                                                            {dispatch.status === 'incoming' ? 'Dispatch' : dispatch.status === 'en_route' ? 'Confirm Arrival' : 'Track'}
+                                                            {dispatch.status === 'incoming' ? 'Dispatch' : dispatch.status === 'in_transit' ? 'Confirm Arrival' : 'Track'}
                                                         </button>
                                                     )}
                                                 </td>

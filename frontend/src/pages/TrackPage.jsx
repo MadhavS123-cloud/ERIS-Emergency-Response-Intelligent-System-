@@ -39,34 +39,48 @@ function TrackPage() {
     const urlId = new URLSearchParams(window.location.search).get('id');
 
     useEffect(() => {
-        if (!activeDispatch && urlId && !guestDispatch) {
-            fetch(`${API_BASE_URL}/emergency/${urlId}`)
-                .then(r => r.json())
-                .then(res => {
-                    if (res.status === 'success') {
-                        const req = res.data;
-                        const mapped = {
-                            ...req,
-                            requestId: req.id.slice(0, 8).toUpperCase(),
-                            status: req.status === 'PENDING' ? 'incoming' : req.status === 'ACCEPTED' ? 'assigned' : req.status === 'EN_ROUTE' ? 'en_route' : 'completed',
-                            patientName: req.patientName || 'Guest Patient',
-                            contactNumber: req.patientPhone,
-                            hospitalName: req.ambulance?.hospital?.name || 'Awaiting assignment',
-                            driverName: req.driver?.name || req.ambulance?.driver?.name || 'Awaiting assignment',
-                            driverPhone: req.driver?.phone || req.ambulance?.driver?.phone || 'Awaiting assignment',
-                            vehicleNumber: req.ambulance?.plateNumber || req.ambulanceId || 'Awaiting assignment',
-                            pickupAddress: req.pickupAddress || 'Unknown GPS Location',
-                            patientPosition: [req.locationLat, req.locationLng],
-                            hospitalPosition: [req.ambulance?.hospital?.locationLat || 12.9684, req.ambulance?.hospital?.locationLng || 77.6021],
-                            eta: req.status === 'EN_ROUTE' ? '8 mins' : 'Awaiting assignment',
-                            logs: [{ id: '1', message: 'Request triggered successfully.', type: 'system', timestamp: new Date().toLocaleTimeString() }]
-                        };
-                        setGuestDispatch(mapped);
-                        if (!req.patientPhone) setShowOtpModal(true);
-                    }
-                }).catch(console.error);
+        let interval;
+        if (!activeDispatch && urlId) {
+            const fetchGuestDispatch = () => {
+                fetch(`${API_BASE_URL}/emergency/${urlId}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.status === 'success') {
+                            const req = res.data;
+                            const mapped = {
+                                ...req,
+                                requestId: req.id.slice(0, 8).toUpperCase(),
+                                status: req.status === 'PENDING' ? 'incoming' : req.status === 'ACCEPTED' ? 'assigned' : req.status === 'EN_ROUTE' ? 'en_route' : req.status === 'ARRIVED' ? 'arrived' : req.status === 'IN_TRANSIT' ? 'in_transit' : 'completed',
+                                patientName: req.patientName || 'Guest Patient',
+                                contactNumber: req.patientPhone,
+                                hospitalName: req.ambulance?.hospital?.name || 'Awaiting assignment',
+                                driverName: req.driver?.name || req.ambulance?.driver?.name || 'Awaiting assignment',
+                                driverPhone: req.driver?.phone || req.ambulance?.driver?.phone || 'Awaiting assignment',
+                                vehicleNumber: req.ambulance?.plateNumber || req.ambulanceId || 'Awaiting assignment',
+                                pickupAddress: req.pickupAddress || 'Unknown GPS Location',
+                                patientPosition: [req.locationLat, req.locationLng],
+                                hospitalPosition: [req.ambulance?.hospital?.locationLat || 12.9684, req.ambulance?.hospital?.locationLng || 77.6021],
+                                eta: req.status === 'EN_ROUTE' ? '8 mins' : 'Awaiting assignment',
+                                logs: [{ id: '1', message: 'Request triggered successfully.', type: 'system', timestamp: new Date(req.createdAt || Date.now()).toLocaleTimeString() }]
+                            };
+                            setGuestDispatch(prev => {
+                                // Only show OTP modal if NO phone AND this is the first successful load
+                                if (!req.patientPhone && !prev) {
+                                    setShowOtpModal(true);
+                                }
+                                return mapped;
+                            });
+                        }
+                    }).catch(console.error);
+            };
+
+            fetchGuestDispatch();
+            interval = setInterval(fetchGuestDispatch, 3000); // Check every 3s since websockets won't work without auth
         }
-    }, [activeDispatch, urlId, guestDispatch]);
+        return () => {
+             if (interval) clearInterval(interval);
+        };
+    }, [activeDispatch, urlId]);
 
     const dispatch = activeDispatch || guestDispatch;
     const currentIndex = Math.max(STATUS_STEPS.findIndex((step) => step.key === dispatch?.status), 0);
