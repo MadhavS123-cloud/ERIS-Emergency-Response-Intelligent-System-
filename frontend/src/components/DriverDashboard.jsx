@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
 import { addTomTomLayers } from '../config/tomtom';
+import API_BASE_URL from '../config/api';
+import authService from '../services/authService';
 import './DriverDashboard.css';
 
 const stepConfig = {
@@ -25,8 +27,9 @@ function DriverDashboard() {
     const patientMarker = useRef(null);
     const hospitalMarker = useRef(null);
     const routeLine = useRef(null);
-    const simInterval = useRef(null);
-    const currentPos = useRef([12.9684, 77.6021]);
+    const watchIdRef = useRef(null);
+    const locationPushInterval = useRef(null);
+    const currentPos = useRef(null); // null until real GPS acquired
 
     const dispatchInfo = activeDispatch;
 
@@ -41,7 +44,7 @@ function DriverDashboard() {
     const renderRoute = useCallback((pos) => {
         if (!window.L || !mapInstance.current || !dispatchInfo) return;
         const destination = getDestinationPosition();
-        if (!destination) return;
+        if (!destination || !pos) return;
 
         if (!driverMarker.current) {
             const ambulanceIcon = window.L.divIcon({
@@ -64,8 +67,12 @@ function DriverDashboard() {
             });
 
             driverMarker.current = window.L.marker(pos, { icon: ambulanceIcon }).addTo(mapInstance.current);
-            patientMarker.current = window.L.marker(dispatchInfo.patientPosition, { icon: patientIcon }).addTo(mapInstance.current);
-            hospitalMarker.current = window.L.marker(dispatchInfo.hospitalPosition, { icon: hospitalIcon }).addTo(mapInstance.current);
+            if (dispatchInfo.patientPosition) {
+                patientMarker.current = window.L.marker(dispatchInfo.patientPosition, { icon: patientIcon }).addTo(mapInstance.current);
+            }
+            if (dispatchInfo.hospitalPosition) {
+                hospitalMarker.current = window.L.marker(dispatchInfo.hospitalPosition, { icon: hospitalIcon }).addTo(mapInstance.current);
+            }
         } else {
             driverMarker.current.setLatLng(pos);
         }
@@ -81,16 +88,20 @@ function DriverDashboard() {
             routeLine.current.setLatLngs([pos, destination]);
         }
 
-        mapInstance.current.fitBounds(
-            [pos, dispatchInfo.patientPosition, dispatchInfo.hospitalPosition],
-            { padding: [80, 80], maxZoom: 15 }
-        );
+        const bounds = [pos];
+        if (dispatchInfo.patientPosition) bounds.push(dispatchInfo.patientPosition);
+        if (dispatchInfo.hospitalPosition) bounds.push(dispatchInfo.hospitalPosition);
+        mapInstance.current.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
     }, [dispatchInfo, getDestinationPosition]);
 
     const cleanupMap = useCallback(() => {
-        if (simInterval.current) {
-            clearInterval(simInterval.current);
-            simInterval.current = null;
+        if (watchIdRef.current) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+        }
+        if (locationPushInterval.current) {
+            clearInterval(locationPushInterval.current);
+            locationPushInterval.current = null;
         }
         if (mapInstance.current) {
             mapInstance.current.remove();
@@ -102,57 +113,73 @@ function DriverDashboard() {
         routeLine.current = null;
     }, []);
 
+    // Push real GPS to backend so all clients see real ambulance position
+    const pushLocationToBackend = useCallback(async (lat, lng) => {
+        const token = authService.getToken();
+        if (!token) return;
+        try {
+            await fetch(`${API_BASE_URL}/tracking/location`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ locationLat: lat, locationLng: lng })
+            });
+        } catch (e) {
+            // silent — location push is best-effort
+        }
+    }, []);
+
     const initMap = useCallback(() => {
         if (!window.L || !dispatchInfo) return;
         cleanupMap();
 
+        const patientPos = dispatchInfo.patientPosition;
+        const hospitalPos = dispatchInfo.hospitalPosition;
+
+        if (!patientPos) return; // No real patient location — don't render map
+
         mapInstance.current = window.L.map('driver-map', {
             zoomControl: false,
             attributionControl: false,
-        }).setView(dispatchInfo.patientPosition, 14);
+        }).setView(patientPos, 14);
 
         addTomTomLayers(mapInstance.current, 'night', true, false);
 
-        // Try to get real location first, fall back to dummy
-        const startFromLocation = (lat, lng) => {
+        const onPosition = (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
             currentPos.current = [lat, lng];
             renderRoute(currentPos.current);
         };
 
+        const onError = () => {
+            // If GPS unavailable, center on patient but show no ambulance marker
+            // (don't fake a position)
+            if (!driverMarker.current && patientPos) {
+                mapInstance.current?.setView(patientPos, 14);
+            }
+        };
+
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => startFromLocation(pos.coords.latitude, pos.coords.longitude),
-                () => startFromLocation(12.9684, 77.6021),
-                { enableHighAccuracy: true, timeout: 3000 }
-            );
-        } else {
-            startFromLocation(12.9684, 77.6021);
-        }
+            // Get initial position
+            navigator.geolocation.getCurrentPosition(onPosition, onError, {
+                enableHighAccuracy: true,
+                timeout: 8000
+            });
 
-        // Simulation: move ambulance marker toward destination
-        if (dispatchInfo.status === 'en_route' || dispatchInfo.status === 'in_transit') {
-            simInterval.current = setInterval(() => {
-                const dest = getDestinationPosition();
-                if (!dest || !mapInstance.current) return;
+            // Watch for continuous updates
+            watchIdRef.current = navigator.geolocation.watchPosition(onPosition, onError, {
+                enableHighAccuracy: true,
+                maximumAge: 5000
+            });
 
-                const latDiff = dest[0] - currentPos.current[0];
-                const lngDiff = dest[1] - currentPos.current[1];
-                currentPos.current = [
-                    currentPos.current[0] + latDiff * 0.04,
-                    currentPos.current[1] + lngDiff * 0.04,
-                ];
-
-                if (driverMarker.current) {
-                    driverMarker.current.setLatLng(currentPos.current);
+            // Push location to backend every 5 seconds
+            locationPushInterval.current = setInterval(() => {
+                if (currentPos.current) {
+                    pushLocationToBackend(currentPos.current[0], currentPos.current[1]);
                 }
-                if (routeLine.current) {
-                    const dest2 = getDestinationPosition();
-                    if (dest2) routeLine.current.setLatLngs([currentPos.current, dest2]);
-                }
-                mapInstance.current.panTo(currentPos.current);
-            }, 1200);
+            }, 5000);
         }
-    }, [dispatchInfo, cleanupMap, renderRoute, getDestinationPosition]);
+    }, [dispatchInfo, cleanupMap, renderRoute, pushLocationToBackend]);
 
     useEffect(() => {
         if (!dispatchInfo || dispatchInfo.status === 'completed') {

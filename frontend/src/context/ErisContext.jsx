@@ -87,6 +87,44 @@ const getLogMessage = (request) => {
   return 'Emergency request received and waiting for hospital assignment.';
 };
 
+// Haversine distance in km (client-side, no import needed)
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+  if (!lat1 || !lng1 || !lat2 || !lng2) return null;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+// Compute a realistic ETA string from ambulance → patient distance
+const computeEta = (request) => {
+  const status = request.status;
+  if (status === 'COMPLETED' || status === 'CANCELLED') return 'Arrived';
+  if (status === 'IN_TRANSIT') return 'Heading to hospital';
+  if (status === 'ARRIVED') return 'Ambulance at pickup';
+
+  // Use ML-predicted delay if available
+  if (request.mlExpectedDelay && (status === 'EN_ROUTE' || status === 'ACCEPTED')) {
+    const mins = Math.round(request.mlExpectedDelay);
+    return `~${mins} min${mins !== 1 ? 's' : ''}`;
+  }
+
+  // Fall back to distance-based estimate (avg ambulance speed ~40 km/h in city)
+  const ambLat = request.ambulance?.locationLat;
+  const ambLng = request.ambulance?.locationLng;
+  const dist = haversineKm(ambLat, ambLng, request.locationLat, request.locationLng);
+  if (dist !== null) {
+    const mins = Math.max(2, Math.round((dist / 40) * 60));
+    return `~${mins} min${mins !== 1 ? 's' : ''}`;
+  }
+
+  if (status === 'EN_ROUTE') return 'En route';
+  if (status === 'ACCEPTED') return 'Dispatched';
+  return 'Awaiting dispatch';
+};
+
 const mapRequestToDispatch = (request) => ({
   ...request,
   requestId: request.id.slice(0, 8).toUpperCase(),
@@ -95,11 +133,17 @@ const mapRequestToDispatch = (request) => ({
   contactNumber: request.patientPhone || request.patient?.phone || 'No Contact',
   hospitalName: request.ambulance?.hospital?.name || 'Awaiting hospital assignment',
   hospitalId: request.ambulance?.hospital?.id || null,
-  hospitalPosition: [
-    request.ambulance?.hospital?.locationLat ?? 12.9635,
-    request.ambulance?.hospital?.locationLng ?? 77.6032
-  ],
-  patientPosition: [request.locationLat, request.locationLng],
+  // Only use real hospital coordinates — no hardcoded fallback
+  hospitalPosition: (request.ambulance?.hospital?.locationLat && request.ambulance?.hospital?.locationLng)
+    ? [request.ambulance.hospital.locationLat, request.ambulance.hospital.locationLng]
+    : null,
+  patientPosition: (request.locationLat && request.locationLng)
+    ? [request.locationLat, request.locationLng]
+    : null,
+  // Real ambulance GPS position from the database
+  ambulancePosition: (request.ambulance?.locationLat && request.ambulance?.locationLng)
+    ? [request.ambulance.locationLat, request.ambulance.locationLng]
+    : null,
   priority: getPriority(request.emergencyType),
   ambulanceId: request.ambulance?.plateNumber || 'Awaiting assignment',
   vehicleNumber: request.ambulance?.plateNumber || 'Awaiting assignment',
@@ -108,17 +152,7 @@ const mapRequestToDispatch = (request) => ({
   driverId: request.driver?.id || request.ambulance?.driver?.id || null,
   driverEmail: request.driver?.email || request.ambulance?.driver?.email || null,
   driverPhone: request.driver?.phone || request.ambulance?.driver?.phone || null,
-  eta: request.status === 'COMPLETED'
-    ? 'Arrived'
-    : request.status === 'IN_TRANSIT'
-      ? 'Heading to hospital'
-      : request.status === 'ARRIVED'
-        ? 'Ambulance is at pickup'
-        : request.status === 'EN_ROUTE'
-          ? '8 mins'
-          : request.status === 'ACCEPTED'
-            ? '12 mins'
-            : 'Awaiting assignment',
+  eta: computeEta(request),
   estimatedCharge: 3000,
   logs: [
     {
@@ -208,14 +242,25 @@ export function ErisProvider({ children }) {
       fetchData();
     };
 
+    // Real-time ambulance location updates — update only the position, no full refetch
+    const handleLocationUpdate = ({ ambulanceId, locationLat, locationLng }) => {
+      setDispatches(prev => prev.map(d =>
+        d.ambulanceInternalId === ambulanceId
+          ? { ...d, ambulancePosition: [locationLat, locationLng], eta: computeEta({ ...d, ambulance: { ...d.ambulance, locationLat, locationLng } }) }
+          : d
+      ));
+    };
+
     socket.on('new_emergency', handleRequestChange);
     socket.on('request_updated', handleRequestChange);
     socket.on('driver_assigned', handleRequestChange);
+    socket.on('location_update', handleLocationUpdate);
 
     return () => {
       socket.off('new_emergency', handleRequestChange);
       socket.off('request_updated', handleRequestChange);
       socket.off('driver_assigned', handleRequestChange);
+      socket.off('location_update', handleLocationUpdate);
     };
   }, [fetchData]);
 
@@ -273,8 +318,8 @@ export function ErisProvider({ children }) {
           emergencyType: formData.emergencyType,
           pickupAddress: formData.pickupAddress,
           medicalNotes: formData.medicalNotes,
-          locationLat: formData.locationLat || 12.9716,
-          locationLng: formData.locationLng || 77.5946,
+          locationLat: formData.locationLat,
+          locationLng: formData.locationLng,
           patientName: formData.patientName || 'Emergency Patient',
           patientPhone: formData.contactNumber || 'Not Provided'
         })

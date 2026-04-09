@@ -156,15 +156,19 @@ function TrackPage() {
 
         const patientPos = dispatch.patientPosition?.[0] && dispatch.patientPosition?.[1]
             ? dispatch.patientPosition
-            : [12.9716, 77.5946];
+            : null;
         const hospitalPos = dispatch.hospitalPosition?.[0] && dispatch.hospitalPosition?.[1]
             ? dispatch.hospitalPosition
-            : [12.9684, 77.6021];
+            : null;
+        // Use real ambulance GPS from backend — NOT the patient's browser location
+        const ambulancePos = dispatch.ambulancePosition?.[0] && dispatch.ambulancePosition?.[1]
+            ? dispatch.ambulancePosition
+            : null;
+
+        if (!patientPos) return undefined; // Can't render without patient location
 
         patientPositionRef.current = patientPos;
         hospitalPositionRef.current = hospitalPos;
-
-        const fallbackDriverPosition = patientPos; // Use patient location as initial driver position
 
         const ambulanceIcon = window.L.divIcon({
             className: 'track-ambulance-icon',
@@ -187,8 +191,8 @@ function TrackPage() {
             iconAnchor: [19, 19]
         });
 
-        const initMap = (driverPosition) => {
-            if (mapRef.current) return; // Already initialized
+        const initMap = () => {
+            if (mapRef.current) return;
 
             mapRef.current = window.L.map(mapContainerRef.current, {
                 zoomControl: false,
@@ -197,45 +201,29 @@ function TrackPage() {
             window.L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
             addTomTomLayers(mapRef.current, 'night', true, false);
 
-            driverMarkerRef.current = window.L.marker(driverPosition, { icon: ambulanceIcon }).addTo(mapRef.current);
+            // Always place patient marker
             patientMarkerRef.current = window.L.marker(patientPos, { icon: patientIcon }).addTo(mapRef.current);
-            hospitalMarkerRef.current = window.L.marker(hospitalPos, { icon: hospitalIcon }).addTo(mapRef.current);
 
-            routeLineRef.current = window.L.polyline([driverPosition, patientPos], {
-                color: '#2563eb',
-                weight: 4,
-                opacity: 0.85,
-                dashArray: '10, 10'
-            }).addTo(mapRef.current);
-
-            mapRef.current.fitBounds([driverPosition, patientPos, hospitalPos], { padding: [36, 36] });
-        };
-
-        const updateDriverPosition = (driverPosition) => {
-            if (!mapRef.current) {
-                initMap(driverPosition);
-                return;
+            // Place hospital marker only if we have real coordinates
+            if (hospitalPos) {
+                hospitalMarkerRef.current = window.L.marker(hospitalPos, { icon: hospitalIcon }).addTo(mapRef.current);
             }
-            driverMarkerRef.current?.setLatLng(driverPosition);
-            routeLineRef.current?.setLatLngs([driverPosition, patientPositionRef.current]);
+
+            // Place ambulance marker only if driver has real GPS
+            if (ambulancePos) {
+                driverMarkerRef.current = window.L.marker(ambulancePos, { icon: ambulanceIcon }).addTo(mapRef.current);
+                routeLineRef.current = window.L.polyline([ambulancePos, patientPos], {
+                    color: '#2563eb', weight: 4, opacity: 0.85, dashArray: '10, 10'
+                }).addTo(mapRef.current);
+            }
+
+            const boundsPoints = [patientPos];
+            if (ambulancePos) boundsPoints.push(ambulancePos);
+            if (hospitalPos) boundsPoints.push(hospitalPos);
+            mapRef.current.fitBounds(boundsPoints, { padding: [36, 36] });
         };
 
-        // Get initial position then watch — but only update driver marker, not reinit map
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => initMap([pos.coords.latitude, pos.coords.longitude]),
-                () => initMap(fallbackDriverPosition),
-                { enableHighAccuracy: true, timeout: 8000 }
-            );
-
-            watchIdRef.current = navigator.geolocation.watchPosition(
-                (pos) => updateDriverPosition([pos.coords.latitude, pos.coords.longitude]),
-                () => {},
-                { enableHighAccuracy: true }
-            );
-        } else {
-            initMap(fallbackDriverPosition);
-        }
+        initMap();
 
         return () => {
             if (watchIdRef.current) {
@@ -252,7 +240,36 @@ function TrackPage() {
             routeLineRef.current = null;
             dispatchIdRef.current = null;
         };
-    }, [dispatch?.id]); // Only re-init map when the dispatch ID changes, not on every data update
+    }, [dispatch?.id]); // Only re-init map when the dispatch ID changes
+
+    // Update ambulance marker position when real-time location_update arrives
+    useEffect(() => {
+        if (!mapRef.current || !dispatch?.ambulancePosition) return;
+        const [lat, lng] = dispatch.ambulancePosition;
+        if (!lat || !lng) return;
+
+        if (driverMarkerRef.current) {
+            driverMarkerRef.current.setLatLng([lat, lng]);
+        } else if (window.L) {
+            // Ambulance just got GPS for the first time — add marker now
+            const ambulanceIcon = window.L.divIcon({
+                className: 'track-ambulance-icon',
+                html: `<div style="background: white; border: 3px solid #2563eb; padding: 4px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><svg width="22" height="22" viewBox="0 0 24 24" fill="#2563eb" stroke="#2563eb" stroke-width="1.5"><path d="M10 17h.01"/><path d="M14 17h.01"/><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/><path d="M6 13V8l4-4h4l4 4v5"/><circle cx="7" cy="17" r="1"/><circle cx="17" cy="17" r="1"/></svg></div>`,
+                iconSize: [38, 38], iconAnchor: [19, 19]
+            });
+            driverMarkerRef.current = window.L.marker([lat, lng], { icon: ambulanceIcon }).addTo(mapRef.current);
+        }
+
+        if (patientPositionRef.current) {
+            if (routeLineRef.current) {
+                routeLineRef.current.setLatLngs([[lat, lng], patientPositionRef.current]);
+            } else if (window.L) {
+                routeLineRef.current = window.L.polyline([[lat, lng], patientPositionRef.current], {
+                    color: '#2563eb', weight: 4, opacity: 0.85, dashArray: '10, 10'
+                }).addTo(mapRef.current);
+            }
+        }
+    }, [dispatch?.ambulancePosition]);
 
     if (!dispatch) {
         return (

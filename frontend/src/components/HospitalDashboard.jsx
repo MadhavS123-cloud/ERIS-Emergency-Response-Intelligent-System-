@@ -43,31 +43,39 @@ function HospitalDashboard() {
 
     const initMap = useCallback(() => {
         if (!window.L || !mapContainerRef.current || mapInstance.current) return;
-        
+
+        // Center on the hospital's real location if available, else defer
+        const center = currentHospital?.locationLat && currentHospital?.locationLng
+            ? [currentHospital.locationLat, currentHospital.locationLng]
+            : null;
+
         mapInstance.current = window.L.map(mapContainerRef.current, {
             zoomControl: true,
             attributionControl: false,
-        }).setView([12.9716, 77.5946], 12);
+        }).setView(center || [20, 78], center ? 12 : 5); // India overview if no hospital location
 
         addTomTomLayers(mapInstance.current, 'night', true, false);
-    }, []);
+    }, [currentHospital]);
 
     const updateMapMarkers = useCallback(() => {
         if (!window.L || !mapInstance.current) return;
 
-        // Clear existing markers that are no longer active
+        // Clear markers no longer active
         Object.keys(markersRef.current).forEach(id => {
-            if (!dispatches.find(d => d.id === id && d.status !== 'completed')) {
+            const stillActive = dispatches.find(d => d.id === id && d.status !== 'completed')
+                || hospitalFleet.find(a => a.id === id);
+            if (!stillActive) {
                 markersRef.current[id].remove();
                 delete markersRef.current[id];
             }
         });
 
+        // Patient markers
         dispatches.filter(d => d.status !== 'completed').forEach(dispatch => {
-            if (!dispatch.patientPosition) return;
+            if (!dispatch.patientPosition?.[0] || !dispatch.patientPosition?.[1]) return;
 
             const icon = window.L.divIcon({
-                className: `map-marker-${dispatch.priority.toLowerCase()}`,
+                className: `map-marker-${(dispatch.priority || 'high').toLowerCase()}`,
                 html: `<div class="marker-pulse"></div><div class="marker-core"></div>`,
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
@@ -82,10 +90,30 @@ function HospitalDashboard() {
             }
         });
 
-        if (activeDispatch?.patientPosition) {
-             mapInstance.current.panTo(activeDispatch.patientPosition);
+        // Ambulance markers — real GPS positions from database
+        hospitalFleet.forEach(ambulance => {
+            if (!ambulance.locationLat || !ambulance.locationLng) return;
+            const pos = [ambulance.locationLat, ambulance.locationLng];
+            const ambIcon = window.L.divIcon({
+                className: 'dd-ambulance-icon',
+                html: `<div style="background:#2563eb;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5"><path d="M10 17h.01"/><path d="M14 17h.01"/><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/><path d="M6 13V8l4-4h4l4 4v5"/></svg></div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+            const markerId = `amb-${ambulance.id}`;
+            if (!markersRef.current[markerId]) {
+                markersRef.current[markerId] = window.L.marker(pos, { icon: ambIcon })
+                    .addTo(mapInstance.current)
+                    .bindPopup(`<b>${ambulance.plateNumber}</b><br/>${ambulance.isAvailable ? 'Available' : 'On dispatch'}`);
+            } else {
+                markersRef.current[markerId].setLatLng(pos);
+            }
+        });
+
+        if (activeDispatch?.patientPosition?.[0]) {
+            mapInstance.current.panTo(activeDispatch.patientPosition);
         }
-    }, [dispatches, activeDispatch]);
+    }, [dispatches, activeDispatch, hospitalFleet]);
 
     useEffect(() => {
         if (activeTab === 'dashboard') {
@@ -99,7 +127,7 @@ function HospitalDashboard() {
 
     useEffect(() => {
         updateMapMarkers();
-    }, [dispatches, activeDispatch, updateMapMarkers]);
+    }, [dispatches, activeDispatch, hospitalFleet, updateMapMarkers]);
 
     useEffect(() => {
         setCapacityForm(hospitalCapacity);

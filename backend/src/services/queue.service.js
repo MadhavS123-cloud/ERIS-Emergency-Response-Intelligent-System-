@@ -25,14 +25,24 @@ export const initQueue = (connection) => {
       const requestData = job.data;
       
       try {
-        // Find nearest hospital for destination coordinates
+        // Find nearest hospital to use as destination for route calculation
         const hospitals = await prisma.hospital.findMany();
-        let destLat = requestData.locationLat + 0.01; // Mock slight offset if no hospital
-        let destLng = requestData.locationLng + 0.01;
-        
+        let destLat = requestData.locationLat;
+        let destLng = requestData.locationLng;
+
         if (hospitals.length > 0) {
-          destLat = hospitals[0].locationLat || destLat;
-          destLng = hospitals[0].locationLng || destLng;
+          // Pick the geographically nearest hospital
+          const nearest = hospitals
+            .filter(h => h.locationLat && h.locationLng)
+            .sort((a, b) => {
+              const distA = Math.hypot(a.locationLat - requestData.locationLat, a.locationLng - requestData.locationLng);
+              const distB = Math.hypot(b.locationLat - requestData.locationLat, b.locationLng - requestData.locationLng);
+              return distA - distB;
+            })[0];
+          if (nearest) {
+            destLat = nearest.locationLat;
+            destLng = nearest.locationLng;
+          }
         }
 
         // 1. Fetch External APIs Context

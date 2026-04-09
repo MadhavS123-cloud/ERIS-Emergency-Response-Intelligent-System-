@@ -167,6 +167,13 @@ function EmergencyForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Block submission if we don't have real GPS coordinates
+        if (!formData.locationLat || !formData.locationLng) {
+            alert('Your location could not be detected. Please allow location access and click "Refresh Location" before submitting.');
+            return;
+        }
+
         setIsSubmitting(true);
 
             const newDispatch = await submitEmergencyRequest(formData);
