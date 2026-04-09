@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
+import { addTomTomLayers } from '../config/tomtom';
 import './DriverDashboard.css';
 
 const stepConfig = {
@@ -110,9 +111,7 @@ function DriverDashboard() {
             attributionControl: false,
         }).setView(dispatchInfo.patientPosition, 14);
 
-        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19
-        }).addTo(mapInstance.current);
+        addTomTomLayers(mapInstance.current, 'night', true, false);
 
         // Try to get real location first, fall back to dummy
         const startFromLocation = (lat, lng) => {

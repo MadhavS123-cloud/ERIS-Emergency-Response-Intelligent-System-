@@ -3,6 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine";
 import { socket } from "../socket";
+import { addTomTomLayers } from "../config/tomtom";
 
 const Map = () => {
     const mapRef = useRef(null);
@@ -15,9 +16,7 @@ const Map = () => {
         // Initialize map
         mapRef.current = L.map("map").setView([12.9716, 77.5946], 13);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: "&copy; OpenStreetMap",
-        }).addTo(mapRef.current);
+        addTomTomLayers(mapRef.current, 'main', true, false);
 
         // 🚑 Custom icon
         const ambulanceIcon = L.icon({

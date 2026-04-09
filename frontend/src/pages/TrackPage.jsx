@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
 import API_BASE_URL from '../config/api';
+import { addTomTomLayers } from '../config/tomtom';
 import './TrackPage.css';
 
 const STATUS_STEPS = [
@@ -142,9 +143,7 @@ function TrackPage() {
                 }).setView(dispatch.patientPosition, 13);
                 window.L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-                window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '© OpenStreetMap contributors © CARTO'
-                }).addTo(mapRef.current);
+                addTomTomLayers(mapRef.current, 'night', true, false);
             }
 
             const ambulanceIcon = window.L.divIcon({

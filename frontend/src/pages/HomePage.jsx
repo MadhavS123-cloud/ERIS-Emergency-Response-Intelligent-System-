@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useEris } from '../context/ErisContext';
 import { CircleLoader } from 'react-spinners';
+import { addTomTomLayers } from '../config/tomtom';
 import './HomePage.css';
 
 /**
@@ -214,11 +215,7 @@ function HomePage() {
                 scrollWheelZoom: false // Prevent accidental zoom on scroll
             }).setView(userLocation, 13);
 
-            window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors & CARTO',
-                subdomains: 'abcd',
-                maxZoom: 20
-            }).addTo(mapRef.current);
+            addTomTomLayers(mapRef.current, 'main', true, false);
 
             // Add accurate user location marker
             const patientIcon = window.L.divIcon({
@@ -700,7 +697,7 @@ function HomePage() {
                             )}
                         </div>
 
-                        {/* Right side: Live Leaflet Map */}
+                        {/* Right side: TomTom Live Map */}
                         <div
                             className="card-std"
                             style={{ padding: '0', overflow: 'hidden', minHeight: '500px', display: 'flex', flexDirection: 'column' }}

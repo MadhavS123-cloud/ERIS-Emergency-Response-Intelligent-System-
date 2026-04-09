@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useEris } from '../context/ErisContext';
 import authService from '../services/authService';
+import { addTomTomLayers } from '../config/tomtom';
 import './HospitalDashboard.css';
 
 const statusLabels = {
@@ -48,9 +49,7 @@ function HospitalDashboard() {
             attributionControl: false,
         }).setView([12.9716, 77.5946], 12);
 
-        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19
-        }).addTo(mapInstance.current);
+        addTomTomLayers(mapInstance.current, 'night', true, false);
     }, []);
 
     const updateMapMarkers = useCallback(() => {
