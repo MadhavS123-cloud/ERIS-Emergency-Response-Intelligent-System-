@@ -36,6 +36,7 @@ function TrackPage() {
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [phoneInput, setPhoneInput] = useState('');
     const [otpStep, setOtpStep] = useState(false);
+    const [resolvedAddress, setResolvedAddress] = useState('');
     
     const urlId = new URLSearchParams(window.location.search).get('id');
 
@@ -86,6 +87,23 @@ function TrackPage() {
     const dispatch = activeDispatch || guestDispatch;
     const currentIndex = Math.max(STATUS_STEPS.findIndex((step) => step.key === dispatch?.status), 0);
 
+    // Reverse geocode if pickupAddress is missing or is the generic fallback
+    useEffect(() => {
+        const pos = dispatch?.patientPosition;
+        const addr = dispatch?.pickupAddress;
+        const needsGeocode = (!addr || addr === 'Unknown GPS Location') && pos?.[0] && pos?.[1];
+        if (!needsGeocode) return;
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos[0]}&lon=${pos[1]}&addressdetails=1`, {
+            headers: { 'User-Agent': 'ERIS-Emergency-System' }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data?.display_name) setResolvedAddress(data.display_name);
+            })
+            .catch(() => {});
+    }, [dispatch?.id, dispatch?.patientPosition, dispatch?.pickupAddress]);
+
     const submitOtp = async () => {
         if (otpStep) {
             // Verify
@@ -113,113 +131,110 @@ function TrackPage() {
     const hospitalMarkerRef = useRef(null);
     const routeLineRef = useRef(null);
     const watchIdRef = useRef(null);
+    // Stable refs so map effects don't re-run on every dispatch update
+    const dispatchIdRef = useRef(null);
+    const patientPositionRef = useRef(null);
+    const hospitalPositionRef = useRef(null);
 
     useEffect(() => {
         document.title = dispatch 
             ? `Track Case #${dispatch.requestId} | ERIS` 
             : "Ambulance Tracking | ERIS System";
-    }, [dispatch]);
+    }, [dispatch?.requestId]);
 
+    // Initialize map only once when dispatch first becomes available
     useEffect(() => {
         if (!dispatch || !window.L || !mapContainerRef.current) {
             return undefined;
         }
+        // Already initialized for this dispatch — skip
+        if (dispatchIdRef.current === dispatch.id && mapRef.current) {
+            return undefined;
+        }
 
-        const fallbackDriverPosition = [12.9684, 77.6021];
+        dispatchIdRef.current = dispatch.id;
 
-        const getDestination = () => {
-            if (dispatch.status === 'completed') {
-                return dispatch.hospitalPosition;
-            }
+        const patientPos = dispatch.patientPosition?.[0] && dispatch.patientPosition?.[1]
+            ? dispatch.patientPosition
+            : [12.9716, 77.5946];
+        const hospitalPos = dispatch.hospitalPosition?.[0] && dispatch.hospitalPosition?.[1]
+            ? dispatch.hospitalPosition
+            : [12.9684, 77.6021];
 
-            return dispatch.patientPosition;
+        patientPositionRef.current = patientPos;
+        hospitalPositionRef.current = hospitalPos;
+
+        const fallbackDriverPosition = patientPos; // Use patient location as initial driver position
+
+        const ambulanceIcon = window.L.divIcon({
+            className: 'track-ambulance-icon',
+            html: `<div style="background: white; border: 3px solid #2563eb; padding: 4px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><svg width="22" height="22" viewBox="0 0 24 24" fill="#2563eb" stroke="#2563eb" stroke-width="1.5"><path d="M10 17h.01"/><path d="M14 17h.01"/><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/><path d="M6 13V8l4-4h4l4 4v5"/><circle cx="7" cy="17" r="1"/><circle cx="17" cy="17" r="1"/></svg></div>`,
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
+        });
+
+        const patientIcon = window.L.divIcon({
+            className: 'track-patient-icon',
+            html: `<div class="pulse-ring"></div><div class="pulse-dot"></div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        const hospitalIcon = window.L.divIcon({
+            className: 'track-hospital-icon',
+            html: `<div style="background: white; border: 3px solid #10b981; padding: 4px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><svg width="22" height="22" viewBox="0 0 24 24" fill="#10b981" stroke="#10b981" stroke-width="1.5"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/><path d="M13 9v.01"/><path d="M13 12v.01"/><path d="M13 15v.01"/><path d="M17 15v.01"/><path d="M17 18v.01"/></svg></div>`,
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
+        });
+
+        const initMap = (driverPosition) => {
+            if (mapRef.current) return; // Already initialized
+
+            mapRef.current = window.L.map(mapContainerRef.current, {
+                zoomControl: false,
+                scrollWheelZoom: false
+            }).setView(patientPos, 13);
+            window.L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
+            addTomTomLayers(mapRef.current, 'night', true, false);
+
+            driverMarkerRef.current = window.L.marker(driverPosition, { icon: ambulanceIcon }).addTo(mapRef.current);
+            patientMarkerRef.current = window.L.marker(patientPos, { icon: patientIcon }).addTo(mapRef.current);
+            hospitalMarkerRef.current = window.L.marker(hospitalPos, { icon: hospitalIcon }).addTo(mapRef.current);
+
+            routeLineRef.current = window.L.polyline([driverPosition, patientPos], {
+                color: '#2563eb',
+                weight: 4,
+                opacity: 0.85,
+                dashArray: '10, 10'
+            }).addTo(mapRef.current);
+
+            mapRef.current.fitBounds([driverPosition, patientPos, hospitalPos], { padding: [36, 36] });
         };
 
-        const renderMarkers = (driverPosition) => {
+        const updateDriverPosition = (driverPosition) => {
             if (!mapRef.current) {
-                mapRef.current = window.L.map(mapContainerRef.current, { 
-                    zoomControl: false,
-                    scrollWheelZoom: false 
-                }).setView(dispatch.patientPosition, 13);
-                window.L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
-
-                addTomTomLayers(mapRef.current, 'night', true, false);
+                initMap(driverPosition);
+                return;
             }
-
-            const ambulanceIcon = window.L.divIcon({
-                className: 'track-ambulance-icon',
-                html: `
-                    <div style="background: white; border: 3px solid #2563eb; padding: 4px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#2563eb" stroke="#2563eb" stroke-width="1.5"><path d="M10 17h.01"/><path d="M14 17h.01"/><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/><path d="M6 13V8l4-4h4l4 4v5"/><circle cx="7" cy="17" r="1"/><circle cx="17" cy="17" r="1"/></svg>
-                    </div>
-                `,
-                iconSize: [38, 38],
-                iconAnchor: [19, 19]
-            });
-
-            const patientIcon = window.L.divIcon({
-                className: 'track-patient-icon',
-                html: `
-                    <div class="pulse-ring"></div><div class="pulse-dot"></div>
-                `,
-                iconSize: [40, 40],
-                iconAnchor: [20, 20]
-            });
-
-            const hospitalIcon = window.L.divIcon({
-                className: 'track-hospital-icon',
-                html: `
-                    <div style="background: white; border: 3px solid #10b981; padding: 4px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#10b981" stroke="#10b981" stroke-width="1.5"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/><path d="M13 9v.01"/><path d="M13 12v.01"/><path d="M13 15v.01"/><path d="M17 15v.01"/><path d="M17 18v.01"/></svg>
-                    </div>
-                `,
-                iconSize: [38, 38],
-                iconAnchor: [19, 19]
-            });
-
-            if (!driverMarkerRef.current) {
-                driverMarkerRef.current = window.L.marker(driverPosition, { icon: ambulanceIcon }).addTo(mapRef.current);
-                patientMarkerRef.current = window.L.marker(dispatch.patientPosition, { icon: patientIcon }).addTo(mapRef.current);
-                hospitalMarkerRef.current = window.L.marker(dispatch.hospitalPosition, { icon: hospitalIcon }).addTo(mapRef.current);
-            } else {
-                driverMarkerRef.current.setLatLng(driverPosition);
-                patientMarkerRef.current?.setLatLng(dispatch.patientPosition);
-                hospitalMarkerRef.current?.setLatLng(dispatch.hospitalPosition);
-            }
-
-            const destination = getDestination();
-            if (!routeLineRef.current) {
-                routeLineRef.current = window.L.polyline([driverPosition, destination], {
-                    color: '#2563eb',
-                    weight: 4,
-                    opacity: 0.85,
-                    dashArray: '10, 10'
-                }).addTo(mapRef.current);
-            } else {
-                routeLineRef.current.setLatLngs([driverPosition, destination]);
-            }
-
-            mapRef.current.fitBounds([driverPosition, dispatch.patientPosition, dispatch.hospitalPosition], {
-                padding: [36, 36]
-            });
+            driverMarkerRef.current?.setLatLng(driverPosition);
+            routeLineRef.current?.setLatLngs([driverPosition, patientPositionRef.current]);
         };
 
-        const useFallbackLocation = () => renderMarkers(fallbackDriverPosition);
-
+        // Get initial position then watch — but only update driver marker, not reinit map
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                (position) => renderMarkers([position.coords.latitude, position.coords.longitude]),
-                useFallbackLocation,
-                { enableHighAccuracy: true }
+                (pos) => initMap([pos.coords.latitude, pos.coords.longitude]),
+                () => initMap(fallbackDriverPosition),
+                { enableHighAccuracy: true, timeout: 8000 }
             );
 
             watchIdRef.current = navigator.geolocation.watchPosition(
-                (position) => renderMarkers([position.coords.latitude, position.coords.longitude]),
-                useFallbackLocation,
+                (pos) => updateDriverPosition([pos.coords.latitude, pos.coords.longitude]),
+                () => {},
                 { enableHighAccuracy: true }
             );
         } else {
-            useFallbackLocation();
+            initMap(fallbackDriverPosition);
         }
 
         return () => {
@@ -227,18 +242,17 @@ function TrackPage() {
                 navigator.geolocation.clearWatch(watchIdRef.current);
                 watchIdRef.current = null;
             }
-
             if (mapRef.current) {
                 mapRef.current.remove();
                 mapRef.current = null;
             }
-
             driverMarkerRef.current = null;
             patientMarkerRef.current = null;
             hospitalMarkerRef.current = null;
             routeLineRef.current = null;
+            dispatchIdRef.current = null;
         };
-    }, [dispatch]);
+    }, [dispatch?.id]); // Only re-init map when the dispatch ID changes, not on every data update
 
     if (!dispatch) {
         return (
@@ -331,19 +345,25 @@ function TrackPage() {
                             <div className="track-info-grid">
                                 <div>
                                     <span>Emergency</span>
-                                    <strong>{dispatch.emergencyType}</strong>
+                                    <strong>{dispatch.emergencyType || 'General Emergency'}</strong>
                                 </div>
                                 <div>
                                     <span>Priority</span>
-                                    <strong>{dispatch.priority}</strong>
+                                    <strong>{dispatch.priority || 'HIGH'}</strong>
                                 </div>
                                 <div>
                                     <span>Pickup address</span>
-                                    <strong>{dispatch.pickupAddress}</strong>
+                                    <strong>
+                                        {dispatch.pickupAddress && dispatch.pickupAddress !== 'Unknown GPS Location'
+                                            ? dispatch.pickupAddress
+                                            : resolvedAddress || (dispatch.patientPosition?.[0]
+                                                ? `${dispatch.patientPosition[0].toFixed(5)}, ${dispatch.patientPosition[1].toFixed(5)}`
+                                                : 'Locating...')}
+                                    </strong>
                                 </div>
                                 <div>
                                     <span>Contact</span>
-                                    <strong>{dispatch.contactNumber}</strong>
+                                    <strong>{dispatch.contactNumber || 'Not provided'}</strong>
                                 </div>
                             </div>
                         </div>

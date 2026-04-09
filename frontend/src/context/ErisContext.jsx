@@ -68,7 +68,7 @@ const getRequestsUrlForRole = (role) => {
 };
 
 const getPriority = (emergencyType = '') => (
-  /cardiac|heart|stroke/i.test(emergencyType) ? 'CRITICAL' : 'HIGH'
+  /cardiac|heart|stroke|panic|sos/i.test(emergencyType) ? 'CRITICAL' : 'HIGH'
 );
 
 const getLogMessage = (request) => {
@@ -102,6 +102,7 @@ const mapRequestToDispatch = (request) => ({
   patientPosition: [request.locationLat, request.locationLng],
   priority: getPriority(request.emergencyType),
   ambulanceId: request.ambulance?.plateNumber || 'Awaiting assignment',
+  vehicleNumber: request.ambulance?.plateNumber || 'Awaiting assignment',
   ambulanceInternalId: request.ambulance?.id || null,
   driverName: request.driver?.name || request.ambulance?.driver?.name || 'Awaiting assignment',
   driverId: request.driver?.id || request.ambulance?.driver?.id || null,
@@ -377,10 +378,10 @@ export function ErisProvider({ children }) {
 
   const activeDispatch = useMemo(() => {
     if (selectedDispatchId) {
-      return dispatches.find(dispatch => dispatch.id === selectedDispatchId) || dispatches[0] || null;
+      return dispatches.find(dispatch => dispatch.id === selectedDispatchId) || null;
     }
 
-    return dispatches.find(dispatch => dispatch.status !== 'completed') || dispatches[0] || null;
+    return dispatches.find(dispatch => dispatch.status !== 'completed') || null;
   }, [dispatches, selectedDispatchId]);
 
   const currentHospital = useMemo(() => {
