@@ -163,7 +163,7 @@ function DriverDashboard() {
         return () => cleanupMap();
     }, [dispatchInfo?.id, dispatchInfo?.status]);
 
-    const handleAdvance = useCallback((nextStatus) => {
+    const handleAdvance = useCallback(async (nextStatus) => {
         if (!dispatchInfo) return;
         const msg = {
             en_route: 'Unit moving to pickup.',
@@ -171,7 +171,10 @@ function DriverDashboard() {
             in_transit: 'Unit heading to hospital with patient.',
             completed: 'Handover complete.',
         };
-        updateDispatchStatus(dispatchInfo.id, nextStatus, msg[nextStatus]);
+        const result = await updateDispatchStatus(dispatchInfo.id, nextStatus, msg[nextStatus]);
+        if (!result.ok) {
+            alert(`⚠️ Update Failed: ${result.message}`);
+        }
     }, [dispatchInfo, updateDispatchStatus]);
 
     const handleMarkFake = useCallback(() => {

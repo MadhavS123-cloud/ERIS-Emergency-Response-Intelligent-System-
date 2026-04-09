@@ -76,7 +76,7 @@ const getLogMessage = (request) => {
     return 'Emergency request closed in the dispatch system.';
   }
 
-  if (request.status === 'IN_ROUTE') {
+  if (request.status === 'EN_ROUTE') {
     return 'Assigned ambulance is now heading to the pickup location.';
   }
 
@@ -327,6 +327,7 @@ export function ErisProvider({ children }) {
       });
 
       const data = await response.json();
+      console.log('Update Status Result:', { status, data });
       if (data.status !== 'success') {
         return { ok: false, message: data.message || 'Unable to update request status.' };
       }

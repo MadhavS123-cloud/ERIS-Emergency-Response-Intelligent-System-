@@ -12,49 +12,62 @@ const TOMTOM_API_KEY = import.meta.env.VITE_TOMTOM_API_KEY || '';
 
 /**
  * Base map tile URL (raster)
- * @param {'main'|'night'} style - 'main' for light theme, 'night' for dark theme
  */
-export const getTomTomTileUrl = (style = 'main') =>
-  `https://api.tomtom.com/map/1/tile/basic/${style}/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`;
+export const getTomTomTileUrl = (style = 'main') => {
+  if (!TOMTOM_API_KEY) {
+    // Fallback to OSM if key is missing
+    return style === 'night' 
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  }
+  return `https://{s}.api.tomtom.com/map/1/tile/basic/${style}/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`;
+};
 
 /**
  * Traffic flow overlay tile URL (raster)
- * Shows real-time traffic speed relative to free-flow (green/yellow/red)
  */
-export const getTrafficFlowUrl = () =>
-  `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`;
+export const getTrafficFlowUrl = () => {
+  if (!TOMTOM_API_KEY) return null;
+  return `https://{s}.api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`;
+};
 
 /**
  * Traffic incident overlay tile URL (raster)
- * Shows accidents, road closures, construction, etc.
  */
-export const getTrafficIncidentUrl = () =>
-  `https://api.tomtom.com/traffic/map/4/tile/incidents/s1/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`;
+export const getTrafficIncidentUrl = () => {
+  if (!TOMTOM_API_KEY) return null;
+  return `https://{s}.api.tomtom.com/traffic/map/4/tile/incidents/s1/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`;
+};
 
-/** Standard attribution string for TomTom maps */
-export const TOMTOM_ATTRIBUTION = '&copy; <a href="https://www.tomtom.com" target="_blank">TomTom</a>';
+/** Standard attribution string */
+export const TOMTOM_ATTRIBUTION = TOMTOM_API_KEY 
+  ? '&copy; <a href="https://www.tomtom.com" target="_blank">TomTom</a>'
+  : '&copy; OpenStreetMap contributors';
 
 /**
  * Helper: Add TomTom base + traffic layers to a Leaflet map instance
- * @param {L.Map} map - The Leaflet map instance
- * @param {'main'|'night'} style - Map style
- * @param {boolean} showTraffic - Whether to add traffic flow overlay
- * @param {boolean} showIncidents - Whether to add traffic incidents overlay
  */
 export const addTomTomLayers = (map, style = 'main', showTraffic = true, showIncidents = false) => {
   if (!window.L || !map) return;
+
+  if (!TOMTOM_API_KEY) {
+    console.warn("⚠️ TomTom API Key missing (VITE_TOMTOM_API_KEY). Falling back to OpenStreetMap.");
+  }
 
   // Base map tiles
   window.L.tileLayer(getTomTomTileUrl(style), {
     attribution: TOMTOM_ATTRIBUTION,
     maxZoom: 22,
+    subdomains: ['a', 'b', 'c', 'd'],
     tileSize: 256,
   }).addTo(map);
 
   // Traffic flow overlay
-  if (showTraffic && TOMTOM_API_KEY) {
-    window.L.tileLayer(getTrafficFlowUrl(), {
+  const flowUrl = getTrafficFlowUrl();
+  if (showTraffic && flowUrl) {
+    window.L.tileLayer(flowUrl, {
       maxZoom: 22,
+      subdomains: ['a', 'b', 'c', 'd'],
       tileSize: 256,
       opacity: 0.7,
       zIndex: 10,
@@ -62,9 +75,11 @@ export const addTomTomLayers = (map, style = 'main', showTraffic = true, showInc
   }
 
   // Traffic incidents overlay
-  if (showIncidents && TOMTOM_API_KEY) {
-    window.L.tileLayer(getTrafficIncidentUrl(), {
+  const incidentUrl = getTrafficIncidentUrl();
+  if (showIncidents && incidentUrl) {
+    window.L.tileLayer(incidentUrl, {
       maxZoom: 22,
+      subdomains: ['a', 'b', 'c', 'd'],
       tileSize: 256,
       opacity: 0.8,
       zIndex: 11,
