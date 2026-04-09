@@ -60,21 +60,20 @@
 .form-control {
     width: 100%;
     padding: 16px;
-    border: 2px solid var(--text-secondary); /* Using higher contrast border */
+    border: 1.5px solid var(--border-std);
     border-radius: var(--radius-sm);
     font-size: var(--text-base);
     background-color: var(--bg-main);
     color: var(--text-primary);
     transition: all var(--transition-fast);
-    font-family: 'Inter', sans-serif;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle inner shadow for depth */
+    font-family: 'Roboto', system-ui, sans-serif;
 }
 
 .form-control:focus {
     outline: none;
     border-color: var(--emergency-red);
-    box-shadow: 0 0 0 4px var(--emergency-glow);
-    background-color: white;
+    box-shadow: 0 0 0 3px var(--emergency-glow);
+    background-color: var(--bg-card);
 }
 
 textarea.form-control {

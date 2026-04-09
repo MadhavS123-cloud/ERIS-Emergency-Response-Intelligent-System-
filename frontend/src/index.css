@@ -313,7 +313,53 @@ body.dark-theme .app-logo,
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)) brightness(1.1) contrast(1.1);
 }
 
-/* Global Logo Pulsing Animation for Loaders */
+/* ─── Leaflet map container — override default white/grey background ─── */
+.leaflet-container {
+  background: #1a2744 !important; /* Dark navy — matches night tile style */
+  font-family: inherit;
+}
+
+/* Leaflet popup — theme-aware */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-std) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border-radius: var(--radius-md) !important;
+}
+.leaflet-popup-tip {
+  background: var(--bg-card) !important;
+}
+.leaflet-popup-content {
+  color: var(--text-primary) !important;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.leaflet-popup-close-button {
+  color: var(--text-secondary) !important;
+}
+
+/* Leaflet zoom controls — theme-aware */
+.leaflet-control-zoom a {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-std) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--bg-main) !important;
+}
+
+/* Leaflet attribution */
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.5) !important;
+  color: rgba(255,255,255,0.6) !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a {
+  color: rgba(255,255,255,0.8) !important;
+}
+
+/* ─── Global Logo Pulsing Animation for Loaders ─── */
 @keyframes logoPulse {
     0% { transform: scale(0.95); filter: drop-shadow(0 0 8px rgba(37,99,235, 0.2)); }
     50% { transform: scale(1.05); filter: drop-shadow(0 0 24px rgba(37,99,235, 0.8)); }
@@ -323,3 +369,38 @@ body.dark-theme .app-logo,
     0%, 100% { opacity: 0.5; }
     50% { opacity: 1; }
 }
+
+/* ─── Live dot indicator ─── */
+.live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success-green);
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ─── Input / Select / Textarea — global dark-mode fix ─── */
+input, select, textarea {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  border-color: var(--border-std);
+}
+input::placeholder, textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ─── Scrollbar — theme-aware ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-main); }
+::-webkit-scrollbar-thumb { background: var(--border-std); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }

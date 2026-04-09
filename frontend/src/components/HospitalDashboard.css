@@ -4,7 +4,7 @@
     height: 100vh;
     overflow: hidden;
     background-color: var(--bg-main);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Roboto', system-ui, sans-serif;
 }
 
 /* Sidebar for Hospital */
@@ -132,13 +132,14 @@
 
 .beds-table input {
     padding: 12px 16px;
-    border: 2px solid var(--border-std);
+    border: 1.5px solid var(--border-std);
     border-radius: var(--radius-sm);
     width: 120px;
     font-size: var(--text-xl);
     font-weight: 800;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Roboto', system-ui, sans-serif;
     color: var(--dept-blue-dark);
+    background: var(--bg-main);
     transition: all var(--transition-fast);
 }
 
@@ -170,7 +171,7 @@
 .last-sync {
     font-size: var(--text-xs);
     color: var(--text-secondary);
-    font-family: 'Inter', monospace;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
     margin-top: 16px;
     text-align: center;
     font-weight: 500;
@@ -198,12 +199,12 @@
 }
 
 .queue-table th {
-    background: #f8fafc;
-    color: var(--text-secondary);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 800;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
 }
 
 /* 4-COLUMN COMPACT DISTRIBUTION */
@@ -264,7 +265,7 @@
     margin-top: 4px;
     color: var(--text-secondary);
     font-size: var(--text-xs);
-    font-family: 'Inter', monospace;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
 }
 
 .hospital-fleet-card {
@@ -282,7 +283,7 @@
 }
 
 .fleet-code {
-    font-family: 'Inter', monospace;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
     font-weight: 700;
     color: var(--dept-blue-dark);
 }
@@ -349,13 +350,20 @@
 
 .assignment-select {
     width: 100%;
-    border: 1px solid var(--border-std);
+    border: 1.5px solid var(--border-std);
     border-radius: var(--radius-md);
     padding: 12px 14px;
     background: var(--bg-card);
     color: var(--text-primary);
     font-weight: 600;
     margin-bottom: 10px;
+    transition: border-color var(--transition-fast);
+}
+
+.assignment-select:focus {
+    outline: none;
+    border-color: var(--dept-blue);
+    box-shadow: 0 0 0 3px var(--dept-glow);
 }
 
 /* Responsive Structural Overrides */
@@ -649,6 +657,11 @@
         grid-template-columns: 1fr;
     }
 }
+/* Map container — dark background prevents white flash while tiles load */
+.hospital-map-container {
+    background: #1a2744 !important;
+}
+
 /* Pulsing Map Markers */
 .marker-pulse {
     position: absolute;

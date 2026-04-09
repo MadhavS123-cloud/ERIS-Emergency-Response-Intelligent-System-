@@ -173,14 +173,14 @@
     width: 100%;
     padding: 14px 14px 14px 48px;
     background-color: var(--bg-main);
-    border: 1px solid var(--border-std);
+    border: 1.5px solid var(--border-std);
     border-radius: var(--radius-sm);
     font-size: var(--text-base);
     color: var(--text-primary);
     outline: none;
     box-sizing: border-box;
     transition: all var(--transition-fast);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Roboto', system-ui, sans-serif;
 }
 
 .form-control::placeholder {

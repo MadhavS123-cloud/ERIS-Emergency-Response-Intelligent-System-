@@ -161,7 +161,8 @@
     min-height: 420px;
     border-radius: var(--radius-md);
     overflow: hidden;
-    background: #dbeafe;
+    background: #1a2744; /* Dark navy — matches night tile, no white flash */
+    border: 1px solid var(--border-std);
 }
 
 .track-step-list,
