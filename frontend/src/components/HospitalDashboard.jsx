@@ -62,9 +62,9 @@ function HospitalDashboard() {
 
         // Clear markers no longer active
         Object.keys(markersRef.current).forEach(id => {
-            const stillActive = dispatches.find(d => d.id === id && d.status !== 'completed')
-                || hospitalFleet.find(a => a.id === id);
-            if (!stillActive) {
+            const isDispatchMarker = dispatches.find(d => d.id === id && d.status !== 'completed');
+            const isAmbulanceMarker = id.startsWith('amb-') && hospitalFleet.find(a => `amb-${a.id}` === id);
+            if (!isDispatchMarker && !isAmbulanceMarker) {
                 markersRef.current[id].remove();
                 delete markersRef.current[id];
             }
@@ -90,23 +90,26 @@ function HospitalDashboard() {
             }
         });
 
-        // Ambulance markers — real GPS positions from database
+        // Ambulance markers — real GPS positions, kept in sync via location_update socket
         hospitalFleet.forEach(ambulance => {
             if (!ambulance.locationLat || !ambulance.locationLng) return;
             const pos = [ambulance.locationLat, ambulance.locationLng];
+            const isBusy = !ambulance.isAvailable;
             const ambIcon = window.L.divIcon({
                 className: 'dd-ambulance-icon',
-                html: `<div style="background:#2563eb;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5"><path d="M10 17h.01"/><path d="M14 17h.01"/><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/><path d="M6 13V8l4-4h4l4 4v5"/></svg></div>`,
+                html: `<div style="background:${isBusy ? '#ef4444' : '#2563eb'};border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.4);"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5"><path d="M10 17h.01"/><path d="M14 17h.01"/><path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/><path d="M6 13V8l4-4h4l4 4v5"/></svg></div>`,
                 iconSize: [26, 26],
                 iconAnchor: [13, 13]
             });
             const markerId = `amb-${ambulance.id}`;
+            const popupContent = `<b>${ambulance.plateNumber}</b><br/>Driver: ${ambulance.driver?.name || 'Unassigned'}<br/>Status: ${isBusy ? '🔴 On Dispatch' : '🟢 Available'}<br/><small>${ambulance.locationLat.toFixed(5)}, ${ambulance.locationLng.toFixed(5)}</small>`;
             if (!markersRef.current[markerId]) {
                 markersRef.current[markerId] = window.L.marker(pos, { icon: ambIcon })
                     .addTo(mapInstance.current)
-                    .bindPopup(`<b>${ambulance.plateNumber}</b><br/>${ambulance.isAvailable ? 'Available' : 'On dispatch'}`);
+                    .bindPopup(popupContent);
             } else {
                 markersRef.current[markerId].setLatLng(pos);
+                markersRef.current[markerId].setPopupContent(popupContent);
             }
         });
 
@@ -444,6 +447,11 @@ function HospitalDashboard() {
                                                             <span className={`fleet-status-pill ${ambulance.isAvailable ? 'available' : 'busy'}`}>
                                                                 {ambulance.isAvailable ? 'Available' : 'Busy'}
                                                             </span>
+                                                            {ambulance.locationLat && ambulance.locationLng && (
+                                                                <div className="queue-cell-subtext" style={{ marginTop: '4px', fontSize: '10px' }}>
+                                                                    📍 {ambulance.locationLat.toFixed(4)}, {ambulance.locationLng.toFixed(4)}
+                                                                </div>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 ))

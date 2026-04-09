@@ -242,17 +242,27 @@ export function ErisProvider({ children }) {
       fetchData();
     };
 
-    // Real-time ambulance location updates — update only the position, no full refetch
+    // Real-time ambulance location updates — update dispatches AND hospitalFleet in sync
     const handleLocationUpdate = ({ ambulanceId, locationLat, locationLng }) => {
+      // 1. Update the dispatch that has this ambulance assigned
       setDispatches(prev => prev.map(d => {
         if (d.ambulanceInternalId !== ambulanceId) return d;
-        // Recompute ETA from new ambulance position to patient
         const dist = haversineKm(locationLat, locationLng, d.patientPosition?.[0], d.patientPosition?.[1]);
         const newEta = dist !== null
           ? `~${Math.max(2, Math.round((dist / 40) * 60))} mins`
           : d.eta;
         return { ...d, ambulancePosition: [locationLat, locationLng], eta: newEta };
       }));
+
+      // 2. Update the ambulance inside hospitals state so hospitalFleet map stays in sync
+      setHospitals(prev => prev.map(hospital => ({
+        ...hospital,
+        ambulances: (hospital.ambulances || []).map(amb =>
+          amb.id === ambulanceId
+            ? { ...amb, locationLat, locationLng }
+            : amb
+        )
+      })));
     };
 
     socket.on('new_emergency', handleRequestChange);
