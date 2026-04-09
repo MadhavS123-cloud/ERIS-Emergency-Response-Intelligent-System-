@@ -108,6 +108,31 @@ class AdminService {
   async getAllRequests() {
     return await requestRepository.findAllRequests();
   }
+
+  async getDeviceTrustList() {
+    return await prisma.deviceTrust.findMany({
+      orderBy: { trustScore: 'asc' }
+    });
+  }
+
+  async setDeviceBlacklist(deviceId, blacklisted) {
+    return await prisma.deviceTrust.upsert({
+      where: { deviceId },
+      update: { isBlacklisted: blacklisted },
+      create: { deviceId, isBlacklisted: blacklisted, trustScore: blacklisted ? -10 : 0 }
+    });
+  }
+
+  async getSuspiciousRequests() {
+    return await prisma.request.findMany({
+      where: { OR: [{ isSuspicious: true }, { isFake: true }] },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        ambulance: { include: { hospital: true, driver: true } }
+      }
+    });
+  }
 }
 
 export default new AdminService();

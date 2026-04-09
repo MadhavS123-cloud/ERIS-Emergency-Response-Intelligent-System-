@@ -19,5 +19,8 @@ router.use(restrictTo('ADMIN'));
 router.get('/dashboard-stats', adminController.getDashboardStats);
 router.get('/users', adminController.getAllUsers);
 router.get('/requests', adminController.getAllRequests);
+router.get('/devices', adminController.getDeviceTrustList);
+router.patch('/devices/:deviceId/blacklist', adminController.setDeviceBlacklist);
+router.get('/suspicious', adminController.getSuspiciousRequests);
 
 export default router;

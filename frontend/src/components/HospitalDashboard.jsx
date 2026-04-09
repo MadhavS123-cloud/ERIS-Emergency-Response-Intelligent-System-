@@ -30,11 +30,54 @@ function HospitalDashboard() {
     const [capacityForm, setCapacityForm] = useState(hospitalCapacity);
     const [syncMessage, setSyncMessage] = useState('');
     const [assignmentSelections, setAssignmentSelections] = useState({});
+    // Security panel state (ADMIN only)
+    const [suspiciousRequests, setSuspiciousRequests] = useState([]);
+    const [deviceList, setDeviceList] = useState([]);
+    const [securityLoading, setSecurityLoading] = useState(false);
     const currentUser = authService.getUser();
+    const isAdmin = currentUser?.role === 'ADMIN';
     const hospitalName = currentHospital?.name || `Hospital Account: ${currentUser?.hospitalId || 'Unlinked'}`;
     const hospitalId = currentHospital?.id || currentUser?.hospitalId || 'Unlinked';
     const availableFleet = hospitalFleet.filter((ambulance) => ambulance.isAvailable).length;
     const availableFleetOptions = hospitalFleet.filter((ambulance) => ambulance.isAvailable);
+
+    const loadSecurityData = useCallback(async () => {
+        if (!isAdmin) return;
+        setSecurityLoading(true);
+        try {
+            const token = authService.getToken();
+            const headers = { Authorization: `Bearer ${token}` };
+            const [suspRes, devRes] = await Promise.all([
+                fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/v1/admin/suspicious`, { headers }),
+                fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/v1/admin/devices`, { headers })
+            ]);
+            const [suspData, devData] = await Promise.all([suspRes.json(), devRes.json()]);
+            if (suspData.status === 'success') setSuspiciousRequests(suspData.data);
+            if (devData.status === 'success') setDeviceList(devData.data);
+        } catch (e) {
+            console.error('Failed to load security data', e);
+        } finally {
+            setSecurityLoading(false);
+        }
+    }, [isAdmin]);
+
+    const handleBlacklist = async (deviceId, blacklisted) => {
+        try {
+            const token = authService.getToken();
+            await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/v1/admin/devices/${deviceId}/blacklist`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ blacklisted })
+            });
+            await loadSecurityData();
+        } catch (e) {
+            console.error('Blacklist action failed', e);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'security') loadSecurityData();
+    }, [activeTab, loadSecurityData]);
     
     // Tracking Map Logic
     const mapInstance = useRef(null);
@@ -243,22 +286,25 @@ function HospitalDashboard() {
                 <nav className="hospital-nav">
                     <div
                         className={`hospital-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                        onClick={() => {
-                            setActiveTab('dashboard');
-                            setIsSidebarOpen(false);
-                        }}
+                        onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }}
                     >
                         Operational Overview
                     </div>
                     <div
                         className={`hospital-nav-item ${activeTab === 'capacity' ? 'active' : ''}`}
-                        onClick={() => {
-                            setActiveTab('capacity');
-                            setIsSidebarOpen(false);
-                        }}
+                        onClick={() => { setActiveTab('capacity'); setIsSidebarOpen(false); }}
                     >
                         Bed Coordination
                     </div>
+                    {isAdmin && (
+                        <div
+                            className={`hospital-nav-item ${activeTab === 'security' ? 'active' : ''}`}
+                            onClick={() => { setActiveTab('security'); setIsSidebarOpen(false); }}
+                            style={{ color: activeTab === 'security' ? 'var(--emergency-red)' : undefined }}
+                        >
+                            🛡️ Anti-Abuse
+                        </div>
+                    )}
                     <div className="hospital-nav-item" style={{ color: 'var(--emergency-red)', marginTop: 'auto' }} onClick={logout}>
                         System Logout
                     </div>
@@ -549,6 +595,86 @@ function HospitalDashboard() {
                             </div>
                         </div>
                     </>
+                ) : activeTab === 'security' ? (
+                    /* ── Anti-Abuse / Security Panel (ADMIN only) ── */
+                    <div>
+                        <div className="hospital-header" style={{ marginBottom: '24px' }}>
+                            <div>
+                                <h1>🛡️ ANTI-ABUSE CONTROL</h1>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
+                                    Suspicious requests, device trust scores, and blacklist management
+                                </p>
+                            </div>
+                            <button className="btn-update" style={{ width: 'auto', padding: '10px 20px', marginTop: 0 }} onClick={loadSecurityData}>
+                                {securityLoading ? 'Loading…' : '↻ Refresh'}
+                            </button>
+                        </div>
+
+                        <div className="section-label" style={{ marginBottom: '16px' }}>⚠️ SUSPICIOUS / FAKE REQUESTS</div>
+                        <div className="table-responsive" style={{ marginBottom: '40px' }}>
+                            <table className="queue-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request ID</th><th>Type</th><th>Reason</th>
+                                        <th>Trust Score</th><th>Status</th><th>Device</th><th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {suspiciousRequests.length === 0 ? (
+                                        <tr><td colSpan="7" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                                            {securityLoading ? 'Loading…' : 'No suspicious requests found.'}
+                                        </td></tr>
+                                    ) : suspiciousRequests.map(r => (
+                                        <tr key={r.id} style={{ background: r.isFake ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.04)' }}>
+                                            <td><span className="fleet-code">{r.id.slice(0, 8).toUpperCase()}</span></td>
+                                            <td style={{ fontSize: '12px' }}>{r.emergencyType}</td>
+                                            <td style={{ fontSize: '11px', color: 'var(--warning-orange)', maxWidth: '200px' }}>{r.suspiciousReason || (r.isFake ? 'Marked fake by driver' : '—')}</td>
+                                            <td><span style={{ fontWeight: 800, fontSize: '13px', color: (r.trustScoreAtRequest ?? 0) < 0 ? 'var(--emergency-red)' : 'var(--success-green)' }}>{r.trustScoreAtRequest ?? '—'}</span></td>
+                                            <td><span className={`fleet-status-pill ${r.isFake ? 'busy' : 'available'}`}>{r.isFake ? 'FAKE' : r.status}</span></td>
+                                            <td style={{ fontSize: '10px', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>{r.deviceId ? r.deviceId.slice(0, 12) + '…' : r.ipAddress || '—'}</td>
+                                            <td style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{new Date(r.createdAt).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="section-label" style={{ marginBottom: '16px' }}>📱 DEVICE TRUST SCORES</div>
+                        <div className="table-responsive">
+                            <table className="queue-table">
+                                <thead>
+                                    <tr>
+                                        <th>Device ID</th><th>Trust Score</th><th>Valid</th>
+                                        <th>Fake</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {deviceList.length === 0 ? (
+                                        <tr><td colSpan="6" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                                            {securityLoading ? 'Loading…' : 'No device records yet.'}
+                                        </td></tr>
+                                    ) : deviceList.map(d => (
+                                        <tr key={d.deviceId} style={{ background: d.isBlacklisted ? 'rgba(239,68,68,0.06)' : undefined }}>
+                                            <td><span className="fleet-code" style={{ fontSize: '11px' }}>{d.deviceId.slice(0, 16)}…</span></td>
+                                            <td><span style={{ fontWeight: 900, fontSize: '16px', color: d.trustScore < 0 ? 'var(--emergency-red)' : d.trustScore > 2 ? 'var(--success-green)' : 'var(--text-primary)' }}>{d.trustScore}</span></td>
+                                            <td style={{ color: 'var(--success-green)', fontWeight: 700 }}>{d.totalValid}</td>
+                                            <td style={{ color: 'var(--emergency-red)', fontWeight: 700 }}>{d.totalFake}</td>
+                                            <td><span className={`fleet-status-pill ${d.isBlacklisted ? 'busy' : 'available'}`}>{d.isBlacklisted ? 'BLACKLISTED' : 'Active'}</span></td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <button
+                                                    className="action-cell-btn"
+                                                    style={{ background: d.isBlacklisted ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)', color: d.isBlacklisted ? 'var(--success-green)' : 'var(--emergency-red)', boxShadow: 'none', border: `1px solid ${d.isBlacklisted ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}` }}
+                                                    onClick={() => handleBlacklist(d.deviceId, !d.isBlacklisted)}
+                                                >
+                                                    {d.isBlacklisted ? 'Unblock' : 'Blacklist'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 ) : (
                     <div className="hospital-capacity-layout">
                         <div>

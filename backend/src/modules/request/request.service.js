@@ -4,6 +4,8 @@ import hospitalRepository from '../hospital/hospital.repository.js';
 import { addEmergencyRequestToQueue } from '../../services/queue.service.js';
 import { getIO } from '../../services/socket.service.js';
 import { calculateDistance } from '../../utils/distance.js';
+import { prisma } from '../../config/db.js';
+import { randomUUID } from 'crypto';
 
 class RequestService {
   sortAmbulancesByDistance(ambulances, request) {
@@ -11,6 +13,61 @@ class RequestService {
       calculateDistance(request.locationLat, request.locationLng, a.locationLat ?? 0, a.locationLng ?? 0) -
       calculateDistance(request.locationLat, request.locationLng, b.locationLat ?? 0, b.locationLng ?? 0)
     ));
+  }
+
+  // ── Location Intelligence ──────────────────────────────────────────────────
+  async checkLocationIntelligence(deviceId, lat, lng) {
+    const flags = [];
+
+    if (!deviceId || !lat || !lng) return { isSuspicious: false, reason: null };
+
+    // 1. Repeated exact coordinates from same device in last 30 min
+    const recentFromDevice = await prisma.request.findMany({
+      where: {
+        deviceId,
+        createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) },
+        status: { not: 'CANCELLED' }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { locationLat: true, locationLng: true, createdAt: true }
+    });
+
+    for (const prev of recentFromDevice) {
+      const dist = calculateDistance(lat, lng, prev.locationLat, prev.locationLng);
+      if (dist < 0.05) { // within 50 metres
+        flags.push('Repeated requests from same coordinates');
+        break;
+      }
+    }
+
+    // 2. Velocity check — impossible travel speed between requests
+    if (recentFromDevice.length > 0) {
+      const last = recentFromDevice[0];
+      const distKm = calculateDistance(lat, lng, last.locationLat, last.locationLng);
+      const timeDiffHours = (Date.now() - new Date(last.createdAt).getTime()) / 3600000;
+      if (timeDiffHours > 0 && distKm / timeDiffHours > 300) {
+        flags.push('Unrealistic location jump (>300 km/h between requests)');
+      }
+    }
+
+    // 3. Cluster spam — 3+ requests from within 100m radius in last hour (any device)
+    const nearbyCount = await prisma.request.count({
+      where: {
+        createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+        locationLat: { gte: lat - 0.001, lte: lat + 0.001 },
+        locationLng: { gte: lng - 0.001, lte: lng + 0.001 },
+        isFake: false
+      }
+    });
+    if (nearbyCount >= 3) {
+      flags.push(`Cluster spam: ${nearbyCount} requests from same area in 1 hour`);
+    }
+
+    return {
+      isSuspicious: flags.length > 0,
+      reason: flags.join('; ') || null
+    };
   }
 
   async createRequest(patientId, data) {
@@ -37,22 +94,43 @@ class RequestService {
 
   async createGuestEmergency(data) {
     let trustScore = 0;
+    let isSuspicious = data.isSuspicious || false;
+    let suspiciousReason = data.suspiciousReason || null;
+
     if (data.deviceId) {
-       const deviceTrust = await requestRepository.getDeviceTrust(data.deviceId);
-       if (deviceTrust) trustScore = deviceTrust.trustScore;
+      const deviceTrust = await requestRepository.getDeviceTrust(data.deviceId);
+      if (deviceTrust) {
+        trustScore = deviceTrust.trustScore;
+
+        // ── Blacklist enforcement ──────────────────────────────────────────
+        if (deviceTrust.isBlacklisted) {
+          // Still dispatch (act first) but mark highly suspicious
+          isSuspicious = true;
+          suspiciousReason = (suspiciousReason ? suspiciousReason + '; ' : '') + 'Device is blacklisted';
+        }
+      }
     }
 
-    let isSuspicious = data.isSuspicious;
-    let suspiciousReason = data.suspiciousReason;
-
-    // Reject extremely low trust strictly or flag them
+    // ── Trust score threshold ──────────────────────────────────────────────
     if (trustScore <= -4) {
-       isSuspicious = true;
-       suspiciousReason = (suspiciousReason ? suspiciousReason + '; ' : '') + 'Extremely low trust score (Bot likely)';
+      isSuspicious = true;
+      suspiciousReason = (suspiciousReason ? suspiciousReason + '; ' : '') + 'Extremely low trust score';
+    }
+
+    // ── Location intelligence ──────────────────────────────────────────────
+    if (data.locationLat && data.locationLng) {
+      const locCheck = await this.checkLocationIntelligence(
+        data.deviceId, data.locationLat, data.locationLng
+      );
+      if (locCheck.isSuspicious) {
+        isSuspicious = true;
+        suspiciousReason = (suspiciousReason ? suspiciousReason + '; ' : '') + locCheck.reason;
+      }
     }
 
     const request = await requestRepository.createRequest({
       isGuest: true,
+      guestSessionId: randomUUID(),
       locationLat: data.locationLat,
       locationLng: data.locationLng,
       emergencyType: data.emergencyType || 'General Emergency',
@@ -64,40 +142,36 @@ class RequestService {
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
       deviceId: data.deviceId,
-      isSuspicious: isSuspicious,
-      suspiciousReason: suspiciousReason,
+      isSuspicious,
+      suspiciousReason,
       trustScoreAtRequest: trustScore
     });
 
-    // Act first, verify later: Auto dispatch via queue
+    // Act first, verify later — always dispatch
     await addEmergencyRequestToQueue(request);
-    
-    // Background Reverse Geocoding
+
+    // Background reverse geocoding
     if (data.locationLat && data.locationLng && request.pickupAddress === 'Unknown GPS Location') {
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.locationLat}&lon=${data.locationLng}`)
         .then(r => r.json())
         .then(async geo => {
-          if (geo && geo.display_name) {
-             await requestRepository.updateRequest(request.id, { pickupAddress: geo.display_name });
+          if (geo?.display_name) {
+            await requestRepository.updateRequest(request.id, { pickupAddress: geo.display_name });
           }
-        }).catch(err => {
-          // ignore background geocode errors
-        });
+        }).catch(() => {});
     }
-    
-    // Direct assignment logic for lightning-fast dispatch inline if needed, but queue does it cleanly!
+
+    // Inline fast dispatch — even for suspicious (act first)
     try {
-      if (!isSuspicious) {
-        // Just trigger standard queue/admin accept directly
-         const assignedAmbulance = await this.assignAmbulance(request, { role: 'ADMIN' });
-         await requestRepository.updateRequest(request.id, { 
-            status: 'ACCEPTED', 
-            ambulanceId: assignedAmbulance.id, 
-            driverId: assignedAmbulance.driverId 
-         });
-      }
+      const assignedAmbulance = await this.assignAmbulance(request, { role: 'ADMIN' });
+      await requestRepository.updateRequest(request.id, {
+        status: 'ACCEPTED',
+        ambulanceId: assignedAmbulance.id,
+        driverId: assignedAmbulance.driverId
+      });
     } catch (e) {
-      console.error('Instant assign failed, queue might pick it up', e.message);
+      // No ambulance available — keep PENDING, hospital will assign manually
+      console.warn('Auto-assign failed (no ambulance available):', e.message);
     }
 
     const finalRequest = await requestRepository.findRequestById(request.id);
@@ -221,9 +295,15 @@ class RequestService {
     if (driverFeedback === 'False Request') {
        updateData.isFake = true;
        updateData.driverFeedback = driverFeedback;
-       newStatus = 'CANCELLED'; // Force cancel
+       newStatus = 'CANCELLED';
        if (request.deviceId) {
           await requestRepository.updateDeviceTrustScore(request.deviceId, -2, true);
+       }
+    } else if (driverFeedback === 'Patient Found') {
+       updateData.driverFeedback = driverFeedback;
+       // Positive signal — boost trust score
+       if (request.deviceId) {
+          await requestRepository.updateDeviceTrustScore(request.deviceId, 1, false);
        }
     } else if (newStatus === 'COMPLETED' && request.deviceId) {
        await requestRepository.updateDeviceTrustScore(request.deviceId, 1, false);

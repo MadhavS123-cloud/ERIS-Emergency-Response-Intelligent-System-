@@ -21,6 +21,7 @@ function DriverDashboard() {
     const [showDetails, setShowDetails] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [notesOpen, setNotesOpen] = useState(false);
+    const [feedbackSent, setFeedbackSent] = useState(null); // 'found' | 'fake' | null
 
     const mapInstance = useRef(null);
     const driverMarker = useRef(null);
@@ -219,6 +220,15 @@ function DriverDashboard() {
     const handleMarkFake = useCallback(() => {
         if (!dispatchInfo || !window.confirm('Mark this as a fake request? It will cancel the case.')) return;
         updateDispatchStatus(dispatchInfo.id, 'completed', 'Marked as False Request by Driver', { driverFeedback: 'False Request' });
+        setFeedbackSent('fake');
+        setNotesOpen(false);
+    }, [dispatchInfo, updateDispatchStatus]);
+
+    const handleMarkPatientFound = useCallback(() => {
+        if (!dispatchInfo) return;
+        updateDispatchStatus(dispatchInfo.id, dispatchInfo.status, 'Patient confirmed at location by Driver', { driverFeedback: 'Patient Found' });
+        setFeedbackSent('found');
+        setNotesOpen(false);
     }, [dispatchInfo, updateDispatchStatus]);
 
     // =================== EMPTY STATE ===================
@@ -295,7 +305,25 @@ function DriverDashboard() {
                                 <div className="dd-notes-field"><span>Notes</span><strong>{dispatchInfo.medicalNotes}</strong></div>
                             )}
                         </div>
-                        <button className="dd-fake-btn" onClick={handleMarkFake}>⚠️ Mark as False Request</button>
+                        {feedbackSent ? (
+                            <div style={{ padding: '12px', borderRadius: '10px', textAlign: 'center', fontWeight: 700, fontSize: '14px',
+                                background: feedbackSent === 'found' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                                color: feedbackSent === 'found' ? '#10b981' : '#ef4444', border: `1px solid ${feedbackSent === 'found' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                                {feedbackSent === 'found' ? '✓ Patient Found — Trust score updated' : '⚠️ False Request reported'}
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    style={{ flex: 1, padding: '12px', background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                                    onClick={handleMarkPatientFound}
+                                >
+                                    ✓ Patient Found
+                                </button>
+                                <button className="dd-fake-btn" style={{ flex: 1 }} onClick={handleMarkFake}>
+                                    ⚠️ False Request
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
