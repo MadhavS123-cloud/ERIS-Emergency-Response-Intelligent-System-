@@ -163,7 +163,8 @@ elif nav == "📋 Active Emergencies":
                 with col1:
                     st.markdown(f"### `{r['id'][:8].upper()}` — {r.get('emergencyType','?')}")
                     st.caption(f"Patient: **{r.get('patientName','?')}** | Contact: {r.get('patientPhone','N/A')}")
-                    st.caption(f"📍 {r.get('pickupAddress') or f\"{r.get('locationLat','?')}, {r.get('locationLng','?')}\"}")
+                    addr = r.get('pickupAddress') or f"{r.get('locationLat','?')}, {r.get('locationLng','?')}"
+                    st.caption(f"📍 {addr}")
                 with col2:
                     st.markdown(f"**Status**")
                     st.markdown(f"`{r.get('status','?')}`")
