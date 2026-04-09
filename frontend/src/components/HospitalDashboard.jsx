@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useEris } from '../context/ErisContext';
 import authService from '../services/authService';
 import './HospitalDashboard.css';
@@ -34,6 +34,73 @@ function HospitalDashboard() {
     const hospitalId = currentHospital?.id || currentUser?.hospitalId || 'Unlinked';
     const availableFleet = hospitalFleet.filter((ambulance) => ambulance.isAvailable).length;
     const availableFleetOptions = hospitalFleet.filter((ambulance) => ambulance.isAvailable);
+    
+    // Tracking Map Logic
+    const mapInstance = useRef(null);
+    const markersRef = useRef({});
+    const mapContainerRef = useRef(null);
+
+    const initMap = useCallback(() => {
+        if (!window.L || !mapContainerRef.current || mapInstance.current) return;
+        
+        mapInstance.current = window.L.map(mapContainerRef.current, {
+            zoomControl: true,
+            attributionControl: false,
+        }).setView([12.9716, 77.5946], 12);
+
+        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(mapInstance.current);
+    }, []);
+
+    const updateMapMarkers = useCallback(() => {
+        if (!window.L || !mapInstance.current) return;
+
+        // Clear existing markers that are no longer active
+        Object.keys(markersRef.current).forEach(id => {
+            if (!dispatches.find(d => d.id === id && d.status !== 'completed')) {
+                markersRef.current[id].remove();
+                delete markersRef.current[id];
+            }
+        });
+
+        dispatches.filter(d => d.status !== 'completed').forEach(dispatch => {
+            if (!dispatch.patientPosition) return;
+
+            const icon = window.L.divIcon({
+                className: `map-marker-${dispatch.priority.toLowerCase()}`,
+                html: `<div class="marker-pulse"></div><div class="marker-core"></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            if (!markersRef.current[dispatch.id]) {
+                markersRef.current[dispatch.id] = window.L.marker(dispatch.patientPosition, { icon })
+                    .addTo(mapInstance.current)
+                    .bindPopup(`<b>${dispatch.requestId}</b><br/>${dispatch.patientName}<br/>${dispatch.emergencyType}`);
+            } else {
+                markersRef.current[dispatch.id].setLatLng(dispatch.patientPosition);
+            }
+        });
+
+        if (activeDispatch?.patientPosition) {
+             mapInstance.current.panTo(activeDispatch.patientPosition);
+        }
+    }, [dispatches, activeDispatch]);
+
+    useEffect(() => {
+        if (activeTab === 'dashboard') {
+            initMap();
+        } else if (mapInstance.current) {
+            mapInstance.current.remove();
+            mapInstance.current = null;
+            markersRef.current = {};
+        }
+    }, [activeTab, initMap]);
+
+    useEffect(() => {
+        updateMapMarkers();
+    }, [dispatches, activeDispatch, updateMapMarkers]);
 
     useEffect(() => {
         setCapacityForm(hospitalCapacity);
@@ -87,6 +154,14 @@ function HospitalDashboard() {
             ...current,
             [dispatchId]: ambulanceId,
         }));
+    };
+
+    const handleRejectRequest = async (dispatchId) => {
+        if (!window.confirm('Are you sure you want to reject/clear this request? It will be removed from your active queue.')) return;
+        const result = await updateDispatchStatus(dispatchId, 'completed', 'Hospital desk rejected/cleared this emergency call.');
+        if (!result?.ok) {
+            setSyncMessage(result?.message || 'Unable to clear request.');
+        }
     };
 
     return (
@@ -161,6 +236,14 @@ function HospitalDashboard() {
 
                 {activeTab === 'dashboard' ? (
                     <>
+                        <div className="dashboard-map-section" style={{ marginBottom: '32px' }}>
+                            <div className="section-label">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                                LIVE FLEET TRACKING
+                            </div>
+                            <div className="hospital-map-container" ref={mapContainerRef} style={{ height: '350px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-std)', boxShadow: 'var(--shadow-sm)' }}></div>
+                        </div>
+
                         <div className="section-label">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
@@ -208,14 +291,14 @@ function HospitalDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {dispatches.length === 0 ? (
+                                    {dispatches.filter(d => d.status !== 'completed').length === 0 ? (
                                         <tr>
                                             <td colSpan="4" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
                                                 Queue is clear. No active emergencies right now.
                                             </td>
                                         </tr>
                                     ) : (
-                                        dispatches.map((dispatch) => (
+                                        dispatches.filter(d => d.status !== 'completed').map((dispatch) => (
                                             <tr
                                                 key={dispatch.id}
                                                 className={`${dispatch.id === activeDispatch?.id ? 'queue-table-row-active ' : ''}${dispatch.priority === 'CRITICAL' ? 'critical-row' : ''}`}
@@ -247,16 +330,35 @@ function HospitalDashboard() {
                                                     <div className="queue-cell-subtext">{statusLabels[dispatch.status] || dispatch.status}</div>
                                                 </td>
                                                 <td style={{ textAlign: 'right' }}>
-                                                    {dispatch.status === 'completed' ? (
-                                                        <span className="table-status-pill complete">Closed</span>
-                                                    ) : (
-                                                        <button className="action-cell-btn" onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            handleDispatchAction(dispatch);
-                                                        }}>
+                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                        <button 
+                                                            className="action-cell-btn" 
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                handleDispatchAction(dispatch);
+                                                            }}
+                                                        >
                                                             {dispatch.status === 'incoming' ? 'Dispatch' : dispatch.status === 'in_transit' ? 'Confirm Arrival' : 'Track'}
                                                         </button>
-                                                    )}
+                                                        <button 
+                                                            className="action-cell-btn reject-btn" 
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                handleRejectRequest(dispatch.id);
+                                                            }}
+                                                            style={{
+                                                                background: 'rgba(239, 68, 68, 0.1)',
+                                                                color: 'var(--emergency-red)',
+                                                                padding: '8px 12px',
+                                                                minWidth: 'auto',
+                                                                boxShadow: 'none',
+                                                                border: '1px solid rgba(239, 68, 68, 0.2)'
+                                                            }}
+                                                            title="Clear/Reject Request"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
