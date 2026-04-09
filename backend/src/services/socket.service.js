@@ -3,15 +3,10 @@ import logger from '../utils/logger.js';
 
 let io;
 
-/**
- * Initialize Socket.IO. Call once during server startup.
- * @param {import('http').Server} server - The HTTP server instance
- * @returns {Server} The Socket.IO server instance
- */
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: '*', // Define specific origins in production
+      origin: '*',
       methods: ['GET', 'POST'],
     },
   });
@@ -19,35 +14,45 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     logger.info(`New client connected: ${socket.id}`);
 
-    // Placeholder events
     socket.on('join_room', (room) => {
       socket.join(room);
-      logger.info(`User ${socket.id} joined room ${room}`);
+      logger.info(`Socket ${socket.id} joined room: ${room}`);
+    });
+
+    // Driver joins their active request room so location updates are targeted
+    socket.on('join_request_room', (requestId) => {
+      socket.join(`request:${requestId}`);
+      logger.info(`Socket ${socket.id} joined request room: request:${requestId}`);
     });
 
     socket.on('request_created', (data) => {
-      logger.info('Emergency request created', data);
       socket.broadcast.emit('new_emergency', data);
     });
 
     socket.on('driver_accept', (data) => {
-      logger.info('Driver accepted request', data);
-
       const payload = {
         patientId: data.patientId,
-        requestId: data.requestId, // ✅ IMPORTANT
+        requestId: data.requestId,
         driverId: data.driverId,
       };
-
       io.to(data.patientId).emit('driver_assigned', payload);
     });
 
-    // 🔥 ADD THIS
-    socket.on("update_location", (data) => {
-      logger.info("📍 Location update:", data);
-
-      // ✅ send only to that request room
-      io.to(data.requestId).emit("ambulance_location_update", data);
+    // Driver sends location — broadcast to request room AND globally for hospital dashboards
+    socket.on('update_location', (data) => {
+      logger.info(`📍 Location update from driver for request ${data.requestId}`);
+      // Targeted: patient tracking page
+      if (data.requestId) {
+        io.to(`request:${data.requestId}`).emit('ambulance_location_update', data);
+      }
+      // Global: hospital dashboard fleet map
+      io.emit('location_update', {
+        ambulanceId: data.ambulanceId,
+        driverId: data.driverId,
+        locationLat: data.locationLat,
+        locationLng: data.locationLng,
+        requestId: data.requestId,
+      });
     });
 
     socket.on('disconnect', () => {
@@ -59,14 +64,8 @@ const initSocket = (server) => {
   return io;
 };
 
-/**
- * Get the active Socket.IO instance.
- * @returns {Server} The Socket.IO server instance
- */
 const getIO = () => {
-  if (!io) {
-    throw new Error('Socket.io not initialized!');
-  }
+  if (!io) throw new Error('Socket.io not initialized!');
   return io;
 };
 

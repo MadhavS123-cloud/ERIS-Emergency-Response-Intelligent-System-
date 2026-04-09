@@ -53,9 +53,14 @@ class AdminService {
       },
       fleet: fleet.map(a => ({
         unitId: a.plateNumber || a.id.slice(0, 8),
+        ambulanceId: a.id,
         driverName: a.driver ? a.driver.name : 'Unassigned',
+        driverId: a.driver?.id || null,
         status: a.isAvailable ? 'Available' : 'Active',
-        hospitalName: a.hospital ? a.hospital.name : 'Unknown'
+        hospitalName: a.hospital ? a.hospital.name : 'Unknown',
+        hospitalId: a.hospitalId,
+        locationLat: a.locationLat,
+        locationLng: a.locationLng,
       })),
       nodes: hospitals.map(h => ({
         nodeId: h.id.slice(0, 8),
@@ -68,11 +73,30 @@ class AdminService {
         id: r.id,
         status: r.status,
         emergencyType: r.emergencyType,
+        patientName: r.patientName || 'Unknown',
+        patientPhone: r.patientPhone || null,
+        pickupAddress: r.pickupAddress || null,
+        locationLat: r.locationLat,
+        locationLng: r.locationLng,
+        isGuest: r.isGuest,
+        isFake: r.isFake,
+        isSuspicious: r.isSuspicious,
+        suspiciousReason: r.suspiciousReason,
+        trustScoreAtRequest: r.trustScoreAtRequest,
         mlRisk: r.mlDelayRisk,
         mlDelayMins: r.mlExpectedDelay,
         mlReasons: r.mlReasons ? JSON.parse(r.mlReasons) : [],
         mlActions: r.mlSuggestedActions ? JSON.parse(r.mlSuggestedActions) : [],
-        createdAt: r.createdAt
+        ambulanceId: r.ambulance?.id || null,
+        ambulancePlate: r.ambulance?.plateNumber || null,
+        ambulanceLat: r.ambulance?.locationLat || null,
+        ambulanceLng: r.ambulance?.locationLng || null,
+        driverName: r.ambulance?.driver?.name || null,
+        hospitalName: r.ambulance?.hospital?.name || null,
+        hospitalLat: r.ambulance?.hospital?.locationLat || null,
+        hospitalLng: r.ambulance?.hospital?.locationLng || null,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
       }))
     };
   }

@@ -262,11 +262,23 @@ class RequestService {
     const updatedRequest = await requestRepository.updateRequest(id, updateData);
 
     const io = getIO();
+    // Broadcast to all relevant parties
     io.emit('request_updated', updatedRequest);
-    io.to(updatedRequest.patientId).emit('request_updated', updatedRequest);
+    // Targeted: patient
+    if (updatedRequest.patientId) {
+      io.to(updatedRequest.patientId).emit('request_updated', updatedRequest);
+    }
+    // Targeted: driver
     if (updatedRequest.driverId) {
       io.to(updatedRequest.driverId).emit('request_updated', updatedRequest);
     }
+    // Targeted: hospital dashboard
+    const hospitalId = updatedRequest.ambulance?.hospital?.id;
+    if (hospitalId) {
+      io.to(hospitalId).emit('request_updated', updatedRequest);
+    }
+    // Targeted: patient tracking page (request room)
+    io.to(`request:${updatedRequest.id}`).emit('request_updated', updatedRequest);
 
     return updatedRequest;
   }

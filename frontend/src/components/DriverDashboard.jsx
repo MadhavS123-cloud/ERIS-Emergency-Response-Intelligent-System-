@@ -128,7 +128,16 @@ function DriverDashboard() {
         }
     }, []);
 
-    const initMap = useCallback(() => {
+    // Join the request socket room so driver gets targeted updates
+    useEffect(() => {
+        if (!dispatchInfo?.id) return;
+        import('../socket').then(({ socket }) => {
+            if (!socket.connected) socket.connect();
+            socket.emit('join_request_room', dispatchInfo.id);
+        });
+    }, [dispatchInfo?.id]);
+
+    const initMapFn = useCallback(() => {
         if (!window.L || !dispatchInfo) return;
         cleanupMap();
 
@@ -186,7 +195,7 @@ function DriverDashboard() {
             cleanupMap();
             return undefined;
         }
-        initMap();
+        initMapFn();
         return () => cleanupMap();
     }, [dispatchInfo?.id, dispatchInfo?.status]);
 

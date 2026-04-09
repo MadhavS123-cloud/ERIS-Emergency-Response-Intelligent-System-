@@ -117,13 +117,19 @@ function HospitalDashboard() {
 
     useEffect(() => {
         if (activeTab === 'dashboard') {
+            // Re-init map whenever hospital data becomes available or tab switches
+            if (mapInstance.current) {
+                mapInstance.current.remove();
+                mapInstance.current = null;
+                markersRef.current = {};
+            }
             initMap();
         } else if (mapInstance.current) {
             mapInstance.current.remove();
             mapInstance.current = null;
             markersRef.current = {};
         }
-    }, [activeTab, initMap]);
+    }, [activeTab, initMap, currentHospital?.id]);
 
     useEffect(() => {
         updateMapMarkers();

@@ -40,6 +40,16 @@ function TrackPage() {
     
     const urlId = new URLSearchParams(window.location.search).get('id');
 
+    // Join the request-specific socket room for targeted ambulance location updates
+    useEffect(() => {
+        const requestId = activeDispatch?.id || urlId;
+        if (!requestId) return;
+        import('../socket').then(({ socket }) => {
+            if (!socket.connected) socket.connect();
+            socket.emit('join_request_room', requestId);
+        });
+    }, [activeDispatch?.id, urlId]);
+
     useEffect(() => {
         let interval;
         if (!activeDispatch && urlId) {
@@ -58,11 +68,19 @@ function TrackPage() {
                                 hospitalName: req.ambulance?.hospital?.name || 'Awaiting assignment',
                                 driverName: req.driver?.name || req.ambulance?.driver?.name || 'Awaiting assignment',
                                 driverPhone: req.driver?.phone || req.ambulance?.driver?.phone || 'Awaiting assignment',
-                                vehicleNumber: req.ambulance?.plateNumber || req.ambulanceId || 'Awaiting assignment',
-                                pickupAddress: req.pickupAddress || 'Unknown GPS Location',
-                                patientPosition: [req.locationLat, req.locationLng],
-                                hospitalPosition: [req.ambulance?.hospital?.locationLat || 12.9684, req.ambulance?.hospital?.locationLng || 77.6021],
-                                eta: req.status === 'EN_ROUTE' ? '8 mins' : 'Awaiting assignment',
+                                vehicleNumber: req.ambulance?.plateNumber || 'Awaiting assignment',
+                                pickupAddress: req.pickupAddress || null,
+                                patientPosition: (req.locationLat && req.locationLng) ? [req.locationLat, req.locationLng] : null,
+                                hospitalPosition: (req.ambulance?.hospital?.locationLat && req.ambulance?.hospital?.locationLng)
+                                    ? [req.ambulance.hospital.locationLat, req.ambulance.hospital.locationLng]
+                                    : null,
+                                ambulancePosition: (req.ambulance?.locationLat && req.ambulance?.locationLng)
+                                    ? [req.ambulance.locationLat, req.ambulance.locationLng]
+                                    : null,
+                                ambulanceInternalId: req.ambulance?.id || null,
+                                priority: /cardiac|heart|stroke|panic|sos/i.test(req.emergencyType) ? 'CRITICAL' : 'HIGH',
+                                eta: req.mlExpectedDelay ? `~${Math.round(req.mlExpectedDelay)} mins` : 'Awaiting dispatch',
+                                estimatedCharge: 3000,
                                 logs: [{ id: '1', message: 'Request triggered successfully.', type: 'system', timestamp: new Date(req.createdAt || Date.now()).toLocaleTimeString() }]
                             };
                             setGuestDispatch(prev => {

@@ -244,11 +244,15 @@ export function ErisProvider({ children }) {
 
     // Real-time ambulance location updates — update only the position, no full refetch
     const handleLocationUpdate = ({ ambulanceId, locationLat, locationLng }) => {
-      setDispatches(prev => prev.map(d =>
-        d.ambulanceInternalId === ambulanceId
-          ? { ...d, ambulancePosition: [locationLat, locationLng], eta: computeEta({ ...d, ambulance: { ...d.ambulance, locationLat, locationLng } }) }
-          : d
-      ));
+      setDispatches(prev => prev.map(d => {
+        if (d.ambulanceInternalId !== ambulanceId) return d;
+        // Recompute ETA from new ambulance position to patient
+        const dist = haversineKm(locationLat, locationLng, d.patientPosition?.[0], d.patientPosition?.[1]);
+        const newEta = dist !== null
+          ? `~${Math.max(2, Math.round((dist / 40) * 60))} mins`
+          : d.eta;
+        return { ...d, ambulancePosition: [locationLat, locationLng], eta: newEta };
+      }));
     };
 
     socket.on('new_emergency', handleRequestChange);
