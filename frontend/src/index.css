@@ -141,9 +141,10 @@ a:hover { color: var(--dept-blue-dark); }
 button {
   font-family: inherit;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform;
 }
-button:active { transform: scale(0.96) !important; }
+button:active { transform: scale(0.96); }
 
 input, select, textarea {
   background-color: var(--bg-main);
@@ -259,9 +260,10 @@ select option {
   box-shadow: 0 4px 16px var(--emergency-glow);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   position: relative;
   overflow: hidden;
+  will-change: transform;
 }
 .btn-emergency::after {
   content: '';
@@ -297,9 +299,10 @@ select option {
   border-radius: var(--radius-full);
   box-shadow: 0 4px 16px var(--dept-glow);
   letter-spacing: 0.04em;
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   position: relative;
   overflow: hidden;
+  will-change: transform;
 }
 .btn-secondary:hover {
   transform: translateY(-3px);
@@ -336,16 +339,15 @@ select option {
   outline-offset: 3px;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   CARD SYSTEM
-   ═══════════════════════════════════════════════════════════ */
+/* ── Cards — use opacity for shadow change, not box-shadow repaint ── */
 .card-std {
   background: var(--bg-card);
   border: 1px solid var(--border-std);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-md);
-  transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+  transition: transform var(--transition-smooth), opacity var(--transition-smooth);
   position: relative;
+  will-change: transform;
 }
 .card-std:hover {
   transform: translateY(-4px);
@@ -357,7 +359,8 @@ select option {
   border: 1px solid var(--border-std);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  transition: all var(--transition-smooth);
+  transition: transform var(--transition-smooth);
+  will-change: transform;
 }
 .card-glow:hover {
   transform: translateY(-4px);
@@ -394,17 +397,15 @@ select option {
 .theme-toggle-btn.dark  { background: #f8fafc; color: #0f172a; }
 .theme-toggle-btn:hover { transform: translateY(-4px) scale(1.08); }
 
-/* ═══════════════════════════════════════════════════════════
-   APP LOGO
-   ═══════════════════════════════════════════════════════════ */
+/* ── App Logo ── */
 .app-logo {
   object-fit: contain;
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast);  /* only transform, not filter */
   padding: 8px;
+  will-change: transform;
 }
 .app-logo:hover {
   transform: scale(1.03);
-  filter: drop-shadow(0 4px 10px var(--dept-glow));
 }
 body:not(.dark-theme) .app-logo,
 .light-theme .app-logo {
@@ -448,9 +449,9 @@ body.dark-theme .app-logo,
 .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 .lazy-fade-in { opacity: 0; }
-.lazy-fade-in.is-visible { animation: fadeIn 0.8s ease-out forwards; }
-.lazy-slide-up { opacity: 0; transform: translateY(20px); }
-.lazy-slide-up.is-visible { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.lazy-fade-in.is-visible { animation: fadeIn 0.6s ease-out forwards; }
+.lazy-slide-up { opacity: 0; transform: translateY(16px); }
+.lazy-slide-up.is-visible { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 /* ═══════════════════════════════════════════════════════════
    LIVE DOT

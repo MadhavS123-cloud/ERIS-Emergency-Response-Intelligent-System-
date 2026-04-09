@@ -57,30 +57,38 @@ function HomePage() {
         document.title = "ERIS | Fast Emergency Response System";
     }, []);
 
-    // ScrollSpy for Active Links
+    // ScrollSpy for Active Links — throttled with requestAnimationFrame
     useEffect(() => {
+        let ticking = false;
+
         const handleScroll = () => {
-            const scrollY = window.scrollY;
-            if (scrollY < 200) {
-                setActiveSection('');
-                return;
-            }
-            const sections = ['how', 'hospitals'];
-            let currentStr = '';
-            for (const section of sections) {
-                const el = document.getElementById(section);
-                if (el) {
-                    const rect = el.getBoundingClientRect();
-                    if (rect.top <= 150 && rect.bottom >= 150) {
-                        currentStr = section;
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                const scrollY = window.scrollY;
+                if (scrollY < 200) {
+                    setActiveSection('');
+                    ticking = false;
+                    return;
+                }
+                const sections = ['how', 'hospitals'];
+                let currentStr = '';
+                for (const section of sections) {
+                    const el = document.getElementById(section);
+                    if (el) {
+                        const top = el.offsetTop - 150;
+                        const bottom = top + el.offsetHeight;
+                        if (scrollY >= top && scrollY < bottom) {
+                            currentStr = section;
+                        }
                     }
                 }
-            }
-            setActiveSection(currentStr);
+                setActiveSection(currentStr);
+                ticking = false;
+            });
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
