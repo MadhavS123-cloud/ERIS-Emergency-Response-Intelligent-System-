@@ -153,6 +153,9 @@ function DriverDashboard() {
 
         addTomTomLayers(mapInstance.current, 'night', true, false);
 
+        // Force tile render after container is fully painted
+        setTimeout(() => mapInstance.current?.invalidateSize(), 150);
+
         const onPosition = (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;

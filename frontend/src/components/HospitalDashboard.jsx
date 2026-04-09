@@ -55,6 +55,16 @@ function HospitalDashboard() {
         }).setView(center || [20, 78], center ? 12 : 5); // India overview if no hospital location
 
         addTomTomLayers(mapInstance.current, 'night', true, false);
+
+        // Force tile render after container is fully painted
+        setTimeout(() => mapInstance.current?.invalidateSize(), 150);
+
+        // Re-invalidate on container resize (e.g. sidebar toggle, window resize)
+        if (window.ResizeObserver && mapContainerRef.current) {
+            const ro = new ResizeObserver(() => mapInstance.current?.invalidateSize());
+            ro.observe(mapContainerRef.current);
+            mapInstance.current._ro = ro;
+        }
     }, [currentHospital]);
 
     const updateMapMarkers = useCallback(() => {
@@ -122,12 +132,14 @@ function HospitalDashboard() {
         if (activeTab === 'dashboard') {
             // Re-init map whenever hospital data becomes available or tab switches
             if (mapInstance.current) {
+                mapInstance.current._ro?.disconnect();
                 mapInstance.current.remove();
                 mapInstance.current = null;
                 markersRef.current = {};
             }
             initMap();
         } else if (mapInstance.current) {
+            mapInstance.current._ro?.disconnect();
             mapInstance.current.remove();
             mapInstance.current = null;
             markersRef.current = {};

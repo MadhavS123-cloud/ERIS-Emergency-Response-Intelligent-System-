@@ -106,6 +106,7 @@ function HomePage() {
         // Cleanup Leaflet instance on unmount
         return () => {
             if (mapRef.current) {
+                mapRef.current._resizeObserver?.disconnect();
                 mapRef.current.remove();
                 mapRef.current = null;
             }
@@ -216,6 +217,16 @@ function HomePage() {
             }).setView(userLocation, 13);
 
             addTomTomLayers(mapRef.current, 'main', true, false);
+
+            // Force Leaflet to recalculate container size after render
+            setTimeout(() => mapRef.current?.invalidateSize(), 100);
+
+            // Re-invalidate on any container resize (handles scroll-into-view)
+            if (window.ResizeObserver) {
+                const ro = new ResizeObserver(() => mapRef.current?.invalidateSize());
+                ro.observe(mapContainer.current);
+                mapRef.current._resizeObserver = ro;
+            }
 
             // Add accurate user location marker
             const patientIcon = window.L.divIcon({
@@ -706,7 +717,7 @@ function HomePage() {
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span className="live-dot" style={{ background: 'var(--success-green)' }}></span> LIVE GPS TRACKING</span>
                                 {userLocation && <span style={{ fontFamily: 'monospace', opacity: 0.8 }}>LAT: {userLocation[0].toFixed(4)} LON: {userLocation[1].toFixed(4)}</span>}
                             </div>
-                            <div ref={mapContainer} style={{ flex: 1, width: '100%', backgroundColor: '#e2e8f0' }}></div>
+                            <div ref={mapContainer} style={{ flex: 1, width: '100%', minHeight: '460px', backgroundColor: '#1a2744' }}></div>
                         </div>
                     </div>
                 </div>

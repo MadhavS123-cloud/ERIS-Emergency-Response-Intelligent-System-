@@ -243,6 +243,9 @@ function TrackPage() {
 
         initMap();
 
+        // Leaflet needs to know the real container size after React renders it
+        setTimeout(() => mapRef.current?.invalidateSize(), 150);
+
         return () => {
             if (watchIdRef.current) {
                 navigator.geolocation.clearWatch(watchIdRef.current);
