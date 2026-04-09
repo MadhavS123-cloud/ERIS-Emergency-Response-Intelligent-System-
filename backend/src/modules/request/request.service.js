@@ -214,7 +214,7 @@ class RequestService {
     const request = await this.getRequestById(id);
     const actorRole = actor?.role;
     const requestHospitalId = request.ambulance?.hospital?.id || null;
-    let newStatus = status;
+    let newStatus = status?.toUpperCase();
     const updateData = {};
     const { ambulanceId = null, driverFeedback = null } = options;
 
