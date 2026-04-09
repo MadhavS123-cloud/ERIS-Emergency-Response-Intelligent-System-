@@ -1,0 +1,42 @@
+/* ═══════════════════════════════════════════════════════════
+   ERIS Patient Page
+   ═══════════════════════════════════════════════════════════ */
+
+.patient-page-root {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+.patient-page-header {
+  height: var(--header-height);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  border-bottom: 1px solid var(--border-std);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.patient-page-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.patient-page-main {
+  padding: 48px 20px;
+}
+
+@media (max-width: 768px) {
+  .patient-page-header {
+    padding: 0 16px;
+  }
+  .patient-page-main {
+    padding: 28px 16px;
+  }
+}

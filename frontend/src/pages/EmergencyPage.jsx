@@ -92,8 +92,8 @@ export default function EmergencyPage() {
         </a>
       </div>
       
-      <div style={{ marginTop: '3rem' }}>
-         <a href="/home" style={{ color: '#94a3b8', fontSize: '0.9rem', textDecoration: 'none' }}>Access Dashboard / Login &rarr;</a>
+      <div className="emergency-dashboard-link">
+         <a href="/home">Access Dashboard / Login &rarr;</a>
       </div>
     </div>
   );
