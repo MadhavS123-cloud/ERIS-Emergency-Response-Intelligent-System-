@@ -15,7 +15,7 @@ import random
 # ── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="ERIS Admin Dashboard",
-    page_icon="🚑",
+    page_icon=":ambulance:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -189,51 +189,51 @@ closed_requests = [r for r in all_requests if r.get("status") in ("COMPLETED", "
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🚑 ERIS")
+    st.markdown("## ERIS")
     st.caption("Emergency Response Intelligence System")
     st.divider()
 
     nav = st.radio(
         "Go to",
         [
-            "📊 Overview",
-            "🗺️ Live Map",
-            "📋 Active Emergencies",
-            "🚑 Fleet Status",
-            "🏥 Hospitals",
-            "📈 Demand Forecast",
-            "🔍 Pattern Analysis",
-            "✅ Data Quality",
-            "📑 Reports",
+            "Overview",
+            "Live Map",
+            "Active Emergencies",
+            "Fleet Status",
+            "Hospitals",
+            "Demand Forecast",
+            "Pattern Analysis",
+            "Data Quality",
+            "Reports",
         ],
         label_visibility="collapsed",
     )
 
     st.divider()
     if is_live:
-        st.success("🟢 Connected to live backend")
+        st.success("Connected to live backend")
     else:
-        st.info("🔵 Demo mode — showing sample data")
+        st.info("Demo mode — showing sample data")
         st.caption("Set BACKEND_URL env var to connect to your backend.")
 
     st.caption(f"Refreshed: {datetime.now().strftime('%H:%M:%S')}")
-    if st.button("🔄 Refresh Now"):
+    if st.button("Refresh Now"):
         st.cache_data.clear()
         st.rerun()
 
 # ── KPI Strip ─────────────────────────────────────────────────────────────────
 k1, k2, k3, k4 = st.columns(4)
-k1.metric("🚨 Requests (24h)", kpis.get("signals24h", 0))
-k2.metric("🚑 Units Deployed", kpis.get("unitsDeployed", 0))
-k3.metric("⏱️ Avg ML ETA", f"{kpis.get('avgLatencyMins', 0)} min")
-k4.metric("🏥 Active Hospitals", kpis.get("activeNodes", 0))
+k1.metric("Requests (24h)", kpis.get("signals24h", 0))
+k2.metric("Units Deployed", kpis.get("unitsDeployed", 0))
+k3.metric("Avg ML ETA", f"{kpis.get('avgLatencyMins', 0)} min")
+k4.metric("Active Hospitals", kpis.get("activeNodes", 0))
 st.divider()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Overview
 # ══════════════════════════════════════════════════════════════════════════════
-if nav == "📊 Overview":
-    st.subheader("📊 Overview")
+if nav == "Overview":
+    st.subheader("Overview")
 
     # Summary cards
     c1, c2, c3, c4 = st.columns(4)
@@ -304,17 +304,17 @@ if nav == "📊 Overview":
     fs1, fs2 = st.columns(2)
     with fs1:
         with st.container(border=True):
-            st.metric("🚑 Active Units", fleet_summary.get("Active", 0))
+            st.metric("Active Units", fleet_summary.get("Active", 0))
     with fs2:
         with st.container(border=True):
-            st.metric("✅ Available Units", fleet_summary.get("Available", 0))
+            st.metric("Available Units", fleet_summary.get("Available", 0))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Live Map
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "🗺️ Live Map":
-    st.subheader("🗺️ Live Map")
+elif nav == "Live Map":
+    st.subheader("Live Map")
 
     map_rows = []
 
@@ -374,21 +374,21 @@ elif nav == "🗺️ Live Map":
     st.plotly_chart(fig_map, use_container_width=True)
 
     m1, m2, m3 = st.columns(3)
-    m1.metric("🔴 Patient Locations", sum(1 for r in map_rows if r["type"] == "Patient"))
-    m2.metric("🔵 Ambulances", sum(1 for r in map_rows if r["type"] == "Ambulance"))
-    m3.metric("🟢 Hospitals", sum(1 for r in map_rows if r["type"] == "Hospital"))
+    m1.metric("Patient Locations", sum(1 for r in map_rows if r["type"] == "Patient"))
+    m2.metric("Ambulances", sum(1 for r in map_rows if r["type"] == "Ambulance"))
+    m3.metric("Hospitals", sum(1 for r in map_rows if r["type"] == "Hospital"))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Active Emergencies
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "📋 Active Emergencies":
-    st.subheader("📋 Active Emergencies")
+elif nav == "Active Emergencies":
+    st.subheader("Active Emergencies")
 
     st.markdown(f"**{len(active_requests)} active request(s)**")
 
     for r in active_requests:
-        risk_color = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}.get(r.get("mlRisk", "Low"), "⚪")
+        risk_color = {"High": "HIGH", "Medium": "MED", "Low": "LOW"}.get(r.get("mlRisk", "Low"), "—")
         label = f"{risk_color} [{r.get('id','?')[:8]}] {r.get('emergencyType','?')} — {r.get('patientName','?')} — {r.get('status','?')}"
         with st.expander(label):
             col1, col2 = st.columns(2)
@@ -425,8 +425,8 @@ elif nav == "📋 Active Emergencies":
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Fleet Status
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "🚑 Fleet Status":
-    st.subheader("🚑 Fleet Status")
+elif nav == "Fleet Status":
+    st.subheader("Fleet Status")
 
     active_count = sum(1 for a in fleet if a.get("status") == "Active")
     available_count = sum(1 for a in fleet if a.get("isAvailable"))
@@ -452,7 +452,7 @@ elif nav == "🚑 Fleet Status":
             "Unit ID": a.get("unitId","?"),
             "Driver": a.get("driverName","?"),
             "Status": a.get("status","?"),
-            "Available": "✅" if a.get("isAvailable") else "❌",
+            "Available": "Yes" if a.get("isAvailable") else "No",
             "Hospital": a.get("hospitalName","?"),
         } for a in fleet])
         st.dataframe(df_fleet, use_container_width=True)
@@ -476,8 +476,8 @@ elif nav == "🚑 Fleet Status":
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Hospitals
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "🏥 Hospitals":
-    st.subheader("🏥 Hospitals")
+elif nav == "Hospitals":
+    st.subheader("Hospitals")
 
     df_hosp = pd.DataFrame([{
         "Name": h.get("name","?"),
@@ -517,8 +517,8 @@ elif nav == "🏥 Hospitals":
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Demand Forecast
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "📈 Demand Forecast":
-    st.subheader("📈 Demand Forecast")
+elif nav == "Demand Forecast":
+    st.subheader("Demand Forecast")
 
     now = datetime.now()
 
@@ -614,8 +614,8 @@ elif nav == "📈 Demand Forecast":
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Pattern Analysis
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "🔍 Pattern Analysis":
-    st.subheader("🔍 Pattern Analysis")
+elif nav == "Pattern Analysis":
+    st.subheader("Pattern Analysis")
 
     days_of_week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     hours = list(range(24))
@@ -623,10 +623,10 @@ elif nav == "🔍 Pattern Analysis":
     # Hourly heatmap: hour vs day of week
     heatmap_data = rng.integers(0, 12, size=(7, 24)).astype(float)
     # Simulate realistic peaks: weekday mornings and evenings
-    for d in range(5):  # Mon-Fri
+    for d in range(5): # Mon-Fri
         heatmap_data[d, 7:10] += rng.uniform(3, 6, 3)
         heatmap_data[d, 17:20] += rng.uniform(2, 5, 3)
-    for d in range(5, 7):  # Weekends
+    for d in range(5, 7): # Weekends
         heatmap_data[d, 10:14] += rng.uniform(2, 4, 4)
 
     df_heat = pd.DataFrame(heatmap_data, index=days_of_week, columns=hours)
@@ -707,8 +707,8 @@ elif nav == "🔍 Pattern Analysis":
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Data Quality
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "✅ Data Quality":
-    st.subheader("✅ Data Quality")
+elif nav == "Data Quality":
+    st.subheader("Data Quality")
 
     # Quality metrics
     q1, q2, q3, q4 = st.columns(4)
@@ -786,8 +786,8 @@ elif nav == "✅ Data Quality":
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Reports
 # ══════════════════════════════════════════════════════════════════════════════
-elif nav == "📑 Reports":
-    st.subheader("📑 Reports")
+elif nav == "Reports":
+    st.subheader("Reports")
 
     active_count = sum(1 for a in fleet if a.get("status") == "Active")
 
@@ -865,11 +865,11 @@ elif nav == "📑 Reports":
     st.divider()
     st.markdown("**Key Insights**")
     with st.container(border=True):
-        st.markdown(f"- 📈 Request volume has increased by ~{int(rng.integers(8, 20))}% over the last 30 days.")
-        st.markdown(f"- ⏱️ Average ML-estimated ETA is **{avg_delay} minutes**, within acceptable SLA.")
-        st.markdown(f"- 🔴 High-risk cases account for **{high_risk_pct}%** of all requests — monitor closely.")
-        st.markdown(f"- 🚑 Fleet utilization is at **{round(active_count / max(len(fleet), 1) * 100, 1)}%** capacity.")
-        st.markdown(f"- 🏥 All {len(hospitals)} hospitals are operational with beds available.")
+        st.markdown(f"- Request volume has increased by ~{int(rng.integers(8, 20))}% over the last 30 days.")
+        st.markdown(f"- Average ML-estimated ETA is **{avg_delay} minutes**, within acceptable SLA.")
+        st.markdown(f"- High-risk cases account for **{high_risk_pct}%** of all requests — monitor closely.")
+        st.markdown(f"- Fleet utilization is at **{round(active_count / max(len(fleet), 1) * 100, 1)}%** capacity.")
+        st.markdown(f"- All {len(hospitals)} hospitals are operational with beds available.")
 
     st.divider()
     st.markdown("**Export Data**")
@@ -886,7 +886,7 @@ elif nav == "📑 Reports":
     } for r in all_requests])
     csv_data = df_export.to_csv(index=False).encode("utf-8")
     st.download_button(
-        label="⬇️ Download All Requests as CSV",
+        label="Download All Requests as CSV",
         data=csv_data,
         file_name=f"eris_requests_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
         mime="text/csv",
