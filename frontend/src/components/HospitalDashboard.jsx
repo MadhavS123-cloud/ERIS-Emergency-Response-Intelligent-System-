@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useEris } from '../context/ErisContext';
 import authService from '../services/authService';
 import { addTomTomLayers } from '../config/tomtom';
+import { socket } from '../socket';
 import './HospitalDashboard.css';
 
 const statusLabels = {
@@ -34,6 +35,15 @@ function HospitalDashboard() {
     const [suspiciousRequests, setSuspiciousRequests] = useState([]);
     const [deviceList, setDeviceList] = useState([]);
     const [securityLoading, setSecurityLoading] = useState(false);
+
+    // Tracking modal state
+    const [trackingDispatch, setTrackingDispatch] = useState(null);
+    const trackMapRef = useRef(null);
+    const trackMapContainerRef = useRef(null);
+    const trackAmbMarkerRef = useRef(null);
+    const trackPatientMarkerRef = useRef(null);
+    const trackRouteRef = useRef(null);
+    const [liveCoords, setLiveCoords] = useState(null); // { lat, lng, updatedAt }
     const currentUser = authService.getUser();
     const isAdmin = currentUser?.role === 'ADMIN';
     const hospitalName = currentHospital?.name || `Hospital Account: ${currentUser?.hospitalId || 'Unlinked'}`;
@@ -78,6 +88,129 @@ function HospitalDashboard() {
     useEffect(() => {
         if (activeTab === 'security') loadSecurityData();
     }, [activeTab, loadSecurityData]);
+
+    // ── Tracking Modal: init map when modal opens ──
+    useEffect(() => {
+        if (!trackingDispatch || !window.L) return;
+
+        // Wait one tick for the DOM to render the modal container
+        const timer = setTimeout(() => {
+            if (!trackMapContainerRef.current) return;
+
+            // Destroy previous instance
+            if (trackMapRef.current) {
+                trackMapRef.current.remove();
+                trackMapRef.current = null;
+                trackAmbMarkerRef.current = null;
+                trackPatientMarkerRef.current = null;
+                trackRouteRef.current = null;
+            }
+
+            const patientPos = trackingDispatch.patientPosition;
+            const ambPos = trackingDispatch.ambulancePosition;
+            const center = ambPos || patientPos || [20, 78];
+
+            trackMapRef.current = window.L.map(trackMapContainerRef.current, {
+                zoomControl: true,
+                attributionControl: false,
+            }).setView(center, 14);
+
+            addTomTomLayers(trackMapRef.current, 'night', true, false);
+            setTimeout(() => trackMapRef.current?.invalidateSize(), 100);
+
+            // Patient marker
+            if (patientPos) {
+                const patientIcon = window.L.divIcon({
+                    className: '',
+                    html: `<div style="position:relative;width:20px;height:20px;">
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;background:rgba(239,68,68,0.35);border-radius:50%;animation:track-modal-pulse 2s infinite;"></div>
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;background:#ef4444;border:2px solid white;border-radius:50%;"></div>
+                    </div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                });
+                trackPatientMarkerRef.current = window.L.marker(patientPos, { icon: patientIcon })
+                    .addTo(trackMapRef.current)
+                    .bindPopup(`<b>Patient</b><br/>${trackingDispatch.patientName}<br/>${trackingDispatch.emergencyType}`);
+            }
+
+            // Ambulance marker
+            if (ambPos) {
+                const ambIcon = window.L.divIcon({
+                    className: '',
+                    html: `<div style="background:white;border:3px solid #2563eb;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#2563eb" stroke="#2563eb" stroke-width="1.5">
+                            <path d="M10 17h.01"/><path d="M14 17h.01"/>
+                            <path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/>
+                            <path d="M6 13V8l4-4h4l4 4v5"/>
+                        </svg>
+                    </div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15],
+                });
+                trackAmbMarkerRef.current = window.L.marker(ambPos, { icon: ambIcon })
+                    .addTo(trackMapRef.current)
+                    .bindPopup(`<b>${trackingDispatch.ambulanceId}</b><br/>Driver: ${trackingDispatch.driverName}`);
+
+                // Route line
+                if (patientPos) {
+                    trackRouteRef.current = window.L.polyline([ambPos, patientPos], {
+                        color: '#2563eb', weight: 3, opacity: 0.8, dashArray: '8, 8'
+                    }).addTo(trackMapRef.current);
+                }
+
+                setLiveCoords({ lat: ambPos[0], lng: ambPos[1], updatedAt: new Date() });
+            } else {
+                setLiveCoords(null);
+            }
+
+            // Fit bounds
+            const points = [patientPos, ambPos].filter(Boolean);
+            if (points.length > 1) {
+                trackMapRef.current.fitBounds(points, { padding: [40, 40] });
+            }
+        }, 80);
+
+        return () => clearTimeout(timer);
+    }, [trackingDispatch?.id]); // re-init only when a different dispatch is opened
+
+    // ── Tracking Modal: update ambulance marker in real-time via socket ──
+    useEffect(() => {
+        if (!trackingDispatch) return;
+
+        const handleLocationUpdate = ({ ambulanceId, locationLat, locationLng }) => {
+            if (ambulanceId !== trackingDispatch.ambulanceInternalId) return;
+
+            const newPos = [locationLat, locationLng];
+            setLiveCoords({ lat: locationLat, lng: locationLng, updatedAt: new Date() });
+
+            if (!trackMapRef.current || !window.L) return;
+
+            if (trackAmbMarkerRef.current) {
+                trackAmbMarkerRef.current.setLatLng(newPos);
+            }
+
+            if (trackRouteRef.current && trackingDispatch.patientPosition) {
+                trackRouteRef.current.setLatLngs([newPos, trackingDispatch.patientPosition]);
+            }
+        };
+
+        socket.on('location_update', handleLocationUpdate);
+        return () => socket.off('location_update', handleLocationUpdate);
+    }, [trackingDispatch?.id, trackingDispatch?.ambulanceInternalId, trackingDispatch?.patientPosition]);
+
+    // ── Tracking Modal: cleanup map on close ──
+    const closeTrackingModal = useCallback(() => {
+        if (trackMapRef.current) {
+            trackMapRef.current.remove();
+            trackMapRef.current = null;
+            trackAmbMarkerRef.current = null;
+            trackPatientMarkerRef.current = null;
+            trackRouteRef.current = null;
+        }
+        setTrackingDispatch(null);
+        setLiveCoords(null);
+    }, []);
     
     // Tracking Map Logic
     const mapInstance = useRef(null);
@@ -236,7 +369,8 @@ function HospitalDashboard() {
             return;
         }
 
-        selectDispatch(dispatch.id);
+        // "Track" — open the tracking modal
+        setTrackingDispatch(dispatch);
     };
 
     const handleAssignmentSelection = (dispatchId, ambulanceId) => {
@@ -256,6 +390,7 @@ function HospitalDashboard() {
     };
 
     return (
+        <>
         <div className="hospital-dashboard-container">
             <div className="mobile-hospital-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -747,6 +882,91 @@ function HospitalDashboard() {
                 )}
             </main>
         </div>
+
+        {/* ── Tracking Modal ── */}
+        {trackingDispatch && (
+            <div className="track-modal-overlay" onClick={closeTrackingModal}>
+                <div className="track-modal" onClick={e => e.stopPropagation()}>
+                    {/* Header */}
+                    <div className="track-modal-header">
+                        <div>
+                            <div className="track-modal-title">
+                                <span className="track-modal-status-dot" />
+                                Live Tracking — {trackingDispatch.requestId}
+                            </div>
+                            <div className="track-modal-subtitle">
+                                {trackingDispatch.patientName} · {trackingDispatch.emergencyType} · {trackingDispatch.ambulanceId}
+                            </div>
+                        </div>
+                        <button className="track-modal-close" onClick={closeTrackingModal} aria-label="Close">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Map */}
+                    <div className="track-modal-map-wrap">
+                        <div ref={trackMapContainerRef} className="track-modal-map" />
+                    </div>
+
+                    {/* Live location strip — just below the map */}
+                    <div className="track-modal-coords">
+                        <div className="track-modal-coords-left">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <span className="track-modal-coords-label">Driver live location</span>
+                            {liveCoords ? (
+                                <span className="track-modal-coords-value">
+                                    {liveCoords.lat.toFixed(6)}, {liveCoords.lng.toFixed(6)}
+                                </span>
+                            ) : (
+                                <span className="track-modal-coords-waiting">
+                                    {trackingDispatch.ambulancePosition
+                                        ? `${trackingDispatch.ambulancePosition[0].toFixed(6)}, ${trackingDispatch.ambulancePosition[1].toFixed(6)}`
+                                        : 'Waiting for driver GPS…'}
+                                </span>
+                            )}
+                        </div>
+                        <div className="track-modal-coords-right">
+                            {liveCoords && (
+                                <>
+                                    <span className="live-dot" style={{ width: '6px', height: '6px' }} />
+                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                        Updated {liveCoords.updatedAt.toLocaleTimeString()}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Info row */}
+                    <div className="track-modal-info">
+                        <div className="track-modal-info-item">
+                            <span>Driver</span>
+                            <strong>{trackingDispatch.driverName}</strong>
+                        </div>
+                        <div className="track-modal-info-item">
+                            <span>ETA</span>
+                            <strong style={{ color: 'var(--dept-blue)' }}>{trackingDispatch.eta}</strong>
+                        </div>
+                        <div className="track-modal-info-item">
+                            <span>Status</span>
+                            <strong>{statusLabels[trackingDispatch.status] || trackingDispatch.status}</strong>
+                        </div>
+                        <div className="track-modal-info-item">
+                            <span>Priority</span>
+                            <strong style={{ color: trackingDispatch.priority === 'CRITICAL' ? 'var(--emergency-red)' : 'var(--warning-orange)' }}>
+                                {trackingDispatch.priority}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 }
 
