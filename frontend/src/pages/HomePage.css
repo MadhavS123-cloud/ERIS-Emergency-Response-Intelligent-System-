@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   ERIS Home Page — Product-grade Landing
+   ERIS Home Page — Clean, editorial, trustworthy
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Sticky Header ── */
@@ -13,15 +13,9 @@
   justify-content: space-between;
   padding: 0 80px;
   border-bottom: 1px solid var(--border-std);
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 1px 0 var(--border-std), var(--shadow-sm);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
   transition: background var(--transition-smooth);
-  /* Isolate header repaint from scroll content */
-  will-change: transform;
-  contain: layout style;
-  transform: translateZ(0);
 }
 
 /* ── Nav ── */
@@ -33,7 +27,7 @@
 
 .home-nav a {
   position: relative;
-  font-weight: 600;
+  font-weight: 500;
   font-size: var(--text-sm);
   color: var(--text-secondary);
   transition: color var(--transition-fast);
@@ -52,7 +46,7 @@
   left: 0;
   width: 0%;
   height: 2px;
-  background: var(--gradient-blue);
+  background: var(--dept-blue);
   border-radius: 2px;
   transition: width var(--transition-fast);
 }
@@ -65,19 +59,18 @@
 .btn-nav-login {
   text-decoration: none !important;
   color: var(--text-primary) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   font-size: var(--text-sm);
-  border: 1.5px solid var(--border-std);
-  padding: 10px 24px;
-  border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
-  background: var(--bg-card);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-std);
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  background: transparent;
 }
 .btn-nav-login:hover {
-  box-shadow: var(--shadow-md), 0 0 16px var(--dept-glow);
   border-color: var(--dept-blue);
-  transform: translateY(-2px);
+  color: var(--dept-blue) !important;
+  background: var(--dept-blue-light);
 }
 .btn-nav-login::after { display: none !important; }
 
@@ -89,18 +82,18 @@
   background: var(--emergency-red-light);
   color: var(--emergency-red-dark);
   padding: 8px 16px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   text-decoration: none;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  transition: all var(--transition-fast);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  transition: all 0.15s ease;
   font-weight: 700;
 }
 .nav-helpline:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--emergency-glow);
+  transform: translateY(-1px);
   background: var(--emergency-red);
   color: white;
   border-color: transparent;
+  box-shadow: var(--shadow-sm);
 }
 .nav-helpline .nav-helpline-icon {
   display: flex;
@@ -122,8 +115,8 @@
   padding: 8px;
   z-index: 101;
   cursor: pointer;
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
 }
 
 /* ── Hero Section ── */
@@ -132,10 +125,7 @@
   align-items: center;
   padding: 96px 80px;
   gap: 80px;
-  background:
-    radial-gradient(ellipse 60% 70% at 80% 50%, rgba(239, 68, 68, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 60% at 10% 80%, rgba(37, 99, 235, 0.06) 0%, transparent 55%);
-  contain: layout style;
+  background: var(--bg-main);
 }
 
 .hero-text {
@@ -172,52 +162,12 @@
   margin-bottom: 100px;
 }
 
-/* Stat number gradient text */
-.stat-number {
-  font-size: var(--text-5xl);
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  background: var(--gradient-blue);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1;
-  margin-bottom: 6px;
-  display: block;
-}
-
-.stat-number-red {
-  background: var(--gradient-emergency);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 /* ── Steps Grid ── */
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 28px;
   text-align: left;
-}
-
-/* Step card icon circle */
-.step-icon-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--gradient-blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 16px var(--dept-glow);
-  flex-shrink: 0;
-}
-
-.step-icon-circle-red {
-  background: var(--gradient-emergency);
-  box-shadow: 0 4px 16px var(--emergency-glow);
 }
 
 /* ── Hospitals Grid ── */
@@ -229,19 +179,9 @@
 
 /* ── Footer CTA ── */
 .footer-cta-section {
-  background: var(--gradient-emergency);
+  background: var(--emergency-red);
   position: relative;
   overflow: hidden;
-}
-
-.footer-cta-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 80% at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 80% 50%, rgba(0,0,0,0.15) 0%, transparent 55%);
-  pointer-events: none;
 }
 
 /* ── Responsive ── */
@@ -308,7 +248,7 @@
   .btn-nav-login {
     font-size: var(--text-xs);
     padding: 8px 16px;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
   }
 
   .hero-section { padding: 32px 16px; }

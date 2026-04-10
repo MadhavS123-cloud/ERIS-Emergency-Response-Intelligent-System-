@@ -7,7 +7,7 @@
   height: 100vh;
   overflow: hidden;
   background-color: var(--bg-main);
-  font-family: 'Roboto', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 /* ── Sidebar ── */
@@ -24,7 +24,7 @@
 
 .hospital-sidebar-header {
   padding: 28px 24px;
-  background: linear-gradient(135deg, var(--dept-blue-light) 0%, var(--bg-card) 100%);
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-std);
   display: flex;
   align-items: center;
@@ -65,7 +65,6 @@
   color: var(--dept-blue);
   font-weight: 800;
   border-color: rgba(37, 99, 235, 0.25);
-  box-shadow: 0 0 16px var(--dept-glow);
 }
 
 .hospital-reset-btn {
@@ -140,42 +139,34 @@
   padding: 24px;
   box-shadow: var(--shadow-sm);
   border-left: 4px solid var(--dept-blue);
-  transition: all var(--transition-smooth);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   position: relative;
   overflow: hidden;
 }
 
 .hospital-kpi-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle, var(--dept-glow) 0%, transparent 70%);
-  pointer-events: none;
+  display: none;
 }
 
 .hospital-kpi-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md), 0 0 20px var(--dept-glow);
+  box-shadow: var(--shadow-md);
 }
 
 .hospital-kpi-card.kpi-red {
   border-left-color: var(--emergency-red);
 }
 .hospital-kpi-card.kpi-red::after {
-  background: radial-gradient(circle, var(--emergency-glow) 0%, transparent 70%);
+  display: none;
 }
 .hospital-kpi-card.kpi-red:hover {
-  box-shadow: var(--shadow-md), 0 0 20px var(--emergency-glow);
+  box-shadow: var(--shadow-md);
 }
 
 .hospital-kpi-card.kpi-green {
   border-left-color: var(--success-green);
 }
 .hospital-kpi-card.kpi-green::after {
-  background: radial-gradient(circle, rgba(16,185,129,0.3) 0%, transparent 70%);
+  display: none;
 }
 
 .hospital-kpi-card span {
@@ -232,7 +223,7 @@
   width: 120px;
   font-size: var(--text-xl);
   font-weight: 800;
-  font-family: 'Roboto', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   color: var(--dept-blue);
   background: var(--bg-main);
   transition: all var(--transition-fast);
@@ -241,27 +232,26 @@
 .beds-table input:focus {
   outline: none;
   border-color: var(--dept-blue);
-  box-shadow: 0 0 0 4px var(--dept-glow);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .btn-update {
-  background: var(--gradient-blue);
+  background: var(--dept-blue);
   color: white;
   border: none;
   padding: 13px 24px;
-  font-weight: 800;
-  border-radius: var(--radius-full);
+  font-weight: 700;
+  border-radius: var(--radius-sm);
   width: 100%;
   margin-top: 16px;
-  box-shadow: 0 4px 16px var(--dept-glow);
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   font-size: var(--text-sm);
   cursor: pointer;
-  letter-spacing: 0.03em;
 }
 .btn-update:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--dept-glow);
+  background: var(--dept-blue-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .last-sync {
@@ -348,22 +338,21 @@
 }
 
 .action-cell-btn {
-  padding: 9px 22px;
-  background: var(--gradient-green);
+  padding: 8px 18px;
+  background: var(--success-green);
   color: white;
   border: none;
-  font-weight: 800;
+  font-weight: 700;
   font-size: var(--text-xs);
-  border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
-  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
   white-space: nowrap;
   cursor: pointer;
-  letter-spacing: 0.04em;
 }
 .action-cell-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .queue-cell-subtext {
@@ -478,7 +467,7 @@
 .assignment-select:focus {
   outline: none;
   border-color: var(--dept-blue);
-  box-shadow: 0 0 0 4px var(--dept-glow);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 /* ── Layout grids ── */
@@ -525,8 +514,7 @@
   transition: all var(--transition-fast);
 }
 .hospital-feed-item:hover {
-  border-color: rgba(37, 99, 235, 0.25);
-  box-shadow: 0 0 12px var(--dept-glow);
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
 .hospital-feed-type {

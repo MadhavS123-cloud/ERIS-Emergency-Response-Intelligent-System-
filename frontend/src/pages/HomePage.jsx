@@ -320,7 +320,7 @@ function HomePage() {
     };
 
     return (
-        <div className="landing-page" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-main)' }}>
+        <div className="landing-page" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-main)' }}>
             {/* Header */}
             <header className="home-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -733,11 +733,10 @@ function HomePage() {
 
             {/* Final CTA Banner */}
             <section className="lazy-fade-in" style={{
-                background: 'linear-gradient(135deg, var(--emergency-red) 0%, var(--emergency-red-dark) 100%)',
+                background: 'var(--emergency-red)',
                 padding: '80px 40px',
                 color: 'white',
-                textAlign: 'center',
-                boxShadow: 'inset 0 10px 30px rgba(0,0,0,0.1)'
+                textAlign: 'center'
             }}>
                 <h2 style={{ fontSize: 'var(--text-4xl)', marginBottom: '16px', color: 'white', letterSpacing: '-0.02em' }}>Need Emergency Help Right Now?</h2>
                 <p style={{ fontSize: 'var(--text-xl)', opacity: 0.9, marginBottom: '40px' }}>Don't wait. Every second matters in an emergency.</p>

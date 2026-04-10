@@ -65,9 +65,6 @@ export default function EmergencyPage() {
 
   return (
     <div className="ep-root">
-      {/* Ambient background layers */}
-      <div className="ep-bg-glow ep-bg-glow--top" />
-      <div className="ep-bg-glow ep-bg-glow--bottom" />
 
       {/* Top bar */}
       <header className="ep-topbar">
@@ -124,7 +121,7 @@ export default function EmergencyPage() {
             ) : (
               <>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 17h.01M14 17h.01M22 13h-4l-2-2H8l-2 2H2v7h20v-7ZM6 13V8l4-4h4l4 4v5"/><circle cx="7" cy="17" r="1"/><circle cx="17" cy="17" r="1"/></svg>
-                Request Help Now
+                Request Emergency Help
               </>
             )}
           </button>

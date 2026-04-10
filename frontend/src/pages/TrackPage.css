@@ -1,13 +1,10 @@
 /* ═══════════════════════════════════════════════════════════
-   ERIS Track Page — Live Tracking, Dark + Blue
+   ERIS Track Page — Data-forward, clean logistics tracker
    ═══════════════════════════════════════════════════════════ */
 
 .track-page-shell {
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 55% 45% at 90% 10%, rgba(37, 99, 235, 0.14) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 35% at 10% 90%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
-    linear-gradient(180deg, var(--bg-main) 0%, var(--bg-card) 100%);
+  background: var(--bg-main);
   padding: 28px;
 }
 
@@ -31,9 +28,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .track-brand {
@@ -44,7 +38,7 @@
 
 .track-brand-title {
   font-size: var(--text-xl);
-  font-weight: 900;
+  font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
@@ -62,21 +56,20 @@
 }
 
 .track-secondary-link {
-  padding: 10px 18px;
-  border-radius: var(--radius-full);
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
   background: var(--bg-main);
-  border: 1.5px solid var(--border-std);
+  border: 1px solid var(--border-std);
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: 600;
   font-size: var(--text-sm);
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 .track-secondary-link:hover {
   border-color: var(--dept-blue);
   color: var(--dept-blue);
-  box-shadow: 0 0 14px var(--dept-glow);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 /* ── Main layout ── */
@@ -92,45 +85,38 @@
   grid-template-columns: 2fr 1fr;
   gap: 28px;
   margin-bottom: 24px;
-  border-left: 4px solid var(--dept-blue);
-  box-shadow: var(--shadow-md), 0 0 30px var(--dept-glow);
+  border-left: 3px solid var(--dept-blue);
+  box-shadow: var(--shadow-md);
 }
 
-/* ── Status pill ── */
+/* ── Status pill — static badge, no animation ── */
 .track-status-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 16px;
+  padding: 5px 14px;
   border-radius: var(--radius-full);
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--emergency-red);
   font-size: var(--text-xs);
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 16px;
   border: 1px solid rgba(239, 68, 68, 0.2);
-  animation: statusPulse 2.5s ease-in-out infinite;
 }
 
 .track-status-pill.status-dispatched {
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(37, 99, 235, 0.1);
   color: var(--dept-blue);
   border-color: rgba(37, 99, 235, 0.2);
 }
 
 .track-status-pill.status-arrived,
 .track-status-pill.status-complete {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--success-green);
   border-color: rgba(16, 185, 129, 0.2);
-  animation: none;
-}
-
-@keyframes statusPulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.7; }
 }
 
 .track-hero-card h1 {
@@ -155,17 +141,16 @@
 .track-hero-meta div,
 .track-info-grid div,
 .reception-meta {
-  padding: 18px;
+  padding: 16px;
   background: var(--bg-main);
   border: 1px solid var(--border-std);
   border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  transition: border-color 0.15s ease;
 }
 
 .track-hero-meta div:hover,
 .track-info-grid div:hover {
   border-color: rgba(37, 99, 235, 0.3);
-  box-shadow: 0 0 14px var(--dept-glow);
 }
 
 .track-hero-meta span,
@@ -174,8 +159,8 @@
   display: block;
   font-size: var(--text-xs);
   color: var(--text-secondary);
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 8px;
 }
@@ -185,7 +170,7 @@
 .reception-meta strong {
   color: var(--text-primary);
   font-size: var(--text-lg);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* ── Two-column layout ── */
@@ -210,8 +195,8 @@
 .track-card-title {
   font-size: var(--text-xs);
   color: var(--text-secondary);
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 20px;
   display: flex;
@@ -226,14 +211,13 @@
   overflow: hidden;
   background: #1a2744;
   border: 1px solid var(--border-std);
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
 }
 
 /* ── Step list ── */
 .track-step-list,
 .track-log-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .track-step-item,
@@ -241,58 +225,49 @@
   display: grid;
   grid-template-columns: 18px 1fr;
   gap: 14px;
-  padding: 16px;
+  padding: 14px 16px;
   border-radius: var(--radius-md);
   background: var(--bg-main);
   border: 1px solid var(--border-std);
-  transition: all var(--transition-fast);
+  transition: border-color 0.15s ease;
 }
 
 /* Done state */
 .track-step-item.done {
   border-color: rgba(16, 185, 129, 0.25);
-  background: rgba(16, 185, 129, 0.04);
+  background: rgba(16, 185, 129, 0.03);
 }
 
 /* Active state */
 .track-step-item.active {
-  border-color: rgba(37, 99, 235, 0.35);
-  background: rgba(37, 99, 235, 0.06);
-  box-shadow: 0 0 16px var(--dept-glow);
+  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(37, 99, 235, 0.04);
 }
 
 /* Pending state */
 .track-step-item.pending {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .track-step-dot {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   margin-top: 4px;
-  border: 3px solid var(--border-std);
+  border: 2.5px solid var(--border-std);
   background: transparent;
   flex-shrink: 0;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .track-step-item.done .track-step-dot {
   border-color: var(--success-green);
   background: var(--success-green);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 }
 
 .track-step-item.active .track-step-dot {
   border-color: var(--dept-blue);
   background: var(--dept-blue);
-  box-shadow: 0 0 10px var(--dept-glow);
-  animation: dotPulse 1.8s ease-in-out infinite;
-}
-
-@keyframes dotPulse {
-  0%, 100% { box-shadow: 0 0 6px var(--dept-glow); }
-  50%       { box-shadow: 0 0 18px var(--dept-glow); }
 }
 
 .track-step-item strong,
@@ -300,7 +275,7 @@
   display: block;
   color: var(--text-primary);
   margin-bottom: 4px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .track-step-item div:last-child,
@@ -313,13 +288,12 @@
 /* ── Info grid ── */
 .track-info-grid {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* ── Reception card ── */
 .reception-card {
-  border-left: 4px solid var(--emergency-red);
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--bg-card) 100%);
+  border-left: 3px solid var(--emergency-red);
 }
 
 .reception-amount {
@@ -339,17 +313,17 @@
 
 /* ── Log type dots ── */
 .track-log-type {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   font-size: 0;
   margin-top: 5px;
   flex-shrink: 0;
 }
-.track-log-type.system   { background: var(--dept-blue); box-shadow: 0 0 6px var(--dept-glow); }
-.track-log-type.driver   { background: var(--success-green); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
-.track-log-type.hospital { background: var(--warning-orange); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
-.track-log-type.patient  { background: var(--emergency-red); box-shadow: 0 0 6px var(--emergency-glow); }
+.track-log-type.system   { background: var(--dept-blue); }
+.track-log-type.driver   { background: var(--success-green); }
+.track-log-type.hospital { background: var(--warning-orange); }
+.track-log-type.patient  { background: var(--emergency-red); }
 
 /* ── Empty state ── */
 .track-empty-card {
@@ -377,7 +351,6 @@
   background: #ef4444;
   border-radius: 50%;
   z-index: 2;
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.9);
 }
 .track-patient-icon .pulse-ring {
   position: absolute;
@@ -386,7 +359,7 @@
   transform: translate(-50%, -50%);
   width: 40px;
   height: 40px;
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.25);
   border-radius: 50%;
   z-index: 1;
   animation: track-pulsar 2s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
