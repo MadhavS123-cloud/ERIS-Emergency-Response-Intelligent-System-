@@ -211,13 +211,12 @@ with st.sidebar:
 
     st.divider()
     if is_live:
-        st.success("Connected to live backend")
+        st.caption("● Live data")
     else:
-        st.info("Demo mode — showing sample data")
-        st.caption("Set BACKEND_URL env var to connect to your backend.")
+        st.caption("● Sample data")
 
-    st.caption(f"Refreshed: {datetime.now().strftime('%H:%M:%S')}")
-    if st.button("Refresh Now"):
+    st.caption(f"Updated {datetime.now().strftime('%H:%M:%S')}")
+    if st.button("Refresh"):
         st.cache_data.clear()
         st.rerun()
 
