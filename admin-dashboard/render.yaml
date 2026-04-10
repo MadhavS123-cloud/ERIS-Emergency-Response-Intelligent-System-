@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: eris-admin-dashboard
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: admin-dashboard
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    healthCheckPath: /
+    envVars:
+      - key: BACKEND_URL
+        sync: false          # e.g. https://eris-backend.onrender.com
+      - key: ML_SERVICE_URL
+        sync: false          # e.g. https://eris-ml-service.onrender.com

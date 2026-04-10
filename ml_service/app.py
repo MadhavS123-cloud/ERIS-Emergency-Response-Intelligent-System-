@@ -103,12 +103,12 @@ async def general_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     port = int(os.getenv("ML_SERVICE_PORT", 8000))
     host = os.getenv("ML_SERVICE_HOST", "0.0.0.0")
-    
+
     uvicorn.run(
-        "app:app",
+        "ml_service.app:app",
         host=host,
         port=port,
         reload=True,
