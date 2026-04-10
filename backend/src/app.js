@@ -17,6 +17,9 @@ import requestRoutes from './modules/request/request.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import trackingRoutes from './modules/tracking/tracking.routes.js';
 import emergencyRoutes from './modules/request/emergency.routes.js';
+import forecastsRoutes from './modules/forecasts/forecasts.routes.js';
+import resourcesRoutes from './modules/resources/resources.routes.js';
+import patternsRoutes from './modules/patterns/patterns.routes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
@@ -75,6 +78,9 @@ app.use('/api/v1/requests', requestRoutes);
 app.use('/api/v1/emergency', emergencyRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/tracking', trackingRoutes);
+app.use('/api/v1/forecasts', forecastsRoutes);
+app.use('/api/v1/resources', resourcesRoutes);
+app.use('/api/v1/patterns', patternsRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

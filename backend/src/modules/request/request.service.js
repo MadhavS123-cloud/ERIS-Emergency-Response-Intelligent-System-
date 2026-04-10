@@ -6,6 +6,8 @@ import { getIO } from '../../services/socket.service.js';
 import { calculateDistance } from '../../utils/distance.js';
 import { prisma } from '../../config/db.js';
 import { randomUUID } from 'crypto';
+import MLService from '../../services/ml.service.js';
+import logger from '../../utils/logger.js';
 
 class RequestService {
   sortAmbulancesByDistance(ambulances, request) {
@@ -13,6 +15,144 @@ class RequestService {
       calculateDistance(request.locationLat, request.locationLng, a.locationLat ?? 0, a.locationLng ?? 0) -
       calculateDistance(request.locationLat, request.locationLng, b.locationLat ?? 0, b.locationLng ?? 0)
     ));
+  }
+
+  /**
+   * Get ML predictions for a request (delay, severity, hospital recommendations).
+   * @param {Object} requestData - Request data including location, emergency type, etc.
+   * @returns {Promise<Object>} - ML predictions or null if service unavailable
+   */
+  async getMLPredictions(requestData) {
+    try {
+      const startTime = Date.now();
+
+      // Compute features first
+      const features = await MLService.computeFeatures({
+        request_id: requestData.id || 'temp',
+        location_lat: requestData.locationLat,
+        location_lng: requestData.locationLng,
+        emergency_type: requestData.emergencyType,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!features || !features.features) {
+        logger.warn('Failed to compute features for ML predictions');
+        return null;
+      }
+
+      // Get delay prediction
+      const delayPrediction = await MLService.predictDelay({
+        distance_km: features.features.distance_to_nearest_hospital_km || 5.0,
+        time_of_day: features.features.hour_of_day || new Date().getHours(),
+        day_of_week: features.features.day_of_week || new Date().getDay(),
+        traffic_level: features.features.traffic_level || 'Medium',
+        weather: features.features.weather || 'Clear',
+        area_type: features.features.area_type || 'urban',
+        available_ambulances_nearby: features.features.available_ambulances_nearby || 3
+      });
+
+      // Get severity prediction
+      const severityPrediction = await MLService.predictSeverity({
+        emergency_type: requestData.emergencyType,
+        patient_age: requestData.patientAge || null,
+        vital_signs: requestData.vitalSigns || null,
+        location_type: 'home'
+      });
+
+      // Get hospital recommendations
+      const hospitalRecommendation = await MLService.recommendHospital({
+        patient_location: {
+          lat: requestData.locationLat,
+          lng: requestData.locationLng
+        },
+        emergency_type: requestData.emergencyType,
+        severity: severityPrediction?.severity || 'Medium',
+        current_time: new Date().toISOString()
+      });
+
+      const latency = Date.now() - startTime;
+
+      return {
+        delay: delayPrediction,
+        severity: severityPrediction,
+        hospital: hospitalRecommendation,
+        features: features.features,
+        latency_ms: latency
+      };
+    } catch (error) {
+      logger.error('Error getting ML predictions', { message: error.message });
+      return null;
+    }
+  }
+
+  /**
+   * Store ML predictions in database.
+   * @param {string} requestId - Request ID
+   * @param {Object} predictions - ML predictions object
+   */
+  async storeMlPredictions(requestId, predictions) {
+    if (!predictions) return;
+
+    try {
+      // Store delay prediction
+      if (predictions.delay) {
+        await MLService.storePrediction({
+          request_id: requestId,
+          model_name: 'delay_predictor',
+          model_version: predictions.delay.model_version || 'v2.0',
+          prediction_type: 'delay',
+          prediction_value: {
+            delay_minutes: predictions.delay.delay_minutes,
+            risk_category: predictions.delay.risk_category,
+            confidence: predictions.delay.confidence,
+            prediction_interval: predictions.delay.prediction_interval
+          },
+          features_used: predictions.features || {},
+          explanation: predictions.delay.explanation || null,
+          confidence_score: predictions.delay.confidence,
+          latency_ms: predictions.latency_ms
+        });
+      }
+
+      // Store severity prediction
+      if (predictions.severity) {
+        await MLService.storePrediction({
+          request_id: requestId,
+          model_name: 'severity_classifier',
+          model_version: predictions.severity.model_version || 'v1.0',
+          prediction_type: 'severity',
+          prediction_value: {
+            severity: predictions.severity.severity,
+            confidence: predictions.severity.confidence,
+            recommended_actions: predictions.severity.recommended_actions
+          },
+          features_used: predictions.features || {},
+          explanation: null,
+          confidence_score: predictions.severity.confidence,
+          latency_ms: predictions.latency_ms
+        });
+      }
+
+      // Store hospital recommendation
+      if (predictions.hospital && predictions.hospital.recommendations) {
+        await MLService.storePrediction({
+          request_id: requestId,
+          model_name: 'hospital_recommender',
+          model_version: 'v1.0',
+          prediction_type: 'hospital_recommendation',
+          prediction_value: {
+            recommendations: predictions.hospital.recommendations
+          },
+          features_used: predictions.features || {},
+          explanation: null,
+          confidence_score: null,
+          latency_ms: predictions.latency_ms
+        });
+      }
+    } catch (error) {
+      logger.error('Error storing ML predictions', { message: error.message });
+      // Don't throw - prediction storage failure shouldn't block request creation
+    }
   }
 
   // ── Location Intelligence ──────────────────────────────────────────────────
@@ -83,6 +223,17 @@ class RequestService {
       status: 'PENDING'
     });
 
+    // Get ML predictions (non-blocking)
+    const predictions = await this.getMLPredictions(request);
+    if (predictions) {
+      await this.storeMlPredictions(request.id, predictions);
+      logger.info('ML predictions stored for request', { 
+        requestId: request.id, 
+        delay: predictions.delay?.delay_minutes,
+        severity: predictions.severity?.severity 
+      });
+    }
+
     await addEmergencyRequestToQueue(request);
 
     const io = getIO();
@@ -146,6 +297,17 @@ class RequestService {
       suspiciousReason,
       trustScoreAtRequest: trustScore
     });
+
+    // Get ML predictions (non-blocking)
+    const predictions = await this.getMLPredictions(request);
+    if (predictions) {
+      await this.storeMlPredictions(request.id, predictions);
+      logger.info('ML predictions stored for guest request', { 
+        requestId: request.id, 
+        delay: predictions.delay?.delay_minutes,
+        severity: predictions.severity?.severity 
+      });
+    }
 
     // Act first, verify later — always dispatch
     await addEmergencyRequestToQueue(request);

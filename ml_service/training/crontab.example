@@ -1,0 +1,30 @@
+# ML Training Pipeline Cron Jobs
+# 
+# This file contains example cron job configurations for automated model training.
+# To install these cron jobs:
+#   1. Edit this file to match your environment paths
+#   2. Run: crontab -e
+#   3. Copy the desired cron jobs below
+#
+# Cron format: minute hour day month day_of_week command
+#
+# Examples:
+# - 0 2 * * 0  : Every Sunday at 2:00 AM
+# - 0 3 * * 1  : Every Monday at 3:00 AM
+# - 0 4 1 * *  : First day of every month at 4:00 AM
+
+# Weekly training - Every Sunday at 2:00 AM
+0 2 * * 0 /path/to/ml_service/training/scheduler.sh >> /path/to/logs/cron.log 2>&1
+
+# Alternative: Train individual models on different days
+# Delay Predictor - Every Sunday at 2:00 AM
+# 0 2 * * 0 cd /path/to/project && python -m ml_service.training.cli --model delay_predictor --model-type regression >> /path/to/logs/delay_predictor.log 2>&1
+
+# Severity Classifier - Every Sunday at 3:00 AM
+# 0 3 * * 0 cd /path/to/project && python -m ml_service.training.cli --model severity_classifier --model-type classification >> /path/to/logs/severity_classifier.log 2>&1
+
+# Demand Forecaster - Every Sunday at 4:00 AM
+# 0 4 * * 0 cd /path/to/project && python -m ml_service.training.cli --model demand_forecaster --model-type forecasting >> /path/to/logs/demand_forecaster.log 2>&1
+
+# Monthly full retraining with more trials - First Sunday of each month at 1:00 AM
+# 0 1 * * 0 [ $(date +\%d) -le 7 ] && /path/to/ml_service/training/scheduler.sh >> /path/to/logs/monthly_training.log 2>&1

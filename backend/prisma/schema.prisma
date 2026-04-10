@@ -38,6 +38,7 @@ model Ambulance {
   driver      User?     @relation("DriverAmbulance", fields: [driverId], references: [id])
   hospital    Hospital  @relation("HospitalAmbulances", fields: [hospitalId], references: [id], onDelete: Cascade)
   request     Request[] @relation("RequestAmbulance")
+  recommendations ResourceRecommendation[] @relation("AmbulanceRecommendations")
 }
 
 model Hospital {
@@ -96,6 +97,7 @@ model Request {
   ambulance     Ambulance?    @relation("RequestAmbulance", fields: [ambulanceId], references: [id])
   driver        User?         @relation("DriverRequests", fields: [driverId], references: [id])
   patient       User?         @relation("PatientRequests", fields: [patientId], references: [id], onDelete: Cascade)
+  mlPredictions MLPrediction[] @relation("RequestMLPredictions")
 }
 
 model DeviceTrust {
@@ -106,6 +108,131 @@ model DeviceTrust {
   isBlacklisted Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model MLPrediction {
+  id              String   @id @default(uuid())
+  requestId       String?  @map("request_id")
+  modelName       String   @map("model_name")
+  modelVersion    String   @map("model_version")
+  predictionType  String   @map("prediction_type")
+  predictionValue Json     @map("prediction_value")
+  featuresUsed    Json     @map("features_used")
+  explanation     Json?
+  confidenceScore Float?   @map("confidence_score")
+  latencyMs       Int?     @map("latency_ms")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  request Request? @relation("RequestMLPredictions", fields: [requestId], references: [id], onDelete: SetNull)
+
+  @@index([requestId])
+  @@index([modelName, createdAt])
+  @@map("ml_predictions")
+}
+
+model FeatureDefinition {
+  id               String   @id @default(uuid())
+  featureName      String   @unique @map("feature_name")
+  featureType      String   @map("feature_type")
+  computationLogic String?  @map("computation_logic")
+  dependencies     Json?
+  dataType         String?  @map("data_type")
+  description      String?
+  version          String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_definitions")
+}
+
+model DemandForecast {
+  id                      String   @id @default(uuid())
+  forecastTimestamp       DateTime @map("forecast_timestamp")
+  generatedAt             DateTime @map("generated_at")
+  horizonHours            Int      @map("horizon_hours")
+  predictedRequests       Int      @map("predicted_requests")
+  confidenceIntervalLower Int?     @map("confidence_interval_lower")
+  confidenceIntervalUpper Int?     @map("confidence_interval_upper")
+  byEmergencyType         Json?    @map("by_emergency_type")
+  byRegion                Json?    @map("by_region")
+  modelVersion            String?  @map("model_version")
+  actualRequests          Int?     @map("actual_requests")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  @@index([forecastTimestamp])
+  @@map("demand_forecasts")
+}
+
+model ResourceRecommendation {
+  id                     String    @id @default(uuid())
+  ambulanceId            String?   @map("ambulance_id")
+  recommendationType     String    @map("recommendation_type")
+  currentLocationLat     Float?    @map("current_location_lat")
+  currentLocationLng     Float?    @map("current_location_lng")
+  recommendedLocationLat Float?    @map("recommended_location_lat")
+  recommendedLocationLng Float?    @map("recommended_location_lng")
+  reason                 String?
+  expectedImpact         Json?     @map("expected_impact")
+  priority               String?
+  status                 String    @default("pending")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  executedAt             DateTime? @map("executed_at")
+  outcome                Json?
+
+  ambulance Ambulance? @relation("AmbulanceRecommendations", fields: [ambulanceId], references: [id], onDelete: SetNull)
+
+  @@map("resource_recommendations")
+}
+
+model PatternAnalysis {
+  id                   String    @id @default(uuid())
+  analysisType         String    @map("analysis_type")
+  patternType          String?   @map("pattern_type")
+  description          String?
+  detectedAt           DateTime  @map("detected_at")
+  severity             String?
+  affectedMetrics      Json?     @map("affected_metrics")
+  potentialCauses      Json?     @map("potential_causes")
+  recommendedActions   Json?     @map("recommended_actions")
+  confidenceScore      Float?    @map("confidence_score")
+  status               String    @default("new")
+  investigatedAt       DateTime? @map("investigated_at")
+  investigationNotes   String?   @map("investigation_notes")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  @@map("pattern_analysis")
+}
+
+model DataQualityMetric {
+  id             String   @id @default(uuid())
+  metricName     String   @map("metric_name")
+  metricValue    Float    @map("metric_value")
+  thresholdValue Float?   @map("threshold_value")
+  status         String?
+  details        Json?
+  measuredAt     DateTime @map("measured_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([metricName, measuredAt])
+  @@map("data_quality_metrics")
+}
+
+model ModelTrainingRun {
+  id                    String    @id @default(uuid())
+  modelName             String    @map("model_name")
+  runId                 String    @unique @map("run_id")
+  trainingStart         DateTime  @map("training_start")
+  trainingEnd           DateTime? @map("training_end")
+  dataVersion           String?   @map("data_version")
+  hyperparameters       Json?
+  metrics               Json?
+  status                String?
+  promotedToProduction  Boolean   @default(false) @map("promoted_to_production")
+  promotedAt            DateTime? @map("promoted_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  @@index([modelName, trainingStart])
+  @@map("model_training_runs")
 }
 
 enum Role {
