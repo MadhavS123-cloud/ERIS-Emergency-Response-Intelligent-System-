@@ -55,7 +55,7 @@ def make_demo_requests(n=18):
     statuses = ["PENDING", "ACCEPTED", "EN_ROUTE", "IN_TRANSIT", "COMPLETED", "COMPLETED", "COMPLETED"]
     records = []
     for i in range(n):
-        created = datetime.now() - timedelta(hours=rng.integers(0, 72))
+        created = datetime.now() - timedelta(hours=int(rng.integers(0, 72)))
         etype = rng.choice(EMERGENCY_TYPES)
         status = rng.choice(statuses)
         delay = float(rng.integers(4, 22))
