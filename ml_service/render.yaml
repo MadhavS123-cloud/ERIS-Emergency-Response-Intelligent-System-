@@ -5,19 +5,21 @@ services:
     region: oregon
     plan: free
     rootDir: .
-    buildCommand: pip install --only-binary=:all: numpy pandas scipy scikit-learn && pip install -r ml_service/requirements.txt
+    buildCommand: pip install --upgrade pip && pip install --only-binary=:all: numpy pandas scipy scikit-learn xgboost pydantic pydantic-core && pip install -r ml_service/requirements.txt --no-build-isolation
     startCommand: uvicorn ml_service.app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        sync: false          # Same PostgreSQL URL as backend
+        sync: false
       - key: REDIS_HOST
-        sync: false          # Render Redis host
+        sync: false
       - key: REDIS_PORT
         value: "6379"
       - key: REDIS_PASSWORD
-        sync: false          # Render Redis password
+        sync: false
       - key: LOG_LEVEL
         value: INFO
       - key: ML_SERVICE_HOST
         value: "0.0.0.0"
+      - key: PYTHON_VERSION
+        value: "3.11.9"

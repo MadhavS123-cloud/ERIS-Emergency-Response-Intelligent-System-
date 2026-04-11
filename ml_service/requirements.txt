@@ -1,25 +1,23 @@
-# FastAPI and server
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-pydantic==2.9.2
-python-multipart==0.0.12
+# FastAPI and server — all have Python 3.11 wheels
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.7.1
+python-multipart==0.0.9
 
-# ML — pre-built wheels only (no source compilation)
-scikit-learn==1.5.2
-xgboost==2.1.3
-
-# Data — use latest stable with guaranteed wheels
-numpy>=1.26,<2.0
-pandas>=2.1,<3.0
-scipy>=1.11,<2.0
+# ML — pre-built wheels for Python 3.11
+scikit-learn==1.4.2
+xgboost==2.0.3
+numpy==1.26.4
+pandas==2.2.2
+scipy==1.13.0
 
 # Redis
-redis==5.0.8
+redis==5.0.4
 
 # Database
-sqlalchemy==2.0.36
+sqlalchemy==2.0.30
 psycopg2-binary==2.9.9
 
 # Utilities
 python-dotenv==1.0.1
-requests==2.32.3
+requests==2.32.2
