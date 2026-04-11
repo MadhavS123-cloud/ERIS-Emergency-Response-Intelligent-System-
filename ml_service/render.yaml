@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: .
     buildCommand: pip install --upgrade pip && pip install --only-binary=:all: numpy pandas scipy scikit-learn xgboost pydantic pydantic-core && pip install -r ml_service/requirements.txt --no-build-isolation
-    startCommand: uvicorn ml_service.app:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn ml_service.app:app --host 0.0.0.0 --port ${PORT:-8000}
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL

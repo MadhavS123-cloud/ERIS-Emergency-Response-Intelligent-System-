@@ -72,13 +72,36 @@ async def health_check():
     }
 
 
-# Include routers
-from ml_service.routers import data_generation, features, predictions, quality, monitoring
-app.include_router(data_generation.router)
-app.include_router(features.router)
-app.include_router(predictions.router)
-app.include_router(quality.router)
-app.include_router(monitoring.router)
+# Include routers — wrapped so a broken router doesn't kill the whole service
+try:
+    from ml_service.routers import data_generation
+    app.include_router(data_generation.router)
+except Exception as e:
+    logger.warning(f"data_generation router failed to load: {e}")
+
+try:
+    from ml_service.routers import features
+    app.include_router(features.router)
+except Exception as e:
+    logger.warning(f"features router failed to load: {e}")
+
+try:
+    from ml_service.routers import predictions
+    app.include_router(predictions.router)
+except Exception as e:
+    logger.warning(f"predictions router failed to load: {e}")
+
+try:
+    from ml_service.routers import quality
+    app.include_router(quality.router)
+except Exception as e:
+    logger.warning(f"quality router failed to load: {e}")
+
+try:
+    from ml_service.routers import monitoring
+    app.include_router(monitoring.router)
+except Exception as e:
+    logger.warning(f"monitoring router failed to load: {e}")
 
 
 # Error handlers
