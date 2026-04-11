@@ -350,30 +350,62 @@
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  .ep-topbar { padding: 14px 20px; }
-  .ep-logo-text { font-size: var(--text-lg); }
+  .ep-topbar { padding: 10px 16px; }
+  .ep-logo-text { font-size: var(--text-base); }
+  .ep-logo { height: 28px; width: 28px; }
+
   .ep-main {
-    padding: 36px 20px 28px;
-    gap: 28px;
+    padding: 16px 20px 12px;
+    gap: 16px;
+    justify-content: space-evenly;
   }
+
+  .ep-brand { gap: 8px; }
+
   .ep-logo-circle {
-    width: 72px;
-    height: 72px;
-    border-radius: 18px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
   }
-  .ep-brand-logo { width: 52px; height: 52px; }
-  .ep-title { font-size: clamp(1.9rem, 9vw, 2.6rem); }
-  .ep-subtitle { font-size: var(--text-base); }
+  .ep-brand-logo { width: 40px; height: 40px; }
+
+  .ep-brand-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .ep-headline { margin: 0; }
+  .ep-title {
+    font-size: clamp(1.7rem, 8vw, 2.2rem);
+    margin-bottom: 8px;
+  }
+  .ep-subtitle {
+    font-size: var(--text-sm);
+    line-height: 1.4;
+  }
+
+  .ep-actions { gap: 8px; }
+
   .ep-panic-btn {
-    font-size: 1.05rem;
-    padding: 1.2rem 1.5rem;
+    font-size: 1rem;
+    padding: 1rem 1.2rem;
   }
+  .ep-call-btn {
+    padding: 0.75rem 1.2rem;
+    font-size: var(--text-sm);
+  }
+
   .ep-info-strip {
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     border-radius: var(--radius-lg);
-    padding: 12px 16px;
+    padding: 10px 14px;
   }
   .ep-info-divider { display: none; }
+  .ep-info-item { font-size: 11px; }
+
+  .ep-footer { padding: 12px 20px; }
+  .ep-footer-link { font-size: var(--text-xs); }
 }
