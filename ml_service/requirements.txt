@@ -1,40 +1,36 @@
-# FastAPI and server dependencies
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-python-multipart==0.0.6
+# FastAPI and server
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+python-multipart==0.0.12
 
-# ML and data science
-scikit-learn==1.4.0
-xgboost==2.0.3
-lightgbm==4.3.0
-prophet==1.1.5
-shap==0.44.1
+# ML and data science — pinned to versions with Python 3.12 wheels
+scikit-learn==1.5.2
+xgboost==2.1.1
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.13.1
 
-# Data manipulation
-pandas==2.2.0
-numpy==1.26.3
-scipy==1.12.0
+# Forecasting and explainability (heavy — skip if not needed on first deploy)
+# prophet==1.1.5
+# shap==0.44.1
+# lightgbm==4.3.0
 
-# Feature store and caching
-redis==5.0.1
-pyarrow==15.0.0
-fastparquet==2024.2.0
+# Feature store
+redis==5.0.8
+pyarrow==17.0.0
 
-# Model registry and experiment tracking
-mlflow==2.10.2
-
-# Hyperparameter optimization
-optuna==3.5.0
-
-# Testing
-pytest==8.0.0
-pytest-asyncio==0.23.4
-hypothesis==6.98.3
-
-# Data generation
-faker==22.6.0
+# Model tracking (optional — comment out to speed up build)
+# mlflow==2.10.2
+# optuna==3.5.0
 
 # Utilities
 python-dotenv==1.0.1
-requests==2.31.0
+requests==2.32.3
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.9
+
+# Testing (skip on production)
+# pytest==8.0.0
+# hypothesis==6.98.3
+# faker==22.6.0
