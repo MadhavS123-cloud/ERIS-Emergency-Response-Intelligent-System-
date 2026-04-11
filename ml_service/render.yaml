@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     rootDir: .
-    buildCommand: pip install -r ml_service/requirements.txt
+    buildCommand: pip install --only-binary=:all: numpy pandas scipy scikit-learn && pip install -r ml_service/requirements.txt
     startCommand: uvicorn ml_service.app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
