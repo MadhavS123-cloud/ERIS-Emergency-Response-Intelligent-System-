@@ -131,7 +131,7 @@ const mapRequestToDispatch = (request) => ({
   status: mapBackendStatusToUi(request.status),
   patientName: request.patientName || request.patient?.name || 'Unknown Patient',
   contactNumber: request.patientPhone || request.patient?.phone || 'No Contact',
-  hospitalName: request.ambulance?.hospital?.name || 'Awaiting hospital assignment',
+  hospitalName: request.ambulance?.hospital?.name || request.mlRecommendedHospitalName || 'Awaiting hospital assignment',
   hospitalId: request.ambulance?.hospital?.id || null,
   // Only use real hospital coordinates — no hardcoded fallback
   hospitalPosition: (request.ambulance?.hospital?.locationLat && request.ambulance?.hospital?.locationLng)
@@ -313,7 +313,7 @@ export function ErisProvider({ children }) {
   const submitEmergencyRequest = async (formData) => {
     const token = await ensurePatientAccess({
       patientName: formData.patientName || 'Emergency Patient',
-      patientPhone: formData.contactNumber || '0000000000',
+      patientPhone: formData.contactNumber,
       patientEmail: formData.patientEmail
     });
 
@@ -335,7 +335,7 @@ export function ErisProvider({ children }) {
           locationLat: formData.locationLat,
           locationLng: formData.locationLng,
           patientName: formData.patientName || 'Emergency Patient',
-          patientPhone: formData.contactNumber || 'Not Provided'
+          patientPhone: formData.contactNumber || null
         })
       });
 

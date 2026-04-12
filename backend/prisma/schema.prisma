@@ -81,6 +81,8 @@ model Request {
   mlExpectedDelay     Float?
   mlReasons           String?   // JSON Stringified
   mlSuggestedActions  String?   // JSON Stringified
+  mlRecommendedHospitalId   String?
+  mlRecommendedHospitalName String?
 
   // Anti-Spam / Guest Flow Additions
   isGuest           Boolean   @default(false)

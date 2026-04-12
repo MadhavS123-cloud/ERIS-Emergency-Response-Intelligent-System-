@@ -211,6 +211,27 @@ class RequestService {
   }
 
   async createRequest(patientId, data) {
+    // Ensure empty phone numbers are stored as null, not empty string or "Not Provided"
+    const patientPhone = data.patientPhone && data.patientPhone.trim() !== '' 
+      ? data.patientPhone 
+      : null;
+    
+    // Get ML predictions before creating request
+    const tempRequest = {
+      id: 'temp',
+      locationLat: data.locationLat,
+      locationLng: data.locationLng,
+      emergencyType: data.emergencyType,
+      patientAge: data.patientAge || null,
+      vitalSigns: data.vitalSigns || null
+    };
+    
+    const predictions = await this.getMLPredictions(tempRequest);
+    
+    // Extract ML hospital recommendation if available
+    const mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
+    const mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
+    
     const request = await requestRepository.createRequest({
       patientId,
       locationLat: data.locationLat,
@@ -218,19 +239,21 @@ class RequestService {
       emergencyType: data.emergencyType,
       pickupAddress: data.pickupAddress,
       patientName: data.patientName,
-      patientPhone: data.patientPhone,
+      patientPhone: patientPhone,
       medicalNotes: data.medicalNotes || '',
-      status: 'PENDING'
+      status: 'PENDING',
+      ...(mlRecommendedHospitalId && { mlRecommendedHospitalId }),
+      ...(mlRecommendedHospitalName && { mlRecommendedHospitalName })
     });
 
-    // Get ML predictions (non-blocking)
-    const predictions = await this.getMLPredictions(request);
+    // Store ML predictions
     if (predictions) {
       await this.storeMlPredictions(request.id, predictions);
       logger.info('ML predictions stored for request', { 
         requestId: request.id, 
         delay: predictions.delay?.delay_minutes,
-        severity: predictions.severity?.severity 
+        severity: predictions.severity?.severity,
+        recommendedHospital: mlRecommendedHospitalName
       });
     }
 
@@ -279,6 +302,22 @@ class RequestService {
       }
     }
 
+    // Get ML predictions before creating request
+    const tempRequest = {
+      id: 'temp',
+      locationLat: data.locationLat,
+      locationLng: data.locationLng,
+      emergencyType: data.emergencyType || 'General Emergency',
+      patientAge: null,
+      vitalSigns: null
+    };
+    
+    const predictions = await this.getMLPredictions(tempRequest);
+    
+    // Extract ML hospital recommendation if available
+    const mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
+    const mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
+
     const request = await requestRepository.createRequest({
       isGuest: true,
       guestSessionId: randomUUID(),
@@ -295,17 +334,19 @@ class RequestService {
       deviceId: data.deviceId,
       isSuspicious,
       suspiciousReason,
-      trustScoreAtRequest: trustScore
+      trustScoreAtRequest: trustScore,
+      ...(mlRecommendedHospitalId && { mlRecommendedHospitalId }),
+      ...(mlRecommendedHospitalName && { mlRecommendedHospitalName })
     });
 
-    // Get ML predictions (non-blocking)
-    const predictions = await this.getMLPredictions(request);
+    // Store ML predictions
     if (predictions) {
       await this.storeMlPredictions(request.id, predictions);
       logger.info('ML predictions stored for guest request', { 
         requestId: request.id, 
         delay: predictions.delay?.delay_minutes,
-        severity: predictions.severity?.severity 
+        severity: predictions.severity?.severity,
+        recommendedHospital: mlRecommendedHospitalName
       });
     }
 
@@ -326,6 +367,17 @@ class RequestService {
     // Inline fast dispatch — even for suspicious (act first)
     try {
       const assignedAmbulance = await this.assignAmbulance(request, { role: 'ADMIN' });
+      
+      // Initialize ambulance location from hospital's GPS coordinates
+      const hospital = assignedAmbulance.hospital;
+      if (hospital?.locationLat && hospital?.locationLng) {
+        await ambulanceRepository.updateAmbulance(assignedAmbulance.id, {
+          locationLat: hospital.locationLat,
+          locationLng: hospital.locationLng
+        });
+        logger.info(`Ambulance ${assignedAmbulance.id} location initialized from hospital ${hospital.name} for guest emergency`);
+      }
+      
       await requestRepository.updateRequest(request.id, {
         status: 'ACCEPTED',
         ambulanceId: assignedAmbulance.id,
@@ -481,6 +533,18 @@ class RequestService {
       const assignedAmbulance = await this.assignAmbulance(request, actor, ambulanceId);
       updateData.ambulanceId = assignedAmbulance.id;
       updateData.driverId = assignedAmbulance.driverId;
+
+      // Always initialize ambulance location from hospital's GPS coordinates when assigned
+      const hospital = assignedAmbulance.hospital;
+      if (hospital?.locationLat && hospital?.locationLng) {
+        await ambulanceRepository.updateAmbulance(assignedAmbulance.id, {
+          locationLat: hospital.locationLat,
+          locationLng: hospital.locationLng
+        });
+        logger.info(`Ambulance ${assignedAmbulance.id} location initialized from hospital ${hospital.name} at (${hospital.locationLat}, ${hospital.locationLng})`);
+      } else {
+        logger.warn(`Hospital ${assignedAmbulance.hospitalId} has no valid GPS coordinates for ambulance initialization`);
+      }
     }
 
     if (actorRole === 'DRIVER') {
