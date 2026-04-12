@@ -1,33 +1,99 @@
-# Kiro IDE files — keep locally, never push to GitHub
+# ========================
+# SECRETS & ENV FILES
+# ========================
+.env
+.env.local
+.env.production
+.env.development
+**/. env
+backend/.env
+ml_service/.env
+admin-dashboard/.env
+frontend/.env
+
+# ========================
+# OS FILES
+# ========================
+.DS_Store
+Thumbs.db
+*.DS_Store
+
+# ========================
+# IDE / EDITOR
+# ========================
+.vscode/
+.idea/
 .kiro/
 
-# Node
+# ========================
+# NODE
+# ========================
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Python
+# ========================
+# PYTHON
+# ========================
 __pycache__/
 *.py[cod]
 *.pyo
-.env
+*.pyd
 venv/
 .venv/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
+*.pkl
+*.rdb
 
-# OS
-.DS_Store
-Thumbs.db
+# ========================
+# FRONTEND BUILD OUTPUT
+# ========================
+frontend/dist/
 
-# Logs
+# ========================
+# LOGS
+# ========================
 *.log
 logs/
 
-# Env files
-.env
-.env.local
-.env.production
+# ========================
+# DATABASE / CACHE DUMPS
+# ========================
+*.rdb
+dump.rdb
+backend/dump.rdb
 
-# Build output
-frontend/dist/
+# ========================
+# MISC INTERNAL DOCS
+# ========================
+backend/TASK_13_IMPLEMENTATION_SUMMARY.md
+backend/INTEGRATION_TEST.md
+backend/ML_INTEGRATION.md
+ml_service/COMPLETION_SUMMARY.md
+ml_service/FINAL_STATUS.md
+ml_service/IMPLEMENTATION_COMPLETE.md
+ml_service/IMPLEMENTATION_GUIDE.md
+ml_service/PERFORMANCE_OPTIMIZATIONS.md
+ml_service/QUICK_START.md
+ml_service/TASK_14_SUMMARY.md
+ml_service/training/IMPLEMENTATION_SUMMARY.md
+ml_service/training/QUICK_START.md
+
+# ========================
+# TEST / SCRATCH FILES
+# ========================
+backend/testAmbulance.mjs
+backend/testDistance.mjs
+backend/testDriver.mjs
+frontend/test.js
+
+# ========================
+# MISC
+# ========================
+backend/src/services/resume1.pdf
+postman/
+.postman/
