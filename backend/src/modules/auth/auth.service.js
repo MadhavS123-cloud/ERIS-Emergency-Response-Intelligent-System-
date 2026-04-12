@@ -30,8 +30,8 @@ class AuthService {
   }
 
   async createPatientSession({ name, phone, email }) {
-    const normalizedPhone = phone.replace(/\D/g, '');
-    const patientEmail = (email || `patient-${normalizedPhone}@eris.local`).toLowerCase();
+    const normalizedPhone = phone ? phone.replace(/\D/g, '') : '';
+    const patientEmail = (email || `patient-${normalizedPhone || Date.now()}@eris.local`).toLowerCase();
     const existingUser = await authRepository.findUserByEmail(patientEmail);
 
     if (existingUser && existingUser.role !== 'PATIENT') {

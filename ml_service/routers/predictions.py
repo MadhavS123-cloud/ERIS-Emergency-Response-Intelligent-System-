@@ -52,6 +52,8 @@ class DelayPredictionRequest(BaseModel):
     weather: str = Field(..., pattern="^(Clear|Rain|Fog|Snow)$")
     area_type: str = Field("urban", pattern="^(urban|suburban|rural)$")
     available_ambulances_nearby: int = Field(3, ge=0)
+    location_lat: Optional[float] = None
+    location_lng: Optional[float] = None
 
 
 class DelayPredictionResponse(BaseModel):
@@ -117,16 +119,16 @@ async def predict_delay(request: DelayPredictionRequest):
         
         request_data = {
             "timestamp": timestamp,
-            "location_lat": 40.7128,  # Placeholder
-            "location_lng": -74.0060
+            "location_lat": request.location_lat if hasattr(request, 'location_lat') else 0.0,
+            "location_lng": request.location_lng if hasattr(request, 'location_lng') else 0.0
         }
         
         context_data = {
             "traffic_level": request.traffic_level,
             "weather": request.weather,
             "available_ambulances_nearby": request.available_ambulances_nearby,
-            "nearest_hospital_lat": 40.7128,
-            "nearest_hospital_lng": -74.0060
+            "nearest_hospital_lat": request.location_lat,
+            "nearest_hospital_lng": request.location_lng
         }
         
         features = feature_store.compute_features(request_data, context_data)
@@ -211,34 +213,62 @@ async def recommend_hospital(request: HospitalRecommendationRequest):
     Recommend optimal hospitals for patient.
     
     Returns ranked list of hospitals with scores and reasons.
+    Queries real hospitals from PostgreSQL database and ranks them by:
+    - Distance from patient location
+    - Bed availability (ICU and general)
+    - Specialization match with emergency type
     """
     try:
-        # Simplified hospital recommendation (would query actual hospitals)
-        recommendations = [
-            HospitalRecommendation(
-                hospital_id="hosp-1",
-                hospital_name="City General Hospital",
-                score=0.95,
-                distance_km=3.2,
-                estimated_travel_time_mins=8,
-                icu_beds_available=5,
-                has_specialization=True,
-                reasons=["Closest hospital with specialization", "High capacity", "Low traffic route"]
-            ),
-            HospitalRecommendation(
-                hospital_id="hosp-2",
-                hospital_name="Memorial Medical Center",
-                score=0.87,
-                distance_km=5.1,
-                estimated_travel_time_mins=12,
-                icu_beds_available=3,
-                has_specialization=True,
-                reasons=["Specialized cardiac care", "Moderate distance"]
-            )
-        ]
+        from ml_service.utils.database import query_hospitals_from_database, rank_hospitals_by_criteria
         
+        # Extract patient location
+        patient_lat = request.patient_location.get("lat")
+        patient_lng = request.patient_location.get("lng")
+        
+        if patient_lat is None or patient_lng is None:
+            raise HTTPException(status_code=400, detail="Patient location (lat, lng) is required")
+        
+        # Validate coordinates
+        if not (-90 <= patient_lat <= 90) or not (-180 <= patient_lng <= 180):
+            raise HTTPException(status_code=400, detail="Invalid patient coordinates")
+        
+        # Query real hospitals from database
+        hospitals = query_hospitals_from_database()
+        
+        if not hospitals:
+            logger.warning("No hospitals found in database")
+            return HospitalRecommendationResponse(recommendations=[])
+        
+        # Rank hospitals by distance, capacity, and specialization
+        ranked_hospitals = rank_hospitals_by_criteria(
+            hospitals=hospitals,
+            patient_lat=patient_lat,
+            patient_lng=patient_lng,
+            emergency_type=request.emergency_type,
+            severity=request.severity
+        )
+        
+        # Convert to response format (top 5 recommendations)
+        recommendations = []
+        for hospital in ranked_hospitals[:5]:
+            recommendations.append(
+                HospitalRecommendation(
+                    hospital_id=hospital['hospital_id'],
+                    hospital_name=hospital['hospital_name'],
+                    score=hospital['score'],
+                    distance_km=hospital['distance_km'],
+                    estimated_travel_time_mins=hospital['estimated_travel_time_mins'],
+                    icu_beds_available=hospital['icu_beds_available'],
+                    has_specialization=hospital['has_specialization'],
+                    reasons=hospital['reasons']
+                )
+            )
+        
+        logger.info(f"Recommended {len(recommendations)} hospitals for patient at ({patient_lat}, {patient_lng})")
         return HospitalRecommendationResponse(recommendations=recommendations)
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error recommending hospital: {e}")
         raise HTTPException(status_code=500, detail=str(e))
