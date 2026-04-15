@@ -45,6 +45,33 @@ export const TOMTOM_ATTRIBUTION = TOMTOM_API_KEY
   : '&copy; OpenStreetMap contributors';
 
 /**
+ * Fetch a route from TomTom Routing API.
+ * Maps the coordinates to array of [lat, lng].
+ */
+export const fetchTomTomRoute = async (startCoord, endCoord) => {
+  if (!TOMTOM_API_KEY || !startCoord || !endCoord) return null;
+  // Note: TomTom expects longitude,latitude
+  const [startLat, startLng] = startCoord;
+  const [endLat, endLng] = endCoord;
+
+  try {
+    const url = `https://api.tomtom.com/routing/1/calculateRoute/${startLat},${startLng}:${endLat},${endLng}/json?key=${TOMTOM_API_KEY}&traffic=true`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.routes && data.routes.length > 0) {
+      const route = data.routes[0];
+      const points = route.legs[0].points.map(pt => [pt.latitude, pt.longitude]);
+      const etaSecs = route.summary.travelTimeInSeconds;
+      return { points, etaSecs };
+    }
+  } catch (err) {
+    console.error("TomTom Routing error:", err);
+  }
+  return null;
+};
+
+/**
  * Helper: Add TomTom base + traffic layers to a Leaflet map instance
  */
 export const addTomTomLayers = (map, style = 'main', showTraffic = true, showIncidents = false) => {
@@ -87,4 +114,4 @@ export const addTomTomLayers = (map, style = 'main', showTraffic = true, showInc
   }
 };
 
-export default { getTomTomTileUrl, getTrafficFlowUrl, getTrafficIncidentUrl, addTomTomLayers, TOMTOM_ATTRIBUTION };
+export default { fetchTomTomRoute, getTomTomTileUrl, getTrafficFlowUrl, getTrafficIncidentUrl, addTomTomLayers, TOMTOM_ATTRIBUTION };

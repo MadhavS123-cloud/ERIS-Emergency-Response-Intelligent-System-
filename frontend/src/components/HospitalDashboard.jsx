@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useEris } from '../context/ErisContext';
 import authService from '../services/authService';
-import { addTomTomLayers } from '../config/tomtom';
+import { addTomTomLayers, fetchTomTomRoute } from '../config/tomtom';
 import { socket } from '../socket';
 import './HospitalDashboard.css';
 
@@ -152,8 +152,27 @@ function HospitalDashboard() {
                     .addTo(trackMapRef.current)
                     .bindPopup(`<b>${trackingDispatch.ambulanceId}</b><br/>Driver: ${trackingDispatch.driverName}`);
 
-                // Route line
-                if (patientPos) {
+                // Fetch actual route line
+                let routeOrigin = null;
+                let routeDest = null;
+                if (['incoming', 'assigned', 'en_route', 'arrived'].includes(trackingDispatch.status)) {
+                    routeOrigin = currentHospital?.location?.coordinates || ambPos;
+                    routeDest = patientPos;
+                } else {
+                    routeOrigin = patientPos;
+                    routeDest = currentHospital?.location?.coordinates || ambPos;
+                }
+
+                if (routeOrigin && routeDest) {
+                    fetchTomTomRoute(routeOrigin, routeDest).then(routeData => {
+                        if (routeData?.points && trackMapRef.current) {
+                            trackRouteRef.current = window.L.polyline(routeData.points, {
+                                color: '#2563eb', weight: 4, opacity: 0.85
+                            }).addTo(trackMapRef.current);
+                        }
+                    });
+                } else if (patientPos) {
+                    // Fallback straight line
                     trackRouteRef.current = window.L.polyline([ambPos, patientPos], {
                         color: '#2563eb', weight: 3, opacity: 0.8, dashArray: '8, 8'
                     }).addTo(trackMapRef.current);
@@ -188,10 +207,6 @@ function HospitalDashboard() {
 
             if (trackAmbMarkerRef.current) {
                 trackAmbMarkerRef.current.setLatLng(newPos);
-            }
-
-            if (trackRouteRef.current && trackingDispatch.patientPosition) {
-                trackRouteRef.current.setLatLngs([newPos, trackingDispatch.patientPosition]);
             }
         };
 

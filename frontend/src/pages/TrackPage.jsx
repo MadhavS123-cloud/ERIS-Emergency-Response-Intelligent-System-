@@ -230,9 +230,6 @@ function TrackPage() {
             // Place ambulance marker only if driver has real GPS
             if (ambulancePos) {
                 driverMarkerRef.current = window.L.marker(ambulancePos, { icon: ambulanceIcon }).addTo(mapRef.current);
-                routeLineRef.current = window.L.polyline([ambulancePos, patientPos], {
-                    color: '#2563eb', weight: 4, opacity: 0.85, dashArray: '10, 10'
-                }).addTo(mapRef.current);
             }
 
             const boundsPoints = [patientPos];
@@ -280,17 +277,39 @@ function TrackPage() {
             });
             driverMarkerRef.current = window.L.marker([lat, lng], { icon: ambulanceIcon }).addTo(mapRef.current);
         }
-
-        if (patientPositionRef.current) {
-            if (routeLineRef.current) {
-                routeLineRef.current.setLatLngs([[lat, lng], patientPositionRef.current]);
-            } else if (window.L) {
-                routeLineRef.current = window.L.polyline([[lat, lng], patientPositionRef.current], {
-                    color: '#2563eb', weight: 4, opacity: 0.85, dashArray: '10, 10'
-                }).addTo(mapRef.current);
-            }
-        }
     }, [dispatch?.ambulancePosition]);
+
+    // Draw full TomTom route based on current state
+    useEffect(() => {
+        if (!mapRef.current || !dispatch) return;
+
+        let routeOrigin = null;
+        let routeDest = null;
+
+        if (['incoming', 'assigned', 'en_route', 'arrived'].includes(dispatch.status)) {
+            routeOrigin = dispatch.hospitalPosition; 
+            routeDest = dispatch.patientPosition;
+        } else {
+            routeOrigin = dispatch.patientPosition;
+            routeDest = dispatch.hospitalPosition;
+        }
+
+        if (routeOrigin && routeDest) {
+            import('../config/tomtom').then(({ fetchTomTomRoute }) => {
+                fetchTomTomRoute(routeOrigin, routeDest).then(routeData => {
+                    if (routeData?.points && mapRef.current) {
+                        if (routeLineRef.current) {
+                            routeLineRef.current.setLatLngs(routeData.points);
+                        } else {
+                            routeLineRef.current = window.L.polyline(routeData.points, {
+                                color: '#2563eb', weight: 4, opacity: 0.85
+                            }).addTo(mapRef.current);
+                        }
+                    }
+                });
+            });
+        }
+    }, [dispatch?.status, dispatch?.hospitalPosition, dispatch?.patientPosition]);
 
     if (!dispatch) {
         return (

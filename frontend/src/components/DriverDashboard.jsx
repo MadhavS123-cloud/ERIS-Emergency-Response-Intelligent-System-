@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
-import { addTomTomLayers } from '../config/tomtom';
+import { addTomTomLayers, fetchTomTomRoute } from '../config/tomtom';
 import API_BASE_URL from '../config/api';
 import authService from '../services/authService';
 import './DriverDashboard.css';
@@ -42,7 +42,7 @@ function DriverDashboard() {
         return dispatchInfo.patientPosition;
     }, [dispatchInfo]);
 
-    const renderRoute = useCallback((pos) => {
+    const renderRoute = useCallback((pos, routePoints) => {
         if (!window.L || !mapInstance.current || !dispatchInfo) return;
         const destination = getDestinationPosition();
         if (!destination || !pos) return;
@@ -78,15 +78,16 @@ function DriverDashboard() {
             driverMarker.current.setLatLng(pos);
         }
 
-        if (!routeLine.current) {
-            routeLine.current = window.L.polyline([pos, destination], {
-                color: '#3b82f6',
-                weight: 5,
-                opacity: 0.85,
-                dashArray: '10 6',
-            }).addTo(mapInstance.current);
-        } else {
-            routeLine.current.setLatLngs([pos, destination]);
+        if (routePoints && routePoints.length > 0) {
+            if (!routeLine.current) {
+                routeLine.current = window.L.polyline(routePoints, {
+                    color: '#3b82f6',
+                    weight: 5,
+                    opacity: 0.85,
+                }).addTo(mapInstance.current);
+            } else {
+                routeLine.current.setLatLngs(routePoints);
+            }
         }
 
         const bounds = [pos];
@@ -138,7 +139,7 @@ function DriverDashboard() {
         });
     }, [dispatchInfo?.id]);
 
-    const initMapFn = useCallback(() => {
+    const initMapFn = useCallback(async () => {
         if (!window.L || !dispatchInfo) return;
         cleanupMap();
 
@@ -157,40 +158,46 @@ function DriverDashboard() {
         // Force tile render after container is fully painted
         setTimeout(() => mapInstance.current?.invalidateSize(), 150);
 
-        const onPosition = (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            currentPos.current = [lat, lng];
-            renderRoute(currentPos.current);
-        };
+        let origin = null;
+        let dest = null;
 
-        const onError = () => {
-            // If GPS unavailable, center on patient but show no ambulance marker
-            // (don't fake a position)
-            if (!driverMarker.current && patientPos) {
-                mapInstance.current?.setView(patientPos, 14);
+        if (dispatchInfo.status === 'en_route') {
+            origin = hospitalPos; 
+            dest = patientPos;
+        } else if (dispatchInfo.status === 'in_transit') {
+            origin = patientPos; 
+            dest = hospitalPos;
+        } else {
+            // Unmoving states
+            mapInstance.current.setView(patientPos, 14);
+            return;
+        }
+
+        if (origin && dest) {
+            const routeData = await fetchTomTomRoute(origin, dest);
+            if (routeData && routeData.points && routeData.points.length > 0) {
+                const points = routeData.points;
+                let stepIdx = 0;
+                
+                renderRoute(points[0], points);
+                currentPos.current = points[0];
+                pushLocationToBackend(currentPos.current[0], currentPos.current[1]);
+
+                locationPushInterval.current = setInterval(() => {
+                    stepIdx += 2; // Speed up the demo
+                    if (stepIdx >= points.length) stepIdx = points.length - 1;
+                    
+                    const p = points[stepIdx];
+                    currentPos.current = p;
+                    
+                    renderRoute(p, points.slice(stepIdx));
+                    pushLocationToBackend(p[0], p[1]);
+
+                    if (stepIdx >= points.length - 1) {
+                        clearInterval(locationPushInterval.current);
+                    }
+                }, 2000);
             }
-        };
-
-        if (navigator.geolocation) {
-            // Get initial position
-            navigator.geolocation.getCurrentPosition(onPosition, onError, {
-                enableHighAccuracy: true,
-                timeout: 8000
-            });
-
-            // Watch for continuous updates
-            watchIdRef.current = navigator.geolocation.watchPosition(onPosition, onError, {
-                enableHighAccuracy: true,
-                maximumAge: 5000
-            });
-
-            // Push location to backend every 5 seconds
-            locationPushInterval.current = setInterval(() => {
-                if (currentPos.current) {
-                    pushLocationToBackend(currentPos.current[0], currentPos.current[1]);
-                }
-            }, 5000);
         }
     }, [dispatchInfo, cleanupMap, renderRoute, pushLocationToBackend]);
 
