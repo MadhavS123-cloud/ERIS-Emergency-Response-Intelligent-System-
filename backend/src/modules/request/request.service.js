@@ -232,11 +232,25 @@ class RequestService {
     let mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
     let mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
     
-    // Auto-assign nearest hospital if ML is unavailable
+    const hospitals = await hospitalRepository.findAllHospitals();
+
+    if (mlRecommendedHospitalId) {
+      const mlHospital = hospitals.find(h => h.id === mlRecommendedHospitalId);
+      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.status === 'AVAILABLE'))) {
+         logger.info(`ML recommended hospital ${mlRecommendedHospitalName} has no available drivers. Re-routing...`);
+         mlRecommendedHospitalId = null;
+      }
+    }
+
+    // Auto-assign nearest hospital
     if (!mlRecommendedHospitalId) {
-      const hospitals = await hospitalRepository.findAllHospitals();
-      const nearestHospital = hospitals
-        .filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number')
+      let eligibleHospitals = hospitals.filter(h => 
+        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.status === 'AVAILABLE')
+      );
+      if (eligibleHospitals.length === 0) {
+        eligibleHospitals = hospitals.filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number');
+      }
+      const nearestHospital = eligibleHospitals
         .sort((a, b) => (
           calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
           calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
@@ -245,7 +259,7 @@ class RequestService {
       if (nearestHospital) {
         mlRecommendedHospitalId = nearestHospital.id;
         mlRecommendedHospitalName = nearestHospital.name;
-        logger.info(`ML unavailable. Auto-assigned nearest hospital: ${nearestHospital.name}`);
+        logger.info(`Auto-assigned nearest hospital: ${nearestHospital.name}`);
       }
     }
     
@@ -350,11 +364,25 @@ class RequestService {
     let mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
     let mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
 
-    // Auto-assign nearest hospital if ML is unavailable
+    const hospitals = await hospitalRepository.findAllHospitals();
+
+    if (mlRecommendedHospitalId) {
+      const mlHospital = hospitals.find(h => h.id === mlRecommendedHospitalId);
+      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.status === 'AVAILABLE'))) {
+         logger.info(`ML recommended hospital ${mlRecommendedHospitalName} has no available drivers. Re-routing...`);
+         mlRecommendedHospitalId = null;
+      }
+    }
+
+    // Auto-assign nearest hospital
     if (!mlRecommendedHospitalId) {
-      const hospitals = await hospitalRepository.findAllHospitals();
-      const nearestHospital = hospitals
-        .filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number')
+      let eligibleHospitals = hospitals.filter(h => 
+        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.status === 'AVAILABLE')
+      );
+      if (eligibleHospitals.length === 0) {
+        eligibleHospitals = hospitals.filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number');
+      }
+      const nearestHospital = eligibleHospitals
         .sort((a, b) => (
           calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
           calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
@@ -363,7 +391,7 @@ class RequestService {
       if (nearestHospital) {
         mlRecommendedHospitalId = nearestHospital.id;
         mlRecommendedHospitalName = nearestHospital.name;
-        logger.info(`ML unavailable. Auto-assigned nearest hospital for guest: ${nearestHospital.name}`);
+        logger.info(`Auto-assigned nearest hospital for guest: ${nearestHospital.name}`);
       }
     }
 
