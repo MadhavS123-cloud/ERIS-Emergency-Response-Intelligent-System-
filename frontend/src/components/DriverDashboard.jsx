@@ -69,31 +69,41 @@ function DriverDashboard() {
 
             driverMarker.current = window.L.marker(pos, { icon: ambulanceIcon }).addTo(mapInstance.current);
             if (dispatchInfo.patientPosition) {
-                patientMarker.current = window.L.marker(dispatchInfo.patientPosition, { icon: patientIcon }).addTo(mapInstance.current);
+                patientMarker.current = window.L.marker(dispatchInfo.patientPosition, { icon: patientIcon })
+                    .addTo(mapInstance.current)
+                    .bindTooltip(dispatchInfo.patientName || 'Patient', { permanent: true, direction: 'bottom', offset: [0, 10], className: 'map-label-tooltip' });
             }
             if (dispatchInfo.hospitalPosition) {
-                hospitalMarker.current = window.L.marker(dispatchInfo.hospitalPosition, { icon: hospitalIcon }).addTo(mapInstance.current);
+                hospitalMarker.current = window.L.marker(dispatchInfo.hospitalPosition, { icon: hospitalIcon })
+                    .addTo(mapInstance.current)
+                    .bindTooltip(dispatchInfo.hospitalName || 'Hospital', { permanent: true, direction: 'bottom', offset: [0, 10], className: 'map-label-tooltip' });
             }
+            
+            // First time render: zoom out to fit everything
+            const bounds = [pos];
+            if (dispatchInfo.patientPosition) bounds.push(dispatchInfo.patientPosition);
+            if (dispatchInfo.hospitalPosition) bounds.push(dispatchInfo.hospitalPosition);
+            mapInstance.current.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
         } else {
             driverMarker.current.setLatLng(pos);
+            
+            // If actively moving (en_route, in_transit), snap the camera closely
+            if (['en_route', 'in_transit'].includes(dispatchInfo.status)) {
+                mapInstance.current.setView(pos, 17, { animate: true, duration: 1 });
+            }
         }
 
         if (routePoints && routePoints.length > 0) {
             if (!routeLine.current) {
                 routeLine.current = window.L.polyline(routePoints, {
                     color: '#3b82f6',
-                    weight: 5,
-                    opacity: 0.85,
+                    weight: 6,
+                    opacity: 0.9,
                 }).addTo(mapInstance.current);
             } else {
                 routeLine.current.setLatLngs(routePoints);
             }
         }
-
-        const bounds = [pos];
-        if (dispatchInfo.patientPosition) bounds.push(dispatchInfo.patientPosition);
-        if (dispatchInfo.hospitalPosition) bounds.push(dispatchInfo.hospitalPosition);
-        mapInstance.current.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
     }, [dispatchInfo, getDestinationPosition]);
 
     const cleanupMap = useCallback(() => {
@@ -160,13 +170,16 @@ function DriverDashboard() {
 
         let origin = null;
         let dest = null;
+        let isMoving = false;
 
-        if (dispatchInfo.status === 'en_route') {
+        if (['assigned', 'en_route'].includes(dispatchInfo.status)) {
             origin = hospitalPos; 
             dest = patientPos;
-        } else if (dispatchInfo.status === 'in_transit') {
+            if (dispatchInfo.status === 'en_route') isMoving = true;
+        } else if (['arrived', 'in_transit'].includes(dispatchInfo.status)) {
             origin = patientPos; 
             dest = hospitalPos;
+            if (dispatchInfo.status === 'in_transit') isMoving = true;
         } else {
             // Unmoving states
             mapInstance.current.setView(patientPos, 14);
@@ -183,20 +196,22 @@ function DriverDashboard() {
                 currentPos.current = points[0];
                 pushLocationToBackend(currentPos.current[0], currentPos.current[1]);
 
-                locationPushInterval.current = setInterval(() => {
-                    stepIdx += 2; // Speed up the demo
-                    if (stepIdx >= points.length) stepIdx = points.length - 1;
-                    
-                    const p = points[stepIdx];
-                    currentPos.current = p;
-                    
-                    renderRoute(p, points.slice(stepIdx));
-                    pushLocationToBackend(p[0], p[1]);
+                if (isMoving) {
+                    locationPushInterval.current = setInterval(() => {
+                        stepIdx += 2; // Speed up the demo
+                        if (stepIdx >= points.length) stepIdx = points.length - 1;
+                        
+                        const p = points[stepIdx];
+                        currentPos.current = p;
+                        
+                        renderRoute(p, points.slice(stepIdx));
+                        pushLocationToBackend(p[0], p[1]);
 
-                    if (stepIdx >= points.length - 1) {
-                        clearInterval(locationPushInterval.current);
-                    }
-                }, 2000);
+                        if (stepIdx >= points.length - 1) {
+                            clearInterval(locationPushInterval.current);
+                        }
+                    }, 2000);
+                }
             }
         }
     }, [dispatchInfo, cleanupMap, renderRoute, pushLocationToBackend]);
@@ -273,6 +288,19 @@ function DriverDashboard() {
         <div className="dd-layout">
             {/* ====== MAP ====== */}
             <div className="dd-map-area">
+                <style dangerouslySetInnerHTML={{ __html: `
+                    .map-label-tooltip {
+                        background: rgba(0, 0, 0, 0.75);
+                        border: none;
+                        box-shadow: none;
+                        color: white;
+                        font-weight: bold;
+                        border-radius: 4px;
+                    }
+                    .map-label-tooltip::before {
+                        border-bottom-color: rgba(0, 0, 0, 0.75);
+                    }
+                `}} />
                 <div id="driver-map"></div>
             </div>
 
