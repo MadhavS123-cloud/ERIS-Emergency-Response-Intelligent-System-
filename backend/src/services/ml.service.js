@@ -73,27 +73,84 @@ class MLService {
         if (eligible.length === 0) return null;
 
         const type = (payload.emergency_type || "").toLowerCase();
-        
-        const scoredHospitals = eligible.map(h => {
+
+        // ── Capability Tier Definitions ──────────────────────────────────────
+        // Tier 1: Full-service hospitals with surgical/trauma capabilities
+        const TIER1_KEYWORDS = [
+          'hospital', 'multispeciality', 'multi speciality', 'multispecialty',
+          'multi specialty', 'institute', 'medical center', 'medical centre',
+          'apollo', 'manipal', 'fortis', 'narayana', 'aster', 'columbia',
+          'sakra', 'bgs', 'victoria', 'bowring', 'lady curzon', 'kims',
+          'nimhans', 'general hospital', 'district hospital', 'government hospital',
+          'trauma center', 'emergency care', 'care hospital', 'rainbow',
+          'cloudnine', 'motherhood', 'sparsh', 'sathya sai', 'medanta',
+          'mazumdar shaw', 'vydehi', 'brookfield', 'yashomati', 'lions'
+        ];
+
+        // Tier 2: Small clinics, specialty-only, wellness, dental, eye-only, etc.
+        const TIER2_EXCLUSION_KEYWORDS = [
+          'clinic', 'dental', 'eye care', 'eye hospital', 'optical',
+          'homoeo', 'homeopathy', 'ayurvedic', 'ayurveda', 'wellness',
+          'physiotherapy', 'nursing home', 'diagnostic', 'pathology',
+          'lab', 'pharmacy', 'skin care', 'hair clinic', 'cosmetic',
+          'beauty', 'sleep clinic', 'batra'
+        ];
+
+        // Emergency types that REQUIRE Tier-1 surgical/trauma facilities
+        const CRITICAL_EMERGENCY_KEYWORDS = [
+          'bleeding', 'hemorrhage', 'cardiac', 'heart', 'stroke', 'trauma',
+          'accident', 'burn', 'fire', 'choking', 'unconscious', 'fainting',
+          'seizure', 'convulsion', 'poisoning', 'overdose', 'anaphylaxis',
+          'allergic reaction', 'respiratory', 'breathing'
+        ];
+
+        const isCriticalEmergency = CRITICAL_EMERGENCY_KEYWORDS.some(kw => type.includes(kw));
+
+        const isTier1Capable = (hospitalName) => {
+          const n = hospitalName.toLowerCase();
+          // If the name contains any exclusion keyword, it's NOT Tier-1
+          if (TIER2_EXCLUSION_KEYWORDS.some(kw => n.includes(kw))) return false;
+          // If it matches a Tier-1 keyword, it IS Tier-1
+          return TIER1_KEYWORDS.some(kw => n.includes(kw));
+        };
+
+        // For critical emergencies, ONLY route to Tier-1 capable hospitals
+        const candidatePool = isCriticalEmergency
+          ? eligible.filter(h => isTier1Capable(h.name))
+          : eligible;
+
+        // Safety fallback: if no Tier-1 nearby, open to all (better than nothing)
+        const finalPool = candidatePool.length > 0 ? candidatePool : eligible;
+
+        if (isCriticalEmergency) {
+          logger.info(`Critical emergency detected. Filtered to ${finalPool.length} Tier-1 hospitals from ${eligible.length} total.`);
+        }
+
+        const scoredHospitals = finalPool.map(h => {
           let score = 0;
           const name = h.name.toLowerCase();
-          let dist = calculateDistance(payload.patient_location.lat, payload.patient_location.lng, h.locationLat, h.locationLng);
+          const dist = calculateDistance(payload.patient_location.lat, payload.patient_location.lng, h.locationLat, h.locationLng);
           
-          score -= dist * 2; 
+          // Stronger distance penalty ensures nearby wins all else equal
+          score -= dist * 3;
 
-          if ((type.includes('cardiac') || type.includes('heart')) && (name.includes('heart') || name.includes('cardio') || name.includes('sathya sai') || name.includes('narayana'))) score += 15;
-          if ((type.includes('trauma') || type.includes('accident') || type.includes('injury')) && (name.includes('trauma') || name.includes('general') || name.includes('multi') || name.includes('apollo') || name.includes('manipal'))) score += 10;
-          if ((type.includes('stroke') || type.includes('neuro') || type.includes('seizure')) && (name.includes('neuro') || name.includes('brain') || name.includes('nimhans') || name.includes('speciality'))) score += 12;
-          if ((type.includes('burn') || type.includes('fire')) && (name.includes('burn') || name.includes('victoria'))) score += 15;
-          if ((type.includes('pediatric') || type.includes('child') || type.includes('infant')) && (name.includes('children') || name.includes('pediatric') || name.includes('kids') || name.includes('rainbow'))) score += 15;
-          if ((type.includes('maternity') || type.includes('pregnancy') || type.includes('labor')) && (name.includes('women') || name.includes('maternity') || name.includes('mother') || name.includes('cloudnine'))) score += 15;
-          if ((type.includes('eye') || type.includes('vision')) && (name.includes('eye') || name.includes('nethra') || name.includes('vision') || name.includes('sankara'))) score += 20;
+          // Specialty-match bonuses
+          if ((type.includes('cardiac') || type.includes('heart')) && (name.includes('heart') || name.includes('cardio') || name.includes('sathya sai') || name.includes('narayana') || name.includes('fortis'))) score += 20;
+          if ((type.includes('bleeding') || type.includes('hemorrhage') || type.includes('trauma') || type.includes('accident')) && (name.includes('trauma') || name.includes('apollo') || name.includes('manipal') || name.includes('victoria') || name.includes('bowring') || name.includes('general'))) score += 18;
+          if ((type.includes('stroke') || type.includes('neuro') || type.includes('seizure') || type.includes('convulsion')) && (name.includes('neuro') || name.includes('brain') || name.includes('nimhans') || name.includes('speciality'))) score += 18;
+          if ((type.includes('burn') || type.includes('fire')) && (name.includes('burn') || name.includes('victoria') || name.includes('government'))) score += 22;
+          if ((type.includes('pediatric') || type.includes('child') || type.includes('infant')) && (name.includes('children') || name.includes('pediatric') || name.includes('rainbow'))) score += 20;
+          if ((type.includes('maternity') || type.includes('pregnancy') || type.includes('labor')) && (name.includes('women') || name.includes('maternity') || name.includes('cloudnine') || name.includes('motherhood'))) score += 20;
+          if ((type.includes('eye') || type.includes('vision')) && (name.includes('eye') || name.includes('nethra') || name.includes('vision') || name.includes('sankara'))) score += 25;
 
-          return { hospital: h, score };
-        }).sort((a, b) => b.score - a.score); 
-        
+          // General bonus for Tier-1 hospitals
+          if (isTier1Capable(h.name)) score += 5;
+
+          return { hospital: h, score, dist };
+        }).sort((a, b) => b.score - a.score);
+
         const best = scoredHospitals[0].hospital;
-        logger.info(`Heuristic fallback selected ${best.name} with score ${scoredHospitals[0].score.toFixed(2)} for ${payload.emergency_type}`);
+        logger.info(`Heuristic selected "${best.name}" (dist: ${scoredHospitals[0].dist.toFixed(2)}km, score: ${scoredHospitals[0].score.toFixed(2)}) for "${payload.emergency_type}" [critical=${isCriticalEmergency}]`);
         
         return {
            hospital: {
