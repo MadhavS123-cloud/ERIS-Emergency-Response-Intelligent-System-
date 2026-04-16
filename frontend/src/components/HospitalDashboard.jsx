@@ -319,6 +319,31 @@ function HospitalDashboard() {
         }
     }, [dispatches, activeDispatch, hospitalFleet]);
 
+    // ── Navigation Lock ──
+    useEffect(() => {
+        window.history.pushState(null, '', window.location.href);
+        const handlePopState = (e) => {
+            const confirmLeave = window.confirm("Warning: You are in a critical active session. Navigating away might disrupt ongoing emergency tracking. Are you sure you want to leave?");
+            if (!confirmLeave) {
+                window.history.pushState(null, '', window.location.href);
+            } else {
+                window.removeEventListener('popstate', handlePopState);
+                window.history.back();
+            }
+        };
+        const handleBeforeUnload = (e) => {
+            e.preventDefault();
+            e.returnValue = 'You have an active dashboard session. Are you sure you want to leave?';
+        };
+        window.addEventListener('popstate', handlePopState);
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
     useEffect(() => {
         if (activeTab === 'dashboard') {
             // Re-init map whenever hospital data becomes available or tab switches

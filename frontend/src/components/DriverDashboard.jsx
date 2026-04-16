@@ -34,6 +34,31 @@ function DriverDashboard() {
 
     const dispatchInfo = activeDispatch;
 
+    // ── Navigation Lock ──
+    useEffect(() => {
+        window.history.pushState(null, '', window.location.href);
+        const handlePopState = (e) => {
+            const confirmLeave = window.confirm("Warning: You are in a critical active session. Navigating away might disrupt ongoing emergency tracking. Are you sure you want to leave?");
+            if (!confirmLeave) {
+                window.history.pushState(null, '', window.location.href);
+            } else {
+                window.removeEventListener('popstate', handlePopState);
+                window.history.back();
+            }
+        };
+        const handleBeforeUnload = (e) => {
+            e.preventDefault();
+            e.returnValue = 'You have an active dashboard session. Are you sure you want to leave?';
+        };
+        window.addEventListener('popstate', handlePopState);
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
     const getDestinationPosition = useCallback(() => {
         if (!dispatchInfo) return null;
         if (dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed') {
