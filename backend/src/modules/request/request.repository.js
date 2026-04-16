@@ -30,7 +30,10 @@ class RequestRepository {
     return await prisma.request.findMany({
       where: {
         OR: [
-          { status: 'PENDING' },
+          {
+            status: 'PENDING',
+            mlRecommendedHospitalId: hospitalId
+          },
           {
             ambulance: {
               is: { hospitalId }

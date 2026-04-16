@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import API_BASE_URL from '../config/api';
 import authService from '../services/authService';
 import { socket } from '../socket';
+import { toast } from 'react-hot-toast';
 
 const ErisContext = createContext(null);
 
@@ -238,7 +239,21 @@ export function ErisProvider({ children }) {
       socket.emit('join_room', user.hospitalId);
     }
 
-    const handleRequestChange = () => {
+    const handleRequestChange = (updatedData) => {
+      if (updatedData && updatedData.status) {
+        // Only toast if it's a patient and the status is moving forward
+        const statusMap = {
+          'ACCEPTED': 'Ambulance assigned',
+          'EN_ROUTE': 'Ambulance headed to pickup',
+          'ARRIVED': 'Ambulance arrived',
+          'IN_TRANSIT': 'In transit to hospital',
+          'COMPLETED': 'Arrived at hospital'
+        };
+        const message = statusMap[updatedData.status];
+        if (message && user.role === 'PATIENT') {
+           toast.success(`Update: ${message}`, { id: `status-${updatedData.status}` });
+        }
+      }
       fetchData();
     };
 

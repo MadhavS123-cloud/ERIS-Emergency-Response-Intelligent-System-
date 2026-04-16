@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
 import API_BASE_URL from '../config/api';
 import { addTomTomLayers } from '../config/tomtom';
+import { toast } from 'react-hot-toast';
 import './TrackPage.css';
 
 const STATUS_STEPS = [
@@ -47,6 +48,28 @@ function TrackPage() {
         import('../socket').then(({ socket }) => {
             if (!socket.connected) socket.connect();
             socket.emit('join_request_room', requestId);
+            
+            const handleUpdate = (updatedData) => {
+                if (updatedData && updatedData.status) {
+                    const statusMap = {
+                        'ACCEPTED': 'Ambulance assigned',
+                        'EN_ROUTE': 'Ambulance headed to pickup',
+                        'ARRIVED': 'Ambulance arrived',
+                        'IN_TRANSIT': 'In transit to hospital',
+                        'COMPLETED': 'Arrived at hospital'
+                    };
+                    const message = statusMap[updatedData.status];
+                    if (message) {
+                        toast.success(`Update: ${message}`, { id: `status-${updatedData.status}` });
+                    }
+                }
+            };
+
+            socket.on('request_updated', handleUpdate);
+            
+            return () => {
+                socket.off('request_updated', handleUpdate);
+            };
         });
     }, [activeDispatch?.id, urlId]);
 

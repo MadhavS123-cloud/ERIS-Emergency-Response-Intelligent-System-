@@ -1,10 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
 import { ErisProvider } from './context/ErisContext';
 import FloatingBookButton from './components/FloatingBookButton';
 import authService from './services/authService';
-import { Navigate } from 'react-router-dom';
 
 import EmergencyPage from './pages/EmergencyPage';
 import HomePage from './pages/HomePage';
@@ -33,6 +33,7 @@ function ProtectedRoute({ children, role }) {
 function App() {
   return (
     <ThemeProvider>
+      <Toaster position="top-center" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px', borderRadius: '8px', padding: '12px 16px', fontWeight: 600 } }} />
       <ErisProvider>
         <Router>
           <div className="app-container">

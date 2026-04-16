@@ -229,8 +229,25 @@ class RequestService {
     const predictions = await this.getMLPredictions(tempRequest);
     
     // Extract ML hospital recommendation if available
-    const mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
-    const mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
+    let mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
+    let mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
+    
+    // Auto-assign nearest hospital if ML is unavailable
+    if (!mlRecommendedHospitalId) {
+      const hospitals = await hospitalRepository.findAllHospitals();
+      const nearestHospital = hospitals
+        .filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number')
+        .sort((a, b) => (
+          calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
+          calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
+        ))[0];
+        
+      if (nearestHospital) {
+        mlRecommendedHospitalId = nearestHospital.id;
+        mlRecommendedHospitalName = nearestHospital.name;
+        logger.info(`ML unavailable. Auto-assigned nearest hospital: ${nearestHospital.name}`);
+      }
+    }
     
     const request = await requestRepository.createRequest({
       patientId,
@@ -315,8 +332,25 @@ class RequestService {
     const predictions = await this.getMLPredictions(tempRequest);
     
     // Extract ML hospital recommendation if available
-    const mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
-    const mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
+    let mlRecommendedHospitalId = predictions?.hospital?.recommendations?.[0]?.hospital_id || null;
+    let mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
+
+    // Auto-assign nearest hospital if ML is unavailable
+    if (!mlRecommendedHospitalId) {
+      const hospitals = await hospitalRepository.findAllHospitals();
+      const nearestHospital = hospitals
+        .filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number')
+        .sort((a, b) => (
+          calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
+          calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
+        ))[0];
+        
+      if (nearestHospital) {
+        mlRecommendedHospitalId = nearestHospital.id;
+        mlRecommendedHospitalName = nearestHospital.name;
+        logger.info(`ML unavailable. Auto-assigned nearest hospital for guest: ${nearestHospital.name}`);
+      }
+    }
 
     const request = await requestRepository.createRequest({
       isGuest: true,
