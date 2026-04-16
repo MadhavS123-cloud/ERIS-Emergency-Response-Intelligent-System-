@@ -236,7 +236,7 @@ class RequestService {
 
     if (mlRecommendedHospitalId) {
       const mlHospital = hospitals.find(h => h.id === mlRecommendedHospitalId);
-      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.status === 'AVAILABLE'))) {
+      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.isAvailable === true))) {
          logger.info(`ML recommended hospital ${mlRecommendedHospitalName} has no available drivers. Re-routing...`);
          mlRecommendedHospitalId = null;
       }
@@ -245,7 +245,7 @@ class RequestService {
     // Auto-assign nearest hospital
     if (!mlRecommendedHospitalId) {
       let eligibleHospitals = hospitals.filter(h => 
-        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.status === 'AVAILABLE')
+        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.isAvailable === true)
       );
       if (eligibleHospitals.length === 0) {
         eligibleHospitals = hospitals.filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number');
@@ -368,7 +368,7 @@ class RequestService {
 
     if (mlRecommendedHospitalId) {
       const mlHospital = hospitals.find(h => h.id === mlRecommendedHospitalId);
-      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.status === 'AVAILABLE'))) {
+      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.isAvailable === true))) {
          logger.info(`ML recommended hospital ${mlRecommendedHospitalName} has no available drivers. Re-routing...`);
          mlRecommendedHospitalId = null;
       }
@@ -377,7 +377,7 @@ class RequestService {
     // Auto-assign nearest hospital
     if (!mlRecommendedHospitalId) {
       let eligibleHospitals = hospitals.filter(h => 
-        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.status === 'AVAILABLE')
+        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.isAvailable === true)
       );
       if (eligibleHospitals.length === 0) {
         eligibleHospitals = hospitals.filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number');
