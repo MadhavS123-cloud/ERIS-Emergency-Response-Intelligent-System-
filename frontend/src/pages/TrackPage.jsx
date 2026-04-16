@@ -360,11 +360,15 @@ function TrackPage() {
                         </div>
                         <div>
                             <span>Driver Name</span>
-                            <strong>{dispatch.driverName}</strong>
+                            <strong>{dispatch.driverName || 'Awaiting assignment'}</strong>
                         </div>
                         <div>
                             <span>Vehicle / Driver Contact</span>
-                            <strong>{dispatch.vehicleNumber} | {dispatch.driverPhone}</strong>
+                            <strong>
+                                {dispatch.vehicleNumber === 'Awaiting assignment' || !dispatch.vehicleNumber
+                                    ? 'Awaiting assignment'
+                                    : `${dispatch.vehicleNumber} | ${dispatch.driverPhone || 'No contact'}`}
+                            </strong>
                         </div>
                     </div>
                 </section>
