@@ -58,8 +58,56 @@ class MLService {
       logger.info('ML hospital recommendation received successfully');
       return response.data;
     } catch (error) {
-      logger.error('Error calling ML service for hospital recommendation', { message: error.message });
-      return null;
+      logger.warn('ML Service unreachable. Using intelligent heuristic routing fallback.', { message: error.message });
+      try {
+        const { prisma } = await import('../config/db.js');
+        const { calculateDistance } = await import('../utils/distance.js');
+        
+        const hospitals = await prisma.hospital.findMany({ include: { ambulances: true } });
+        const eligible = hospitals.filter(h => 
+          typeof h.locationLat === 'number' && 
+          typeof h.locationLng === 'number' && 
+          h.ambulances && h.ambulances.some(a => a.isAvailable === true)
+        );
+
+        if (eligible.length === 0) return null;
+
+        const type = (payload.emergency_type || "").toLowerCase();
+        
+        const scoredHospitals = eligible.map(h => {
+          let score = 0;
+          const name = h.name.toLowerCase();
+          let dist = calculateDistance(payload.patient_location.lat, payload.patient_location.lng, h.locationLat, h.locationLng);
+          
+          score -= dist * 2; 
+
+          if ((type.includes('cardiac') || type.includes('heart')) && (name.includes('heart') || name.includes('cardio') || name.includes('sathya sai') || name.includes('narayana'))) score += 15;
+          if ((type.includes('trauma') || type.includes('accident') || type.includes('injury')) && (name.includes('trauma') || name.includes('general') || name.includes('multi') || name.includes('apollo') || name.includes('manipal'))) score += 10;
+          if ((type.includes('stroke') || type.includes('neuro') || type.includes('seizure')) && (name.includes('neuro') || name.includes('brain') || name.includes('nimhans') || name.includes('speciality'))) score += 12;
+          if ((type.includes('burn') || type.includes('fire')) && (name.includes('burn') || name.includes('victoria'))) score += 15;
+          if ((type.includes('pediatric') || type.includes('child') || type.includes('infant')) && (name.includes('children') || name.includes('pediatric') || name.includes('kids') || name.includes('rainbow'))) score += 15;
+          if ((type.includes('maternity') || type.includes('pregnancy') || type.includes('labor')) && (name.includes('women') || name.includes('maternity') || name.includes('mother') || name.includes('cloudnine'))) score += 15;
+          if ((type.includes('eye') || type.includes('vision')) && (name.includes('eye') || name.includes('nethra') || name.includes('vision') || name.includes('sankara'))) score += 20;
+
+          return { hospital: h, score };
+        }).sort((a, b) => b.score - a.score); 
+        
+        const best = scoredHospitals[0].hospital;
+        logger.info(`Heuristic fallback selected ${best.name} with score ${scoredHospitals[0].score.toFixed(2)} for ${payload.emergency_type}`);
+        
+        return {
+           hospital: {
+               recommendations: [{
+                   hospital_id: best.id,
+                   hospital_name: best.name,
+                   score: scoredHospitals[0].score
+               }]
+           }
+        };
+      } catch (innerErr) {
+         logger.error('Heuristic fallback completely failed', { message: innerErr.message });
+         return null;
+      }
     }
   }
 

@@ -316,20 +316,34 @@ function EmergencyForm() {
 
                     <div className="form-group">
                         <label>Emergency Type *</label>
-                        <select
+                        <input
+                            list="emergencyTypes"
                             name="emergencyType"
                             className="form-control"
+                            placeholder="Type or select emergency condition..."
                             value={formData.emergencyType}
                             onChange={handleChange}
                             required
-                        >
-                            <option value="" disabled>Select emergency condition</option>
-                            <option value="Cardiac Arrest">Cardiac Arrest / Heart attack</option>
-                            <option value="Trauma/Accident">Trauma / Road Accident</option>
-                            <option value="Stroke">Stroke / Neurological</option>
-                            <option value="Respiratory">Severe Breathing Difficulty</option>
-                            <option value="Other">Other Medical Emergency</option>
-                        </select>
+                            autoComplete="off"
+                        />
+                        <datalist id="emergencyTypes">
+                            <option value="Cardiac Arrest / Severe Chest Pain" />
+                            <option value="Trauma / Road Traffic Accident" />
+                            <option value="Stroke / Neurological Issue" />
+                            <option value="Severe Breathing Difficulty / Asthma" />
+                            <option value="Pediatric / Child Emergency" />
+                            <option value="Pregnancy / Maternity Labor" />
+                            <option value="Severe Bleeding / Hemorrhage" />
+                            <option value="Burn / Fire Injury" />
+                            <option value="Eye / Vision Emergency" />
+                            <option value="Seizure / Convulsions" />
+                            <option value="Poisoning / Drug Overdose" />
+                            <option value="Severe Allergic Reaction / Anaphylaxis" />
+                            <option value="Choking / Asphyxiation" />
+                            <option value="Unconscious / Fainting" />
+                            <option value="Psychiatric / Mental Health Crisis" />
+                            <option value="Other General Medical Emergency" />
+                        </datalist>
                     </div>
 
                     <div className="form-group">
