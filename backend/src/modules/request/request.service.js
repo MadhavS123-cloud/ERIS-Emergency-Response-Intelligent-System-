@@ -284,6 +284,21 @@ class RequestService {
   }
 
   async createGuestEmergency(data) {
+    if (data.emergencyType === 'Panic SOS' && data.deviceId) {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentPanic = await prisma.request.findFirst({
+        where: {
+          deviceId: data.deviceId,
+          emergencyType: 'Panic SOS',
+          createdAt: { gte: twentyFourHoursAgo }
+        }
+      });
+      
+      if (recentPanic) {
+        throw Object.assign(new Error('1-Tap Emergency is limited to once per day per device to prevent misuse. Please use "Book with details" for further requests.'), { statusCode: 429 });
+      }
+    }
+
     let trustScore = 0;
     let isSuspicious = data.isSuspicious || false;
     let suspiciousReason = data.suspiciousReason || null;

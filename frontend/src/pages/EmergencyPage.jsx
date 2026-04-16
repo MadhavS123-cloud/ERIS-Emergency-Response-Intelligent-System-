@@ -55,10 +55,13 @@ export default function EmergencyPage() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Server error. Use fallback!');
+      if (!response.ok) {
+        if (response.status === 429) throw new Error(data.message);
+        throw new Error((data.message || 'Server error. Use fallback!') + ' Please Call 108.');
+      }
       navigate(`/track?id=${data.data.id}&guest=true`);
     } catch (err) {
-      setError(err.message + ' Please Call 108.');
+      setError(err.message);
       setLoading(false);
     }
   };
