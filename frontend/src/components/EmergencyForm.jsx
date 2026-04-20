@@ -308,14 +308,14 @@ function EmergencyForm() {
                             type="email"
                             name="patientEmail"
                             className="form-control"
-                            placeholder="Optional email for future account linking"
+                            placeholder="Email for future account linking"
                             value={formData.patientEmail}
                             onChange={handleChange}
                         />
                     </div>
 
                     <div className="form-group">
-                        <label>Emergency Type *</label>
+                        <label>Emergency Type (Locates nearest hospital)*</label>
                         <input
                             list="emergencyTypes"
                             name="emergencyType"
