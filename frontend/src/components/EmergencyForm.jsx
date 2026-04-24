@@ -39,7 +39,7 @@ function EmergencyForm() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         if (name === 'contactNumber') {
             const numbersOnly = value.replace(/\D/g, '');
             if (numbersOnly.length <= 10) {
@@ -85,7 +85,7 @@ function EmergencyForm() {
             });
 
             const { latitude, longitude } = position.coords;
-            
+
             // Reverse geocoding to get address
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
@@ -101,20 +101,20 @@ function EmergencyForm() {
             }
 
             const data = await response.json();
-            
+
             if (data && data.display_name) {
                 // Format the address to be more readable
                 const formattedAddress = formatAddress(data);
-                setFormData(prev => ({ 
-                    ...prev, 
+                setFormData(prev => ({
+                    ...prev,
                     pickupAddress: formattedAddress,
                     locationLat: latitude,
                     locationLng: longitude
                 }));
             } else {
                 // Fallback to coordinates if no address found
-                setFormData(prev => ({ 
-                    ...prev, 
+                setFormData(prev => ({
+                    ...prev,
                     pickupAddress: `Current Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
                     locationLat: latitude,
                     locationLng: longitude
@@ -124,9 +124,9 @@ function EmergencyForm() {
             console.error('Location error:', error);
             setLocationError('Unable to get your location. Please enter address manually.');
             // Set a default placeholder message
-            setFormData(prev => ({ 
-                ...prev, 
-                pickupAddress: '' 
+            setFormData(prev => ({
+                ...prev,
+                pickupAddress: ''
             }));
         } finally {
             setIsGettingLocation(false);
@@ -136,27 +136,27 @@ function EmergencyForm() {
     const formatAddress = (data) => {
         const address = data.address || {};
         const parts = [];
-        
+
         // Build address components in order of preference
         if (address.house_number) parts.push(address.house_number);
         if (address.road) parts.push(address.road);
         if (address.neighbourhood) parts.push(address.neighbourhood);
         if (address.suburb) parts.push(address.suburb);
-        
+
         // Add city/town
         if (address.city || address.town || address.village) {
             parts.push(address.city || address.town || address.village);
         }
-        
+
         // Add state and postcode
         if (address.state) parts.push(address.state);
         if (address.postcode) parts.push(address.postcode);
-        
+
         // If we couldn't build a proper address, use the display_name
         if (parts.length === 0) {
             return data.display_name;
         }
-        
+
         return parts.join(', ');
     };
 
@@ -176,24 +176,24 @@ function EmergencyForm() {
 
         setIsSubmitting(true);
 
-            const newDispatch = await submitEmergencyRequest(formData);
-            if (newDispatch) {
-                setSubmittedDispatch(newDispatch);
-                setFormData({
-                    patientName: '',
-                    patientEmail: '',
-                    contactNumber: '',
-                    emergencyType: '',
-                    pickupAddress: '',
-                    medicalNotes: '',
-                    locationLat: null,
-                    locationLng: null
-                });
-                window.scrollTo(0, 0);
-            } else {
-                alert('Failed to dispatch emergency request. Please try again.');
-            }
-            setIsSubmitting(false);
+        const newDispatch = await submitEmergencyRequest(formData);
+        if (newDispatch) {
+            setSubmittedDispatch(newDispatch);
+            setFormData({
+                patientName: '',
+                patientEmail: '',
+                contactNumber: '',
+                emergencyType: '',
+                pickupAddress: '',
+                medicalNotes: '',
+                locationLat: null,
+                locationLng: null
+            });
+            window.scrollTo(0, 0);
+        } else {
+            alert('Failed to dispatch emergency request. Please try again.');
+        }
+        setIsSubmitting(false);
     };
 
     if (submittedDispatch) {
@@ -368,8 +368,8 @@ function EmergencyForm() {
                                 }}
                             >
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polyline points="23 4 23 10 17 10"/>
-                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                                    <polyline points="23 4 23 10 17 10" />
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
                                 </svg>
                                 {isGettingLocation ? 'Getting Location...' : 'Refresh Location'}
                             </button>
@@ -425,8 +425,8 @@ function EmergencyForm() {
                                 gap: '4px'
                             }}>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                                    <circle cx="12" cy="10" r="3"/>
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                    <circle cx="12" cy="10" r="3" />
                                 </svg>
                                 Location auto-detected. You can edit if needed.
                             </div>
