@@ -11,21 +11,30 @@ st.set_page_config(
 from streamlit_autorefresh import st_autorefresh
 from utils.data_loader import load_data
 from utils.styling import load_css
+from utils.socket_listener import ensure_listener_running
 from modules.overview import render_overview
 from modules.live_tracking import render_live_tracking
 from modules.request_management import render_request_management
 from modules.fleet_management import render_fleet_management
 from modules.analytics import render_analytics
 from modules.settings import render_settings
+from modules.dispatch_feed import render_dispatch_feed
+
+# ── Start real-time Socket.IO listener (background thread) ────────────────────
+ensure_listener_running(st.session_state)
 
 # ── Data & Styling ────────────────────────────────────────────────────────────
 load_css()
-# Auto-refresh every 30 seconds to maintain real-time feel
-st_autorefresh(interval=30 * 1000, key="data_refresh")
+# Auto-refresh every 15 seconds for near-real-time feel
+st_autorefresh(interval=15 * 1000, key="data_refresh")
 
 data = load_data()
 all_requests = data["requests"]
 is_live = data["live"]
+
+# ── Live dispatch badge count ─────────────────────────────────────────────────
+feed_count = len(st.session_state.get("live_dispatch_feed", []))
+dispatch_badge = f" ({feed_count})" if feed_count > 0 else ""
 
 # ── Sidebar Navigation ─────────────────────────────────────────────────────────
 with st.sidebar:
@@ -38,6 +47,7 @@ with st.sidebar:
         "Main Navigation",
         [
             "COMMAND CENTER",
+            f"🔴 LIVE DISPATCH{dispatch_badge}",
             "LIVE TRACKING",
             "REQUEST MANAGEMENT",
             "FLEET & DRIVERS",
@@ -51,7 +61,7 @@ with st.sidebar:
         st.success("● System Online: Live Data")
     else:
         st.info("● Demo Mode: Mock Data")
-    
+
     st.caption(f"Last updated: {st.session_state.get('data_refresh', 0)}")
     if st.button("Manual Sync"):
         st.cache_data.clear()
@@ -60,6 +70,8 @@ with st.sidebar:
 # ── Main Content Routing ─────────────────────────────────────────────────────
 if nav == "COMMAND CENTER":
     render_overview(data)
+elif nav.startswith("🔴 LIVE DISPATCH"):
+    render_dispatch_feed()
 elif nav == "LIVE TRACKING":
     render_live_tracking(data)
 elif nav == "REQUEST MANAGEMENT":
