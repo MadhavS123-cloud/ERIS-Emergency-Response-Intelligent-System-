@@ -290,11 +290,44 @@ class RequestService {
 
     await addEmergencyRequestToQueue(request);
 
-    const io = getIO();
-    io.emit('new_emergency', request);
-    io.emit('request_updated', request);
+    // ── Inline fast dispatch — same as guest flow ──────────────────────────
+    try {
+      const assignedAmbulance = await this.assignAmbulance(request, { role: 'ADMIN' });
 
-    return request;
+      const hospital = assignedAmbulance.hospital;
+
+      // Initialize ambulance at hospital GPS location
+      if (hospital?.locationLat && hospital?.locationLng) {
+        await ambulanceRepository.updateAmbulance(assignedAmbulance.id, {
+          locationLat: hospital.locationLat,
+          locationLng: hospital.locationLng
+        });
+      }
+
+      await requestRepository.updateRequest(request.id, {
+        status: 'ACCEPTED',
+        ambulanceId: assignedAmbulance.id,
+        driverId: assignedAmbulance.driverId,
+        mlRecommendedHospitalId: hospital?.id || mlRecommendedHospitalId,
+        mlRecommendedHospitalName: hospital?.name || mlRecommendedHospitalName
+      });
+
+      logger.info('Auto-assigned ambulance to patient request', {
+        requestId: request.id,
+        ambulanceId: assignedAmbulance.id,
+        hospital: hospital?.name
+      });
+    } catch (e) {
+      logger.warn('Auto-assign failed for patient request (will stay PENDING):', e.message);
+    }
+
+    const finalRequest = await requestRepository.findRequestById(request.id);
+
+    const io = getIO();
+    io.emit('new_emergency', finalRequest);
+    io.emit('request_updated', finalRequest);
+
+    return finalRequest;
   }
 
   async createGuestEmergency(data) {
