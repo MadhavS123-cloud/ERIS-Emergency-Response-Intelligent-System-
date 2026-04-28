@@ -1,8 +1,8 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import numpy as np
+import pandas as pd # type: ignore
+import plotly.express as px # type: ignore
+import plotly.graph_objects as go # type: ignore
+import numpy as np # type: ignore
 from datetime import datetime, timedelta
 
 def render_analytics(data):

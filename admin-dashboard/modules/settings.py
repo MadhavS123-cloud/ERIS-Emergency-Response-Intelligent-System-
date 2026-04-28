@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pd
+import pandas as pd # type: ignore
 from datetime import datetime
 
 def render_settings(data):

@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pd
+import pandas as pd # type: ignore
 
 def render_request_management(data):
     st.subheader("Emergency Request Management")
