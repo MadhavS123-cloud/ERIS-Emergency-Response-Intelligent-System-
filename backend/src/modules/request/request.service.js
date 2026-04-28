@@ -458,7 +458,9 @@ class RequestService {
       await requestRepository.updateRequest(request.id, {
         status: 'ACCEPTED',
         ambulanceId: assignedAmbulance.id,
-        driverId: assignedAmbulance.driverId
+        driverId: assignedAmbulance.driverId,
+        mlRecommendedHospitalId: hospital.id,
+        mlRecommendedHospitalName: hospital.name
       });
     } catch (e) {
       // No ambulance available — keep PENDING, hospital will assign manually
@@ -548,20 +550,13 @@ class RequestService {
 
       availableAmbulances = await ambulanceRepository.findAvailableAmbulancesByHospitalId(actor.hospitalId);
     } else {
-      availableAmbulances = await ambulanceRepository.findAvailableAmbulances();
-
-      const hospitals = await hospitalRepository.findAllHospitals();
-      const nearestHospital = hospitals
-        .filter(hospital => typeof hospital.locationLat === 'number' && typeof hospital.locationLng === 'number')
-        .sort((a, b) => (
-          calculateDistance(request.locationLat, request.locationLng, a.locationLat, a.locationLng) -
-          calculateDistance(request.locationLat, request.locationLng, b.locationLat, b.locationLng)
-        ))[0];
-
-      if (nearestHospital) {
-        availableAmbulances = availableAmbulances.filter(
-          ambulance => ambulance.hospitalId === nearestHospital.id
-        );
+      const allAvailable = await ambulanceRepository.findAvailableAmbulances();
+      
+      if (allAvailable.length > 0) {
+        // Find the absolute nearest available ambulance across all hospitals
+        availableAmbulances = this.sortAmbulancesByDistance(allAvailable, request);
+      } else {
+        availableAmbulances = [];
       }
     }
 
