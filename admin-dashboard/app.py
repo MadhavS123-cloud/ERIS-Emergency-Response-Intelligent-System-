@@ -1,4 +1,13 @@
 import streamlit as st
+
+# ── Page Config ───────────────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="ERIS | Admin Intelligence Dashboard",
+    page_icon="🚑",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 from streamlit_autorefresh import st_autorefresh
 from utils.data_loader import load_data
 from utils.styling import load_css
@@ -8,14 +17,6 @@ from modules.request_management import render_request_management
 from modules.fleet_management import render_fleet_management
 from modules.analytics import render_analytics
 from modules.settings import render_settings
-
-# ── Page Config ───────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="ERIS | Admin Intelligence Dashboard",
-    page_icon="🚑",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 # ── Data & Styling ────────────────────────────────────────────────────────────
 load_css()
@@ -68,7 +69,7 @@ elif nav == "FLEET & DRIVERS":
 elif nav == "ANALYTICS & ML":
     render_analytics(data)
 elif nav == "SYSTEM SETTINGS":
-    render_settings()
+    render_settings(data)
 
 # ── Footer ───────────────────────────────────────────────────────────────────
 st.sidebar.divider()

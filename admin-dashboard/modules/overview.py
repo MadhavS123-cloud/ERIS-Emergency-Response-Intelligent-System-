@@ -74,13 +74,23 @@ def render_overview(data):
     # Line chart: requests over last 7 days
     with col_right:
         with st.container(border=True):
-            st.markdown("**Requests Over Last 24 Hours (Mocked)**")
+            st.markdown("**Requests Over Last 24 Hours**")
             today = datetime.now()
-            # Generate dummy hourly data for the last 24h
-            hours = [today - timedelta(hours=i) for i in range(23, -1, -1)]
-            import numpy as np
-            mock_requests = np.random.poisson(lam=5, size=24)
-            df_hours = pd.DataFrame({"Time": hours, "Requests": mock_requests})
+            hours = [(today - timedelta(hours=i)).replace(minute=0, second=0, microsecond=0) for i in range(23, -1, -1)]
+            counts = {h: 0 for h in hours}
+            
+            for r in all_requests:
+                if r.get("createdAt"):
+                    try:
+                        dt_str = r["createdAt"].replace("Z", "+00:00")
+                        dt = datetime.fromisoformat(dt_str)
+                        hr_bin = dt.replace(minute=0, second=0, microsecond=0, tzinfo=None)
+                        if hr_bin in counts:
+                            counts[hr_bin] += 1
+                    except Exception:
+                        pass
+                        
+            df_hours = pd.DataFrame({"Time": list(counts.keys()), "Requests": list(counts.values())})
             fig_line = px.line(df_hours, x="Time", y="Requests", markers=True,
                                color_discrete_sequence=["#00b4d8"])
             fig_line.update_layout(

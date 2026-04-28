@@ -62,12 +62,15 @@ class AdminService {
         locationLat: a.locationLat,
         locationLng: a.locationLng,
       })),
-      nodes: hospitals.map(h => ({
-        nodeId: h.id.slice(0, 8),
+      hospitals: hospitals.map(h => ({
+        id: h.id,
         name: h.name,
-        icuBeds: h.icuBedsAvailable,
-        totalBeds: h.bedCapacity,
-        status: 'Online'
+        locationLat: h.locationLat,
+        locationLng: h.locationLng,
+        icuBedsAvailable: h.icuBedsAvailable || 0,
+        generalBedsAvailable: (h.bedCapacity || 0) - (h.icuBedsAvailable || 0),
+        totalBeds: h.bedCapacity || 0,
+        status: 'Operational'
       })),
       recentRequests: recentRequests.map(r => ({
         id: r.id,

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-def render_settings():
+def render_settings(data):
     st.subheader("System Settings & Configuration")
 
     t1, t2, t3 = st.tabs(["API Integrations", "Alert Thresholds", "System Logs"])
@@ -47,15 +47,35 @@ def render_settings():
     with t3:
         st.markdown("### Admin System Logs")
 
-        # Mocking some recent logs
-        logs = [
-            {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Level": "INFO", "Message": "Admin logged in (IP 192.168.1.4)"},
-            {"Timestamp": (datetime.now() - pd.Timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S"), "Level": "WARNING", "Message": "High latency detected on TomTom SDK responses (800ms)."},
-            {"Timestamp": (datetime.now() - pd.Timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"), "Level": "INFO", "Message": "Ambulance KA-01-AMB-108 registered to network."},
-            {"Timestamp": (datetime.now() - pd.Timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S"), "Level": "ERROR", "Message": "Failed to sync Hospital status for 'Apollo Hospitals Whitefield'. Retrying..."},
-            {"Timestamp": (datetime.now() - pd.Timedelta(hours=2, minutes=2)).strftime("%Y-%m-%d %H:%M:%S"), "Level": "INFO", "Message": "Hospital sync successful (Retry 1)."},
-        ]
+        logs = []
+        for r in data.get("requests", []):
+            if r.get("createdAt"):
+                try:
+                    dt_str = r["createdAt"].replace("Z", "+00:00")
+                    dt = datetime.fromisoformat(dt_str)
+                    timestamp = dt.strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    status = r.get("status")
+                    req_id = r.get("id", "Unknown")[:8]
+                    
+                    if r.get("mlRisk") == "High" or r.get("isSuspicious"):
+                        logs.append({"Timestamp": timestamp, "Level": "WARNING", "Message": f"High risk/suspicious emergency request {req_id} logged."})
+                    
+                    if status == "COMPLETED":
+                        logs.append({"Timestamp": timestamp, "Level": "INFO", "Message": f"Emergency request {req_id} marked as COMPLETED."})
+                    elif status == "PENDING":
+                        logs.append({"Timestamp": timestamp, "Level": "INFO", "Message": f"New emergency request {req_id} received."})
+                    elif status == "CANCELLED":
+                        logs.append({"Timestamp": timestamp, "Level": "ERROR", "Message": f"Emergency request {req_id} was CANCELLED."})
+                        
+                except Exception:
+                    pass
+                    
+        logs.sort(key=lambda x: x["Timestamp"], reverse=True)
         
+        if not logs:
+            logs = [{"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Level": "INFO", "Message": "System started. No recent logs."}]
+            
         df_logs = pd.DataFrame(logs)
         
         # Color code the rows via pandas styler if needed, or simply display

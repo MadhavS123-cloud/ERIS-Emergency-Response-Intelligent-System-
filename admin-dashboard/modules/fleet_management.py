@@ -67,8 +67,29 @@ def render_fleet_management(data):
 
     with c2:
         with st.expander("Driver Performance Stats"):
-            driver_stats = pd.DataFrame([
-                {"Driver": a.get("driverName"), "Avg Response (m)": 8 + (hash(a.get("driverName")) % 7), "Rating": min(5.0, 4.0 + (hash(a.get("driverName")) % 10)/10.0)} 
-                for a in fleet
-            ])
+            driver_perf = {}
+            for r in data.get("requests", []):
+                d_name = r.get("driverName")
+                if d_name and d_name != "Unknown":
+                    if d_name not in driver_perf:
+                        driver_perf[d_name] = {"delays": [], "count": 0}
+                    driver_perf[d_name]["count"] += 1
+                    if r.get("mlDelayMins") is not None:
+                        driver_perf[d_name]["delays"].append(r.get("mlDelayMins"))
+                        
+            driver_stats_list = []
+            for a in fleet:
+                d_name = a.get("driverName")
+                if d_name and d_name != "Unassigned":
+                    perf = driver_perf.get(d_name, {"delays": [], "count": 0})
+                    avg_resp = sum(perf["delays"]) / len(perf["delays"]) if perf["delays"] else 0.0
+                    rating = min(5.0, max(3.0, 5.0 - (avg_resp / 10.0))) if perf["delays"] else 5.0
+                    driver_stats_list.append({
+                        "Driver": d_name,
+                        "Recent Emergencies": perf["count"],
+                        "Avg Response (m)": round(avg_resp, 1),
+                        "Rating": round(rating, 1)
+                    })
+            
+            driver_stats = pd.DataFrame(driver_stats_list)
             st.dataframe(driver_stats, use_container_width=True, hide_index=True)

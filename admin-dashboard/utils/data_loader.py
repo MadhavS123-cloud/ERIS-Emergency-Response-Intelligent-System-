@@ -134,20 +134,14 @@ def load_data():
     kpis_data = demo_kpis
 
     try:
-        r = requests.get(f"{API_BASE}/admin/dashboard-stats", timeout=3)
+        headers = {"x-internal-token": "ERIS_INTERNAL"}
+        r = requests.get(f"{API_BASE}/admin/dashboard-stats", headers=headers, timeout=3)
         if r.status_code == 200:
             d = r.json().get("data", {})
             requests_data = d.get("recentRequests", demo_requests)
             fleet_data = d.get("fleet", demo_fleet)
             kpis_data = d.get("kpis", demo_kpis)
-            live = True
-    except Exception:
-        pass
-
-    try:
-        r2 = requests.get(f"{API_BASE}/hospitals", timeout=3)
-        if r2.status_code == 200:
-            hospitals_data = r2.json().get("data", demo_hospitals)
+            hospitals_data = d.get("hospitals", demo_hospitals)
             live = True
     except Exception:
         pass
