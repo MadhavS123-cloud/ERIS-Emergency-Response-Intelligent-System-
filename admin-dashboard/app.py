@@ -25,24 +25,38 @@ ensure_listener_running(st.session_state)
 
 # ── Data & Styling ────────────────────────────────────────────────────────────
 load_css()
-# Auto-refresh every 8 seconds for near-real-time feel
-st_autorefresh(interval=8 * 1000, key="data_refresh")
+# ── Prominent Logo & Header ──────────────────────────────────────────────────
+st.markdown("""
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; background: linear-gradient(90deg, rgba(255,75,75,0.1), transparent); padding: 20px; border-radius: 15px; border-left: 6px solid #ff4b4b;">
+        <div style="display: flex; align-items: center;">
+            <img src="https://img.icons8.com/fluency/96/ambulance.png" width="60" style="margin-right: 20px; filter: drop-shadow(0 0 10px rgba(255,75,75,0.3));">
+            <div>
+                <h1 style="margin: 0; font-size: 2.5rem; letter-spacing: -2px; font-weight: 800; line-height: 1; color: white;">ERIS <span style="color: #ff4b4b;">INTELLIGENCE</span></h1>
+                <p style="margin: 0; font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">Emergency Response Intelligent System | Global Node v2.1</p>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div style="display: flex; align-items: center; justify-content: flex-end;">
+                <div class="sync-indicator"></div>
+                <span style="font-size: 0.75rem; color: #00ff00; font-weight: 800; letter-spacing: 1px;">SYSTEM ONLINE</span>
+            </div>
+            <p style="margin: 0; font-size: 0.7rem; opacity: 0.5;">Secure Data Stream Active</p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
-data = load_data()
-all_requests = data["requests"]
-is_live = data["live"]
-connection_error = data.get("connection_error")
-backend_url = data.get("backend_url", "Not set")
-
-# ── Live dispatch badge count ─────────────────────────────────────────────────
+# ── Sidebar Setup ────────────────────────────────────────────────────────────
+initial_data = load_data()
+all_requests = initial_data["requests"]
+is_live = initial_data["live"]
+backend_url = initial_data.get("backend_url", "Not set")
 feed_count = len(st.session_state.get("live_dispatch_feed", []))
 dispatch_badge = f" ({feed_count})" if feed_count > 0 else ""
 
-# ── Sidebar Navigation ─────────────────────────────────────────────────────────
 with st.sidebar:
     st.image("https://img.icons8.com/fluency/96/ambulance.png", width=80)
     st.title("ERIS Admin")
-    st.markdown("Emergency Response Intelligence System")
+    st.markdown("Global Command Console")
     st.divider()
 
     nav = st.radio(
@@ -61,38 +75,45 @@ with st.sidebar:
     st.divider()
     if is_live:
         active_count = sum(1 for r in all_requests if r.get("status") not in ("COMPLETED", "CANCELLED"))
-        pending_count = sum(1 for r in all_requests if r.get("status") == "PENDING")
         st.markdown('<div class="sync-indicator"></div><span style="color:#00ff00; font-weight:600;">LIVE SYNC ACTIVE</span>', unsafe_allow_html=True)
         st.metric("Active Emergencies", active_count)
-        if pending_count > 0:
-            st.warning(f"⚠️ {pending_count} PENDING (unassigned)")
     else:
-        st.error("● DEMO MODE — Backend unreachable")
-        if connection_error:
-            st.caption(f"Error: {connection_error}")
-        st.caption(f"URL: `{backend_url}`")
-        st.info("Set BACKEND_URL in Render → Environment to connect live data.")
+        st.error("● OFFLINE / DEMO MODE")
 
-    st.caption(f"Last sync: {st.session_state.get('data_refresh', 0)}")
-    if st.button("🔄 Force Refresh"):
+    if st.button("🔄 Force Global Rerun"):
         st.rerun()
 
-# ── Main Content Routing ─────────────────────────────────────────────────────
-if nav == "COMMAND CENTER":
-    render_overview(data)
-elif nav.startswith("🔴 LIVE DISPATCH"):
-    render_dispatch_feed(data)
-elif nav == "LIVE TRACKING":
-    render_live_tracking(data)
-elif nav == "REQUEST MANAGEMENT":
-    render_request_management(data)
-elif nav == "FLEET & DRIVERS":
-    render_fleet_management(data)
-elif nav == "ANALYTICS & ML":
-    render_analytics(data)
-elif nav == "SYSTEM SETTINGS":
-    render_settings(data)
+# ── Fragmented Main Content ──────────────────────────────────────────────────
+# This @st.fragment is the secret to a smooth dashboard. It reruns every 8s
+# but only for the content inside this function. No full-page flicker!
+@st.fragment(run_every=8)
+def render_main_data():
+    # Progress scanline at the top of the data area
+    st.markdown('<div style="width: 100%; height: 3px; background: rgba(255,255,255,0.05); overflow: hidden; margin-bottom: 10px; border-radius: 2px;"><div style="width: 30%; height: 100%; background: #ff4b4b; animation: scan 2s infinite ease-in-out;"></div></div>', unsafe_allow_html=True)
+    
+    # Reload fresh data inside the fragment
+    current_data = load_data()
+    
+    # Routing inside the fragment
+    if nav == "COMMAND CENTER":
+        render_overview(current_data)
+    elif nav.startswith("🔴 LIVE DISPATCH"):
+        render_dispatch_feed(current_data)
+    elif nav == "LIVE TRACKING":
+        render_live_tracking(current_data)
+    elif nav == "REQUEST MANAGEMENT":
+        render_request_management(current_data)
+    elif nav == "FLEET & DRIVERS":
+        render_fleet_management(current_data)
+    elif nav == "ANALYTICS & ML":
+        render_analytics(current_data)
+    elif nav == "SYSTEM SETTINGS":
+        render_settings(current_data)
+
+# Launch the fragmented content
+render_main_data()
 
 # ── Footer ───────────────────────────────────────────────────────────────────
 st.sidebar.divider()
-st.sidebar.caption("© 2026 ERIS Intelligent Systems v2.1")
+st.sidebar.caption("© 2026 ERIS Global Intelligence v2.1")
+

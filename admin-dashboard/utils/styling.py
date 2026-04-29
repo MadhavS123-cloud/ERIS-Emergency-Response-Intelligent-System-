@@ -60,5 +60,26 @@ def load_css():
             padding-top: 1.5rem;
             max-width: 95%;
         }
+
+        /* 7. Scanline Animation for Data Updates */
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* 8. Shimmer for skeleton loading feel */
+        @keyframes shimmer {
+            0% { background-position: -468px 0; }
+            100% { background-position: 468px 0; }
+        }
+        .shimmer {
+            background: #f6f7f8;
+            background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-repeat: no-repeat;
+            background-size: 800px 104px; 
+            display: inline-block;
+            position: relative; 
+            animation: shimmer 1s linear infinite forwards;
+        }
         </style>
     """, unsafe_allow_html=True)
