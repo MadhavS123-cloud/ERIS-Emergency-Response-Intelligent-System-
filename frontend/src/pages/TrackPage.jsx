@@ -335,13 +335,22 @@ function TrackPage() {
         if (routeOrigin && routeDest) {
             import('../config/tomtom').then(({ fetchTomTomRoute }) => {
                 fetchTomTomRoute(routeOrigin, routeDest).then(routeData => {
-                    if (routeData?.points && mapRef.current) {
+                    const points = (routeData && routeData.points && routeData.points.length > 0)
+                        ? routeData.points
+                        : [routeOrigin, routeDest]; // Fallback to straight line
+                        
+                    if (mapRef.current) {
                         if (routeLineRef.current) {
-                            routeLineRef.current.setLatLngs(routeData.points);
+                            routeLineRef.current.setLatLngs(points);
                         } else {
-                            routeLineRef.current = window.L.polyline(routeData.points, {
-                                color: '#2563eb', weight: 4, opacity: 0.85
+                            routeLineRef.current = window.L.polyline(points, {
+                                color: '#2563eb', weight: 4, opacity: 0.85, dashArray: (routeData && routeData.points) ? null : '10, 10'
                             }).addTo(mapRef.current);
+                        }
+                        
+                        // Only fit bounds if we didn't just initialize the map
+                        if (!routeData?.points) {
+                            console.warn("Routing API unavailable. Drawing direct line.");
                         }
                     }
                 });

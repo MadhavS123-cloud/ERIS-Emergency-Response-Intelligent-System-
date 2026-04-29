@@ -237,6 +237,34 @@ function DriverDashboard() {
                         }
                     }, 2000);
                 }
+            } else {
+                // Fallback if Routing API fails (e.g. missing API key)
+                console.warn("Routing API failed or unavailable. Falling back to straight line.");
+                const points = [origin, dest];
+                renderRoute(origin, points);
+                currentPos.current = origin;
+                pushLocationToBackend(origin[0], origin[1]);
+                
+                if (isMoving) {
+                    // Simple fake movement
+                    let fakeProgress = 0;
+                    locationPushInterval.current = setInterval(() => {
+                        fakeProgress += 0.1;
+                        if (fakeProgress > 1) fakeProgress = 1;
+                        
+                        const lat = origin[0] + (dest[0] - origin[0]) * fakeProgress;
+                        const lng = origin[1] + (dest[1] - origin[1]) * fakeProgress;
+                        const p = [lat, lng];
+                        currentPos.current = p;
+                        
+                        renderRoute(p, [p, dest]);
+                        pushLocationToBackend(p[0], p[1]);
+                        
+                        if (fakeProgress >= 1) {
+                            clearInterval(locationPushInterval.current);
+                        }
+                    }, 2000);
+                }
             }
         }
     }, [dispatchInfo, cleanupMap, renderRoute, pushLocationToBackend]);
