@@ -60,6 +60,28 @@ class AdminController {
       next(error);
     }
   }
+
+  async getStaffAccounts(req, res, next) {
+    try {
+      const staff = await adminService.getStaffAccounts();
+      return APIResponse.success(res, staff, 'Staff accounts retrieved');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetStaffPassword(req, res, next) {
+    try {
+      const { userId, newPassword } = req.body;
+      if (!userId || !newPassword) {
+        return res.status(400).json({ status: 'fail', message: 'userId and newPassword are required' });
+      }
+      const result = await adminService.resetStaffPassword(userId, newPassword);
+      return APIResponse.success(res, result, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new AdminController();

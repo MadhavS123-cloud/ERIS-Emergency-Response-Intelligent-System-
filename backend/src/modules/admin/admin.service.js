@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import requestRepository from '../request/request.repository.js';
+import bcrypt from 'bcrypt';
 
 class AdminService {
   async getDashboardStats() {
@@ -145,6 +146,68 @@ class AdminService {
         ambulance: { include: { hospital: true, driver: true } }
       }
     });
+  }
+  /**
+   * Get all driver and hospital staff accounts (no password hashes).
+   */
+  async getStaffAccounts() {
+    const drivers = await prisma.user.findMany({
+      where: { role: 'DRIVER' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+        ambulance: {
+          select: {
+            id: true,
+            plateNumber: true,
+            isAvailable: true,
+            hospital: { select: { id: true, name: true } }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const hospitals = await prisma.user.findMany({
+      where: { role: 'HOSPITAL' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        hospitalId: true,
+        createdAt: true,
+        hospital: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            locationLat: true,
+            locationLng: true,
+            bedCapacity: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return { drivers, hospitals };
+  }
+
+  /**
+   * Reset password for any staff account by user ID.
+   */
+  async resetStaffPassword(userId, newPassword) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+    return { success: true, message: `Password reset for ${user.name} (${user.email})` };
   }
 }
 
