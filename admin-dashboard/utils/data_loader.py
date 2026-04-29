@@ -116,7 +116,6 @@ def make_demo_kpis(requests_data, fleet_data):
         "activeNodes": len(HOSPITAL_NAMES),
     }
 
-@st.cache_data(ttl=30)
 def load_data():
     """
     Try to fetch live data from the backend.

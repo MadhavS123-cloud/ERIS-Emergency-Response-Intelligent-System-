@@ -82,27 +82,42 @@ function TrackPage() {
                     .then(res => {
                         if (res.status === 'success') {
                             const req = res.data;
+                            // Resolve driver from either the direct driverId relation or via ambulance.driver
+                            const resolvedDriver = req.driver || req.ambulance?.driver || null;
+                            const resolvedAmbulance = req.ambulance || null;
+                            const isAssigned = !!(resolvedAmbulance?.id);
+
+                            // Compute a meaningful ETA: prefer ML value, else show 'Calculating…' once assigned
+                            let etaLabel;
+                            if (req.mlExpectedDelay) {
+                                etaLabel = `~${Math.round(req.mlExpectedDelay)} mins`;
+                            } else if (isAssigned) {
+                                etaLabel = 'Calculating…';
+                            } else {
+                                etaLabel = 'Awaiting dispatch';
+                            }
+
                             const mapped = {
                                 ...req,
                                 requestId: req.id.slice(0, 8).toUpperCase(),
                                 status: req.status === 'PENDING' ? 'incoming' : req.status === 'ACCEPTED' ? 'assigned' : req.status === 'EN_ROUTE' ? 'en_route' : req.status === 'ARRIVED' ? 'arrived' : req.status === 'IN_TRANSIT' ? 'in_transit' : 'completed',
                                 patientName: req.patientName || 'Guest Patient',
                                 contactNumber: req.patientPhone,
-                                hospitalName: req.ambulance?.hospital?.name || 'Awaiting assignment',
-                                driverName: req.driver?.name || req.ambulance?.driver?.name || 'Awaiting assignment',
-                                driverPhone: req.driver?.phone || req.ambulance?.driver?.phone || 'Awaiting assignment',
-                                vehicleNumber: req.ambulance?.plateNumber || 'Awaiting assignment',
+                                hospitalName: resolvedAmbulance?.hospital?.name || req.mlRecommendedHospitalName || 'Locating hospital…',
+                                driverName: resolvedDriver?.name || (isAssigned ? 'Driver en route' : 'Awaiting assignment'),
+                                driverPhone: resolvedDriver?.phone || (isAssigned ? 'Contact via hospital' : null),
+                                vehicleNumber: resolvedAmbulance?.plateNumber || null,
                                 pickupAddress: req.pickupAddress || null,
                                 patientPosition: (req.locationLat && req.locationLng) ? [req.locationLat, req.locationLng] : null,
-                                hospitalPosition: (req.ambulance?.hospital?.locationLat && req.ambulance?.hospital?.locationLng)
-                                    ? [req.ambulance.hospital.locationLat, req.ambulance.hospital.locationLng]
+                                hospitalPosition: (resolvedAmbulance?.hospital?.locationLat && resolvedAmbulance?.hospital?.locationLng)
+                                    ? [resolvedAmbulance.hospital.locationLat, resolvedAmbulance.hospital.locationLng]
                                     : null,
-                                ambulancePosition: (req.ambulance?.locationLat && req.ambulance?.locationLng)
-                                    ? [req.ambulance.locationLat, req.ambulance.locationLng]
+                                ambulancePosition: (resolvedAmbulance?.locationLat && resolvedAmbulance?.locationLng)
+                                    ? [resolvedAmbulance.locationLat, resolvedAmbulance.locationLng]
                                     : null,
-                                ambulanceInternalId: req.ambulance?.id || null,
+                                ambulanceInternalId: resolvedAmbulance?.id || null,
                                 priority: /cardiac|heart|stroke|panic|sos/i.test(req.emergencyType) ? 'CRITICAL' : 'HIGH',
-                                eta: req.mlExpectedDelay ? `~${Math.round(req.mlExpectedDelay)} mins` : 'Awaiting dispatch',
+                                eta: etaLabel,
                                 estimatedCharge: 3000,
                                 logs: [{ id: '1', message: 'Request triggered successfully.', type: 'system', timestamp: new Date(req.createdAt || Date.now()).toLocaleTimeString() }]
                             };
@@ -388,9 +403,9 @@ function TrackPage() {
                         <div>
                             <span>Vehicle / Driver Contact</span>
                             <strong>
-                                {dispatch.vehicleNumber === 'Awaiting assignment' || !dispatch.vehicleNumber
-                                    ? 'Awaiting assignment'
-                                    : `${dispatch.vehicleNumber} | ${dispatch.driverPhone || 'No contact'}`}
+                                {dispatch.vehicleNumber
+                                    ? `${dispatch.vehicleNumber}${dispatch.driverPhone ? ` | ${dispatch.driverPhone}` : ''}`
+                                    : (dispatch.status === 'incoming' ? 'Awaiting dispatch' : 'Assigned — contact via hospital')}
                             </strong>
                         </div>
                     </div>

@@ -31,7 +31,13 @@ class AdminService {
       take: 20,
       orderBy: { createdAt: 'desc' },
       include: {
-        ambulance: true,
+        ambulance: {
+          include: {
+            driver: true,
+            hospital: true
+          }
+        },
+        driver: true,
         patient: true
       }
     });
@@ -94,10 +100,14 @@ class AdminService {
         ambulancePlate: r.ambulance?.plateNumber || null,
         ambulanceLat: r.ambulance?.locationLat || null,
         ambulanceLng: r.ambulance?.locationLng || null,
-        driverName: r.ambulance?.driver?.name || null,
-        hospitalName: r.ambulance?.hospital?.name || null,
+        // Resolve driver from direct relation first, then via ambulance
+        driverName: r.driver?.name || r.ambulance?.driver?.name || null,
+        driverPhone: r.driver?.phone || r.ambulance?.driver?.phone || null,
+        // Resolve hospital from ambulance relation, fallback to ML recommendation
+        hospitalName: r.ambulance?.hospital?.name || r.mlRecommendedHospitalName || null,
         hospitalLat: r.ambulance?.hospital?.locationLat || null,
         hospitalLng: r.ambulance?.hospital?.locationLng || null,
+        mlRecommendedHospitalName: r.mlRecommendedHospitalName || null,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
       }))

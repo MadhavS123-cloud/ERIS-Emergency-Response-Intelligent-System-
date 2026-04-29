@@ -37,8 +37,13 @@ def render_request_management(data):
             with col2:
                 st.write(f"**ML Risk:** {r.get('mlRisk','?')}")
                 st.write(f"**ML Delay Estimate:** {r.get('mlDelayMins','?')} min")
-                st.write(f"**Assigned Ambulance:** {r.get('ambulancePlate','Unassigned')}")
-                st.write(f"**Hospital:** {r.get('hospitalName','N/A')}")
+                amb_plate = r.get('ambulancePlate') or 'Not assigned'
+                driver = r.get('driverName') or 'Not assigned'
+                driver_phone = r.get('driverPhone') or '—'
+                st.write(f"**Assigned Ambulance:** {amb_plate}")
+                st.write(f"**Driver:** {driver} ({driver_phone})")
+                hospital = r.get('hospitalName') or r.get('mlRecommendedHospitalName') or 'N/A'
+                st.write(f"**Hospital:** {hospital}")
             with col3:
                 st.write("**Actions**")
                 # Simulated actions updating session state
