@@ -62,7 +62,7 @@ with st.sidebar:
     if is_live:
         active_count = sum(1 for r in all_requests if r.get("status") not in ("COMPLETED", "CANCELLED"))
         pending_count = sum(1 for r in all_requests if r.get("status") == "PENDING")
-        st.success("● LIVE DATA — Backend Connected")
+        st.markdown('<div class="sync-indicator"></div><span style="color:#00ff00; font-weight:600;">LIVE SYNC ACTIVE</span>', unsafe_allow_html=True)
         st.metric("Active Emergencies", active_count)
         if pending_count > 0:
             st.warning(f"⚠️ {pending_count} PENDING (unassigned)")
