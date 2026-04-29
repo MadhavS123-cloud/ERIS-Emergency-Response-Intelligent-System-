@@ -25,11 +25,25 @@ ensure_listener_running(st.session_state)
 
 # ── Data & Styling ────────────────────────────────────────────────────────────
 load_css()
+import base64
+import os
+
+def get_base64_image(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+logo_path = os.path.join(os.path.dirname(__file__), "assets", "eris_logo.jpeg")
+try:
+    logo_b64 = get_base64_image(logo_path)
+    logo_src = f"data:image/jpeg;base64,{logo_b64}"
+except Exception:
+    logo_src = "https://img.icons8.com/fluency/96/ambulance.png"
+
 # ── Prominent Logo & Header ──────────────────────────────────────────────────
-st.markdown("""
+st.markdown(f"""
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; background: linear-gradient(90deg, rgba(255,75,75,0.1), transparent); padding: 20px; border-radius: 15px; border-left: 6px solid #ff4b4b;">
         <div style="display: flex; align-items: center;">
-            <img src="https://img.icons8.com/fluency/96/ambulance.png" width="60" style="margin-right: 20px; filter: drop-shadow(0 0 10px rgba(255,75,75,0.3));">
+            <img src="{logo_src}" width="60" style="margin-right: 20px; border-radius: 8px; filter: drop-shadow(0 0 10px rgba(255,75,75,0.3));">
             <div>
                 <h1 style="margin: 0; font-size: 2.5rem; letter-spacing: -2px; font-weight: 800; line-height: 1; color: white;">ERIS <span style="color: #ff4b4b;">INTELLIGENCE</span></h1>
                 <p style="margin: 0; font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">Emergency Response Intelligent System | Global Node v2.1</p>
@@ -54,7 +68,7 @@ feed_count = len(st.session_state.get("live_dispatch_feed", []))
 dispatch_badge = f" ({feed_count})" if feed_count > 0 else ""
 
 with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/ambulance.png", width=80)
+    st.image("assets/eris_logo.jpeg", width=80)
     st.title("ERIS Admin")
     st.markdown("Global Command Console")
     st.divider()

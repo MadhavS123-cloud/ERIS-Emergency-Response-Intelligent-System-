@@ -13,10 +13,11 @@ def load_css():
             animation: fadeIn 0.4s ease-out;
         }
 
-        /* 2. Remove the annoying Streamlit "dimming" overlay during refresh */
+        /* 2. Completely remove the annoying Streamlit "dimming" and "running" overlay during refresh */
         div[data-testid="stStatusWidget"] {
-            visibility: hidden;
-            height: 0;
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
         }
         
         /* 3. The "Heartbeat" Live Sync Indicator */
