@@ -20,6 +20,24 @@ class AuthController {
       next(error);
     }
   }
+
+  async createPatientSession(req, res, next) {
+    try {
+      const data = await authService.createPatientSession(req.body);
+      return APIResponse.success(res, data, 'Patient session created successfully', 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPassword(req, res, next) {
+    try {
+      const data = await authService.resetUserPassword(req.body);
+      return APIResponse.success(res, data, 'Password reset successful', 200);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new AuthController();
