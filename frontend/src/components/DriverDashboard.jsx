@@ -198,20 +198,25 @@ function DriverDashboard() {
         let isMoving = false;
 
         if (['assigned', 'en_route'].includes(dispatchInfo.status)) {
-            origin = hospitalPos; 
+            // If hospitalPos is missing, fallback to patientPos so we at least render something
+            origin = hospitalPos || patientPos; 
             dest = patientPos;
             if (dispatchInfo.status === 'en_route') isMoving = true;
         } else if (['arrived', 'in_transit'].includes(dispatchInfo.status)) {
             origin = patientPos; 
-            dest = hospitalPos;
+            dest = hospitalPos || patientPos;
             if (dispatchInfo.status === 'in_transit') isMoving = true;
         } else {
             // Unmoving states
-            mapInstance.current.setView(patientPos, 14);
-            return;
+            origin = patientPos;
+            dest = patientPos;
         }
 
-        if (origin && dest) {
+        // Always render at least the starting markers even if routing fails
+        currentPos.current = origin;
+        renderRoute(origin, [origin, dest]);
+
+        if (origin && dest && (origin[0] !== dest[0] || origin[1] !== dest[1])) {
             const routeData = await fetchTomTomRoute(origin, dest);
             if (routeData && routeData.points && routeData.points.length > 0) {
                 const points = routeData.points;
@@ -238,15 +243,13 @@ function DriverDashboard() {
                     }, 2000);
                 }
             } else {
-                // Fallback if Routing API fails (e.g. missing API key)
+                // Fallback if Routing API fails
                 console.warn("Routing API failed or unavailable. Falling back to straight line.");
                 const points = [origin, dest];
                 renderRoute(origin, points);
-                currentPos.current = origin;
                 pushLocationToBackend(origin[0], origin[1]);
                 
                 if (isMoving) {
-                    // Simple fake movement
                     let fakeProgress = 0;
                     locationPushInterval.current = setInterval(() => {
                         fakeProgress += 0.1;
