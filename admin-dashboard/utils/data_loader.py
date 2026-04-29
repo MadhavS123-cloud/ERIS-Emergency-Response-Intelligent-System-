@@ -1,6 +1,6 @@
 """
 Centralized Data Loader for ERIS Dashboard
-Handles simulated data generation and backend API fetching.
+Handles live backend API fetching with demo fallback.
 """
 import os
 import requests
@@ -10,10 +10,9 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 # ── Environment Config ────────────────────────────────────────────────────────
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5001")
-ML_SERVICE_URL = os.getenv("ML_SERVICE_URL", "http://localhost:8000")
-API_BASE = f"{BACKEND_URL}/api/v1"
-ML_BASE = f"{ML_SERVICE_URL}"
+BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
+ML_SERVICE_URL = os.getenv("ML_SERVICE_URL", "").rstrip("/")
+API_BASE = f"{BACKEND_URL}/api/v1" if BACKEND_URL else ""
 
 # ── Seed for reproducible demo data ──────────────────────────────────────────
 SEED = 42
@@ -64,6 +63,7 @@ def make_demo_requests(n=18):
             "mlActions": ["Dispatch nearest available unit", "Alert hospital ER"],
             "ambulancePlate": f"KA-{rng.integers(1,9):02d}-AMB-{rng.integers(100,110)}",
             "driverName": rng.choice(DRIVER_NAMES),
+            "driverPhone": f"9{rng.integers(100000000, 999999999)}",
             "hospitalName": rng.choice(HOSPITAL_NAMES),
             "isFake": False,
             "isSuspicious": False,
@@ -116,10 +116,31 @@ def make_demo_kpis(requests_data, fleet_data):
         "activeNodes": len(HOSPITAL_NAMES),
     }
 
+def fetch_live_requests():
+    """
+    Fetch all requests from the backend with full relation data.
+    Returns (list_of_requests, error_string_or_None)
+    """
+    if not API_BASE:
+        return None, "BACKEND_URL not configured"
+    try:
+        headers = {"x-internal-token": "ERIS_INTERNAL"}
+        r = requests.get(f"{API_BASE}/admin/dashboard-stats", headers=headers, timeout=5)
+        if r.status_code == 200:
+            d = r.json().get("data", {})
+            return d, None
+        return None, f"Backend returned HTTP {r.status_code}"
+    except requests.exceptions.ConnectionError:
+        return None, "Cannot reach backend (connection refused)"
+    except requests.exceptions.Timeout:
+        return None, "Backend request timed out"
+    except Exception as e:
+        return None, str(e)
+
 def load_data():
     """
-    Try to fetch live data from the backend.
-    Falls back to realistic demo data if the backend is unreachable.
+    Fetch live data from the backend.
+    Falls back to demo data with a visible warning if unreachable.
     """
     demo_requests = make_demo_requests(18)
     demo_fleet = make_demo_fleet(8)
@@ -127,23 +148,20 @@ def load_data():
     demo_kpis = make_demo_kpis(demo_requests, demo_fleet)
 
     live = False
+    connection_error = None
     requests_data = demo_requests
     fleet_data = demo_fleet
     hospitals_data = demo_hospitals
     kpis_data = demo_kpis
 
-    try:
-        headers = {"x-internal-token": "ERIS_INTERNAL"}
-        r = requests.get(f"{API_BASE}/admin/dashboard-stats", headers=headers, timeout=3)
-        if r.status_code == 200:
-            d = r.json().get("data", {})
-            requests_data = d.get("recentRequests", demo_requests)
-            fleet_data = d.get("fleet", demo_fleet)
-            kpis_data = d.get("kpis", demo_kpis)
-            hospitals_data = d.get("hospitals", demo_hospitals)
-            live = True
-    except Exception:
-        pass
+    live_data, connection_error = fetch_live_requests()
+
+    if live_data is not None:
+        requests_data = live_data.get("recentRequests", demo_requests)
+        fleet_data = live_data.get("fleet", demo_fleet)
+        kpis_data = live_data.get("kpis", demo_kpis)
+        hospitals_data = live_data.get("hospitals", demo_hospitals)
+        live = True
 
     return {
         "requests": requests_data,
@@ -151,4 +169,6 @@ def load_data():
         "hospitals": hospitals_data,
         "kpis": kpis_data,
         "live": live,
+        "connection_error": connection_error,
+        "backend_url": BACKEND_URL or "Not configured",
     }

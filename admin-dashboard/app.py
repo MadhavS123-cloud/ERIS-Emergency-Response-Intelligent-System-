@@ -25,12 +25,14 @@ ensure_listener_running(st.session_state)
 
 # ── Data & Styling ────────────────────────────────────────────────────────────
 load_css()
-# Auto-refresh every 15 seconds for near-real-time feel
-st_autorefresh(interval=15 * 1000, key="data_refresh")
+# Auto-refresh every 8 seconds for near-real-time feel
+st_autorefresh(interval=8 * 1000, key="data_refresh")
 
 data = load_data()
 all_requests = data["requests"]
 is_live = data["live"]
+connection_error = data.get("connection_error")
+backend_url = data.get("backend_url", "Not set")
 
 # ── Live dispatch badge count ─────────────────────────────────────────────────
 feed_count = len(st.session_state.get("live_dispatch_feed", []))
@@ -58,20 +60,28 @@ with st.sidebar:
 
     st.divider()
     if is_live:
-        st.success("● System Online: Live Data")
+        active_count = sum(1 for r in all_requests if r.get("status") not in ("COMPLETED", "CANCELLED"))
+        pending_count = sum(1 for r in all_requests if r.get("status") == "PENDING")
+        st.success("● LIVE DATA — Backend Connected")
+        st.metric("Active Emergencies", active_count)
+        if pending_count > 0:
+            st.warning(f"⚠️ {pending_count} PENDING (unassigned)")
     else:
-        st.info("● Demo Mode: Mock Data")
+        st.error("● DEMO MODE — Backend unreachable")
+        if connection_error:
+            st.caption(f"Error: {connection_error}")
+        st.caption(f"URL: `{backend_url}`")
+        st.info("Set BACKEND_URL in Render → Environment to connect live data.")
 
-    st.caption(f"Last updated: {st.session_state.get('data_refresh', 0)}")
-    if st.button("Manual Sync"):
-        st.cache_data.clear()
+    st.caption(f"Last sync: {st.session_state.get('data_refresh', 0)}")
+    if st.button("🔄 Force Refresh"):
         st.rerun()
 
 # ── Main Content Routing ─────────────────────────────────────────────────────
 if nav == "COMMAND CENTER":
     render_overview(data)
 elif nav.startswith("🔴 LIVE DISPATCH"):
-    render_dispatch_feed()
+    render_dispatch_feed(data)
 elif nav == "LIVE TRACKING":
     render_live_tracking(data)
 elif nav == "REQUEST MANAGEMENT":
