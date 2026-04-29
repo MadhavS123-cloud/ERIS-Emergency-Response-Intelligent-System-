@@ -35,7 +35,11 @@ class AdminService {
         ambulance: {
           include: {
             driver: true,
-            hospital: true
+            hospital: {
+              include: {
+                staff: true
+              }
+            }
           }
         },
         driver: true,
@@ -108,6 +112,7 @@ class AdminService {
         driverEmail: r.driver?.email || r.ambulance?.driver?.email || null,
         // Resolve hospital from ambulance relation, fallback to ML recommendation
         hospitalName: r.ambulance?.hospital?.name || r.mlRecommendedHospitalName || null,
+        hospitalEmail: r.ambulance?.hospital?.staff?.[0]?.email || null,
         hospitalLat: r.ambulance?.hospital?.locationLat || null,
         hospitalLng: r.ambulance?.hospital?.locationLng || null,
         mlRecommendedHospitalName: r.mlRecommendedHospitalName || null,

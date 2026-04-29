@@ -92,6 +92,7 @@ def render_overview(data):
             driver_email = r.get("driverEmail") or "—"
             plate = r.get("ambulancePlate") or "—"
             hospital = r.get("hospitalName") or r.get("mlRecommendedHospitalName") or "—"
+            hospital_email = r.get("hospitalEmail") or "—"
             risk = r.get("mlRisk") or "—"
             risk_icon = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}.get(risk, "")
             delay = r.get("mlDelayMins") or r.get("mlExpectedDelay")
@@ -115,10 +116,14 @@ def render_overview(data):
                         st.caption(f"📧 {driver_email}")
                         st.caption(f"📞 {driver_phone}")
                         st.write(f"🚗 `{plate}` | 🏥 {hospital}")
+                        if hospital_email != "—":
+                            st.caption(f"🏥 📧 {hospital_email}")
                     else:
                         st.warning("⏳ Unassigned")
                         if hospital != "—":
                             st.caption(f"🏥 Routing: {hospital}")
+                            if hospital_email != "—":
+                                st.caption(f"🏥 📧 {hospital_email}")
                 with h4:
                     st.markdown("**📊 ML**")
                     st.write(f"{risk_icon} {risk}")

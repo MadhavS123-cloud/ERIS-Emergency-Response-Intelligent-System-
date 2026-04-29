@@ -123,6 +123,7 @@ def render_request_management(data):
                 driver_email = r.get("driverEmail") or "—"
                 plate = r.get("ambulancePlate") or "—"
                 hospital = r.get("hospitalName") or r.get("mlRecommendedHospitalName") or "Determining…"
+                hospital_email = r.get("hospitalEmail") or "—"
 
                 if r.get("ambulancePlate") or r.get("driverName"):
                     st.success(f"✅ Assigned")
@@ -131,10 +132,14 @@ def render_request_management(data):
                     st.write(f"**Phone:** {driver_phone}")
                     st.write(f"**Ambulance:** `{plate}`")
                     st.write(f"**Hospital:** {hospital}")
+                    if hospital_email != "—":
+                        st.write(f"**Hospital Email:** {hospital_email}")
                 else:
                     st.warning("⏳ No ambulance assigned yet")
                     if hospital != "Determining…":
                         st.write(f"**Routed to:** {hospital}")
+                        if hospital_email != "—":
+                            st.write(f"**Hospital Email:** {hospital_email}")
 
                 st.markdown("---")
                 st.markdown("**📊 ML Assessment**")
@@ -204,6 +209,7 @@ def render_request_management(data):
         "Driver Phone": r.get("driverPhone", "—"),
         "Ambulance": r.get("ambulancePlate", "—"),
         "Hospital": r.get("hospitalName") or r.get("mlRecommendedHospitalName", "—"),
+        "Hospital Email": r.get("hospitalEmail", "—"),
         "ML Risk": r.get("mlRisk", "?"),
         "ETA (min)": r.get("mlDelayMins") or r.get("mlExpectedDelay") or "—",
         "Suspicious": r.get("isSuspicious", False),
