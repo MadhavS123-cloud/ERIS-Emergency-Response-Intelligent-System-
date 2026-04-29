@@ -85,6 +85,7 @@ class AdminService {
         emergencyType: r.emergencyType,
         patientName: r.patientName || 'Unknown',
         patientPhone: r.patientPhone || null,
+        patientEmail: r.patient?.email || null,
         pickupAddress: r.pickupAddress || null,
         locationLat: r.locationLat,
         locationLng: r.locationLng,
@@ -104,6 +105,7 @@ class AdminService {
         // Resolve driver from direct relation first, then via ambulance
         driverName: r.driver?.name || r.ambulance?.driver?.name || null,
         driverPhone: r.driver?.phone || r.ambulance?.driver?.phone || null,
+        driverEmail: r.driver?.email || r.ambulance?.driver?.email || null,
         // Resolve hospital from ambulance relation, fallback to ML recommendation
         hospitalName: r.ambulance?.hospital?.name || r.mlRecommendedHospitalName || null,
         hospitalLat: r.ambulance?.hospital?.locationLat || null,

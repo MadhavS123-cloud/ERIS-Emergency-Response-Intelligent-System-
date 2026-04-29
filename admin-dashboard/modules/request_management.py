@@ -103,6 +103,7 @@ def render_request_management(data):
             with col1:
                 st.markdown("**👤 Patient Details**")
                 st.write(f"**Name:** {r.get('patientName') or 'Guest User'}")
+                st.write(f"**Email:** {r.get('patientEmail') or 'Not provided'}")
                 st.write(f"**Phone:** {r.get('patientPhone') or 'Not provided'}")
                 st.write(f"**Emergency:** {etype}")
                 st.write(f"**Pickup:** {r.get('pickupAddress') or 'Unknown'}")
@@ -119,12 +120,14 @@ def render_request_management(data):
                 st.markdown("**🚑 Dispatch Info**")
                 driver = r.get("driverName") or "Not assigned"
                 driver_phone = r.get("driverPhone") or "—"
+                driver_email = r.get("driverEmail") or "—"
                 plate = r.get("ambulancePlate") or "—"
                 hospital = r.get("hospitalName") or r.get("mlRecommendedHospitalName") or "Determining…"
 
                 if r.get("ambulancePlate") or r.get("driverName"):
                     st.success(f"✅ Assigned")
                     st.write(f"**Driver:** {driver}")
+                    st.write(f"**Email:** {driver_email}")
                     st.write(f"**Phone:** {driver_phone}")
                     st.write(f"**Ambulance:** `{plate}`")
                     st.write(f"**Hospital:** {hospital}")
@@ -194,8 +197,11 @@ def render_request_management(data):
         "Status": r.get("status", "?"),
         "Emergency": r.get("emergencyType", "?"),
         "Patient": r.get("patientName", "?"),
-        "Phone": r.get("patientPhone", "—"),
+        "Patient Email": r.get("patientEmail", "—"),
+        "Patient Phone": r.get("patientPhone", "—"),
         "Driver": r.get("driverName", "—"),
+        "Driver Email": r.get("driverEmail", "—"),
+        "Driver Phone": r.get("driverPhone", "—"),
         "Ambulance": r.get("ambulancePlate", "—"),
         "Hospital": r.get("hospitalName") or r.get("mlRecommendedHospitalName", "—"),
         "ML Risk": r.get("mlRisk", "?"),

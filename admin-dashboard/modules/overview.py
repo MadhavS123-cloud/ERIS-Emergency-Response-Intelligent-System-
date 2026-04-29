@@ -85,9 +85,11 @@ def render_overview(data):
             status_icon = _STATUS_COLOR.get(status, "⚪")
             patient = r.get("patientName") or "Guest"
             patient_phone = r.get("patientPhone") or "—"
+            patient_email = r.get("patientEmail") or "—"
             etype = r.get("emergencyType") or "?"
             driver = r.get("driverName") or "—"
             driver_phone = r.get("driverPhone") or "—"
+            driver_email = r.get("driverEmail") or "—"
             plate = r.get("ambulancePlate") or "—"
             hospital = r.get("hospitalName") or r.get("mlRecommendedHospitalName") or "—"
             risk = r.get("mlRisk") or "—"
@@ -104,11 +106,14 @@ def render_overview(data):
                 with h2:
                     st.markdown("**👤 Patient**")
                     st.write(f"{patient}")
+                    st.caption(f"📧 {patient_email}")
                     st.caption(f"📞 {patient_phone}")
                 with h3:
                     st.markdown("**🚑 Dispatch**")
                     if driver != "—":
-                        st.write(f"👨‍✈️ {driver} ({driver_phone})")
+                        st.write(f"👨‍✈️ {driver}")
+                        st.caption(f"📧 {driver_email}")
+                        st.caption(f"📞 {driver_phone}")
                         st.write(f"🚗 `{plate}` | 🏥 {hospital}")
                     else:
                         st.warning("⏳ Unassigned")
