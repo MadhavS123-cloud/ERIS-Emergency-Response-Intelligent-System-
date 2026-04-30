@@ -68,6 +68,7 @@ class AdminService {
         driverName: a.driver ? a.driver.name : 'Unassigned',
         driverId: a.driver?.id || null,
         status: a.isAvailable ? 'Available' : 'Active',
+        isAvailable: a.isAvailable,
         hospitalName: a.hospital ? a.hospital.name : 'Unknown',
         hospitalId: a.hospitalId,
         locationLat: a.locationLat,
