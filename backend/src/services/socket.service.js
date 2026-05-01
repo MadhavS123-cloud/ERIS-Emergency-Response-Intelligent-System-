@@ -19,10 +19,15 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     logger.info(`New client connected: ${socket.id}`);
 
-    // Placeholder events
     socket.on('join_room', (room) => {
       socket.join(room);
       logger.info(`User ${socket.id} joined room ${room}`);
+    });
+
+    socket.on('join_request_room', (requestId) => {
+      const room = `request:${requestId}`;
+      socket.join(room);
+      logger.info(`User ${socket.id} joined request room ${room}`);
     });
 
     socket.on('request_created', (data) => {
@@ -42,20 +47,19 @@ const initSocket = (server) => {
       io.to(data.patientId).emit('driver_assigned', payload);
     });
 
-    // 🔥 ADD THIS
     socket.on("update_location", (data) => {
-  const payload = {
-    lat: data.lat,
-    lng: data.lng,
-    requestId: data.requestId,
+      const payload = {
+        lat: data.lat,
+        lng: data.lng,
+        requestId: data.requestId,
+        patientLat: data.patientLat ?? null,
+        patientLng: data.patientLng ?? null,
+      };
 
-    // 🔥 ADD PATIENT LOCATION (TEMP HARDCODE OR DB)
-    patientLat: 12.9716,
-    patientLng: 77.5946,
-  };
-
-  io.to(data.requestId).emit("ambulance_location_update", payload);
-});
+      if (data.requestId) {
+        io.to(`request:${data.requestId}`).emit("ambulance_location_update", payload);
+      }
+    });
 
     socket.on('disconnect', () => {
       logger.info(`Client disconnected: ${socket.id}`);

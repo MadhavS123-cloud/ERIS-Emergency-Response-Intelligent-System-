@@ -6,6 +6,22 @@ import API_BASE_URL from '../config/api';
 import authService from '../services/authService';
 import './DriverDashboard.css';
 
+const LOCATION_PUSH_INTERVAL_MS = 10000;
+const LOCATION_PUSH_DISTANCE_METERS = 25;
+
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+    if (![lat1, lng1, lat2, lng2].every(value => typeof value === 'number')) {
+        return null;
+    }
+
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 const stepConfig = {
     incoming:   { label: 'WAIT FOR DISPATCH',  color: 'btn-blue',   next: null,         stepNum: 0, totalSteps: 4, stepTitle: 'Awaiting hospital assignment' },
     assigned:   { label: 'START NAVIGATION →',  color: 'btn-blue',   next: 'en_route',   stepNum: 1, totalSteps: 4, stepTitle: 'GO TO PICKUP' },
@@ -28,9 +44,11 @@ function DriverDashboard() {
     const patientMarker = useRef(null);
     const hospitalMarker = useRef(null);
     const routeLine = useRef(null);
+    const latestRoutePointsRef = useRef([]);
     const watchIdRef = useRef(null);
     const locationPushInterval = useRef(null);
     const currentPos = useRef(null); // null until real GPS acquired
+    const lastLocationPushRef = useRef({ ts: 0, lat: null, lng: null });
 
     const dispatchInfo = activeDispatch;
 
@@ -148,6 +166,26 @@ function DriverDashboard() {
         patientMarker.current = null;
         hospitalMarker.current = null;
         routeLine.current = null;
+        latestRoutePointsRef.current = [];
+    }, []);
+
+    const shouldPushLocation = useCallback((lat, lng) => {
+        const last = lastLocationPushRef.current;
+        if (!last.ts || last.lat === null || last.lng === null) {
+            lastLocationPushRef.current = { ts: Date.now(), lat, lng };
+            return true;
+        }
+
+        const elapsed = Date.now() - last.ts;
+        const movedKm = haversineKm(lat, lng, last.lat, last.lng) || 0;
+        const movedMeters = movedKm * 1000;
+
+        if (elapsed >= LOCATION_PUSH_INTERVAL_MS || movedMeters >= LOCATION_PUSH_DISTANCE_METERS) {
+            lastLocationPushRef.current = { ts: Date.now(), lat, lng };
+            return true;
+        }
+
+        return false;
     }, []);
 
     // Push real GPS to backend so all clients see real ambulance position
@@ -193,61 +231,109 @@ function DriverDashboard() {
         // Force tile render after container is fully painted
         setTimeout(() => mapInstance.current?.invalidateSize(), 150);
 
-        let origin = null;
+        const liveOrigin = dispatchInfo.ambulancePosition || null;
+        let origin = liveOrigin;
         let dest = null;
         let isMoving = false;
 
         if (['assigned', 'en_route'].includes(dispatchInfo.status)) {
             // If hospitalPos is missing, fallback to patientPos so we at least render something
-            origin = hospitalPos || patientPos; 
+            origin = liveOrigin || hospitalPos || patientPos; 
             dest = patientPos;
             if (dispatchInfo.status === 'en_route') isMoving = true;
         } else if (['arrived', 'in_transit'].includes(dispatchInfo.status)) {
-            origin = patientPos; 
+            origin = liveOrigin || patientPos; 
             dest = hospitalPos || patientPos;
             if (dispatchInfo.status === 'in_transit') isMoving = true;
         } else {
             // Unmoving states
-            origin = patientPos;
+            origin = liveOrigin || patientPos;
             dest = patientPos;
         }
+
+        const fallbackOrigin = origin;
 
         // Always render at least the starting markers even if routing fails
         currentPos.current = origin;
         renderRoute(origin, [origin, dest]);
 
+        const startLiveTracking = () => {
+            if (!navigator.geolocation?.watchPosition) {
+                return false;
+            }
+
+            watchIdRef.current = navigator.geolocation.watchPosition(
+                ({ coords }) => {
+                    const livePos = [coords.latitude, coords.longitude];
+                    currentPos.current = livePos;
+                    renderRoute(
+                        livePos,
+                        latestRoutePointsRef.current.length > 0 ? latestRoutePointsRef.current : [livePos, dest]
+                    );
+                    if (shouldPushLocation(coords.latitude, coords.longitude)) {
+                        pushLocationToBackend(coords.latitude, coords.longitude);
+                    }
+                },
+                () => {},
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 5000,
+                    timeout: 15000
+                }
+            );
+
+            return true;
+        };
+
         if (origin && dest && (origin[0] !== dest[0] || origin[1] !== dest[1])) {
             const routeData = await fetchTomTomRoute(origin, dest);
             if (routeData && routeData.points && routeData.points.length > 0) {
                 const points = routeData.points;
-                let stepIdx = 0;
+                latestRoutePointsRef.current = points;
                 
                 renderRoute(points[0], points);
                 currentPos.current = points[0];
-                pushLocationToBackend(currentPos.current[0], currentPos.current[1]);
+                if (shouldPushLocation(currentPos.current[0], currentPos.current[1])) {
+                    pushLocationToBackend(currentPos.current[0], currentPos.current[1]);
+                }
+
+                if (isMoving && startLiveTracking()) {
+                    return;
+                }
 
                 if (isMoving) {
+                    let stepIdx = 0;
                     locationPushInterval.current = setInterval(() => {
-                        stepIdx += 2; // Speed up the demo
+                        stepIdx += 1;
                         if (stepIdx >= points.length) stepIdx = points.length - 1;
-                        
+
                         const p = points[stepIdx];
                         currentPos.current = p;
-                        
-                        renderRoute(p, points.slice(stepIdx));
-                        pushLocationToBackend(p[0], p[1]);
 
-                        if (stepIdx >= points.length - 1) {
-                            clearInterval(locationPushInterval.current);
+                        renderRoute(p, points.slice(stepIdx));
+                        if (shouldPushLocation(p[0], p[1])) {
+                            pushLocationToBackend(p[0], p[1]);
                         }
-                    }, 2000);
+
+                        if (stepIdx >= points.length - 1 && locationPushInterval.current) {
+                            clearInterval(locationPushInterval.current);
+                            locationPushInterval.current = null;
+                        }
+                    }, LOCATION_PUSH_INTERVAL_MS);
                 }
             } else {
                 // Fallback if Routing API fails
                 console.warn("Routing API failed or unavailable. Falling back to straight line.");
                 const points = [origin, dest];
+                latestRoutePointsRef.current = points;
                 renderRoute(origin, points);
-                pushLocationToBackend(origin[0], origin[1]);
+                if (shouldPushLocation(origin[0], origin[1])) {
+                    pushLocationToBackend(origin[0], origin[1]);
+                }
+
+                if (isMoving && startLiveTracking()) {
+                    return;
+                }
                 
                 if (isMoving) {
                     let fakeProgress = 0;
@@ -261,16 +347,21 @@ function DriverDashboard() {
                         currentPos.current = p;
                         
                         renderRoute(p, [p, dest]);
-                        pushLocationToBackend(p[0], p[1]);
-                        
-                        if (fakeProgress >= 1) {
-                            clearInterval(locationPushInterval.current);
+                        if (shouldPushLocation(p[0], p[1])) {
+                            pushLocationToBackend(p[0], p[1]);
                         }
-                    }, 2000);
+                        
+                        if (fakeProgress >= 1 && locationPushInterval.current) {
+                            clearInterval(locationPushInterval.current);
+                            locationPushInterval.current = null;
+                        }
+                    }, LOCATION_PUSH_INTERVAL_MS);
                 }
             }
+        } else if (fallbackOrigin && shouldPushLocation(fallbackOrigin[0], fallbackOrigin[1])) {
+            pushLocationToBackend(fallbackOrigin[0], fallbackOrigin[1]);
         }
-    }, [dispatchInfo, cleanupMap, renderRoute, pushLocationToBackend]);
+    }, [dispatchInfo, cleanupMap, renderRoute, pushLocationToBackend, shouldPushLocation]);
 
     useEffect(() => {
         if (!dispatchInfo || dispatchInfo.status === 'completed') {

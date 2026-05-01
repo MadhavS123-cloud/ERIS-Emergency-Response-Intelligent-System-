@@ -53,10 +53,13 @@ def _render_request_card(r: dict, is_new: bool = False):
     # Resolve all fields
     driver_name = r.get("driverName") or "Not yet assigned"
     driver_phone = r.get("driverPhone") or "—"
+    driver_email = r.get("driverEmail") or "—"
     amb_plate = r.get("ambulancePlate") or r.get("ambulanceId") or "—"
     hospital = r.get("hospitalName") or r.get("mlRecommendedHospitalName") or "Determining…"
+    hospital_email = r.get("hospitalEmail") or "—"
     patient_name = r.get("patientName") or "Guest User"
     patient_phone = r.get("patientPhone") or "Not provided"
+    patient_email = r.get("patientEmail") or "—"
     pickup = r.get("pickupAddress") or "Unknown location"
     emergency_type = r.get("emergencyType") or "General Emergency"
     ml_delay = r.get("mlDelayMins") or r.get("mlExpectedDelay")
@@ -87,6 +90,7 @@ def _render_request_card(r: dict, is_new: bool = False):
             st.write(f"**Type:** {emergency_type}")
             st.write(f"**Patient:** {patient_name}")
             st.write(f"**Phone:** {patient_phone}")
+            st.write(f"**Email:** {patient_email}")
             st.write(f"**Pickup:** {pickup}")
             lat = r.get("locationLat")
             lng = r.get("locationLng")
@@ -99,8 +103,10 @@ def _render_request_card(r: dict, is_new: bool = False):
             if assigned:
                 st.success(f"👨‍✈️ **Driver:** {driver_name}")
                 st.write(f"📞 **Contact:** {driver_phone}")
+                st.write(f"📧 **Email:** {driver_email}")
                 st.write(f"🚗 **Unit:** `{amb_plate}`")
                 st.write(f"🏥 **Hospital:** {hospital}")
+                st.write(f"🏥 **Hospital Email:** {hospital_email}")
             else:
                 st.warning("⏳ Awaiting ambulance assignment")
                 if hospital != "Determining…":

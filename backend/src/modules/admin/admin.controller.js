@@ -4,7 +4,8 @@ import adminService from './admin.service.js';
 class AdminController {
   async getDashboardStats(req, res, next) {
     try {
-      const stats = await adminService.getDashboardStats();
+      const forceRefresh = String(req.query.forceRefresh || '').toLowerCase() === 'true';
+      const stats = await adminService.getDashboardStats({ forceRefresh });
       return APIResponse.success(res, stats, 'Admin dashboard stats retrieved successfully');
     } catch (error) {
       next(error);

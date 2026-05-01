@@ -6,7 +6,7 @@ const requestInclude = {
   ambulance: {
     include: {
       driver: { select: { id: true, name: true, phone: true, email: true } },
-      hospital: { select: { id: true, name: true, address: true, locationLat: true, locationLng: true } }
+      hospital: { select: { id: true, name: true, address: true, locationLat: true, locationLng: true, staff: { select: { email: true } } } }
     }
   }
 };

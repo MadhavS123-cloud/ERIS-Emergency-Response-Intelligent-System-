@@ -20,8 +20,14 @@ def render_overview(data):
     fleet = data["fleet"]
     hospitals = data["hospitals"]
     is_live = data.get("live", False)
+    is_stale = data.get("stale", False)
 
-    if not is_live:
+    if is_stale:
+        st.warning(
+            "⚠️ **Live Snapshot (Stale)** — Showing the last successful backend response while the service wakes up.",
+            icon="🕒"
+        )
+    elif not is_live:
         st.warning(
             "⚠️ **Demo Mode** — Showing simulated data. "
             "Set `BACKEND_URL` in Render environment to see real emergency requests.",

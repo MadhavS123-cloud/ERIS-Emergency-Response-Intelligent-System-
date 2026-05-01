@@ -31,6 +31,48 @@ const formatCurrency = (amount) =>
         maximumFractionDigits: 0,
     }).format(amount || 0);
 
+const FALLBACK_REFRESH_MS = 2 * 60 * 1000;
+
+const mapRequestToGuestDispatch = (req) => {
+    const resolvedDriver = req.driver || req.ambulance?.driver || null;
+    const resolvedAmbulance = req.ambulance || null;
+    const isAssigned = !!resolvedAmbulance?.id;
+
+    let etaLabel;
+    if (req.mlExpectedDelay) {
+        etaLabel = `~${Math.round(req.mlExpectedDelay)} mins`;
+    } else if (isAssigned) {
+        etaLabel = 'Calculating…';
+    } else {
+        etaLabel = 'Awaiting dispatch';
+    }
+
+    return {
+        ...req,
+        requestId: req.id.slice(0, 8).toUpperCase(),
+        status: req.status === 'PENDING' ? 'incoming' : req.status === 'ACCEPTED' ? 'assigned' : req.status === 'EN_ROUTE' ? 'en_route' : req.status === 'ARRIVED' ? 'arrived' : req.status === 'IN_TRANSIT' ? 'in_transit' : 'completed',
+        patientName: req.patientName || 'Guest Patient',
+        contactNumber: req.patientPhone,
+        hospitalName: resolvedAmbulance?.hospital?.name || req.mlRecommendedHospitalName || 'Locating hospital…',
+        driverName: resolvedDriver?.name || (isAssigned ? 'Driver en route' : 'Awaiting assignment'),
+        driverPhone: resolvedDriver?.phone || (isAssigned ? 'Contact via hospital' : null),
+        vehicleNumber: resolvedAmbulance?.plateNumber || null,
+        pickupAddress: req.pickupAddress || null,
+        patientPosition: (req.locationLat && req.locationLng) ? [req.locationLat, req.locationLng] : null,
+        hospitalPosition: (resolvedAmbulance?.hospital?.locationLat && resolvedAmbulance?.hospital?.locationLng)
+            ? [resolvedAmbulance.hospital.locationLat, resolvedAmbulance.hospital.locationLng]
+            : null,
+        ambulancePosition: (resolvedAmbulance?.locationLat && resolvedAmbulance?.locationLng)
+            ? [resolvedAmbulance.locationLat, resolvedAmbulance.locationLng]
+            : null,
+        ambulanceInternalId: resolvedAmbulance?.id || null,
+        priority: /cardiac|heart|stroke|panic|sos/i.test(req.emergencyType) ? 'CRITICAL' : 'HIGH',
+        eta: etaLabel,
+        estimatedCharge: 3000,
+        logs: [{ id: '1', message: 'Request triggered successfully.', type: 'system', timestamp: new Date(req.createdAt || Date.now()).toLocaleTimeString() }]
+    };
+};
+
 function TrackPage() {
     const { activeDispatch } = useEris();
     const [guestDispatch, setGuestDispatch] = useState(null);
@@ -44,7 +86,8 @@ function TrackPage() {
     // Join the request-specific socket room for targeted ambulance location updates
     useEffect(() => {
         const requestId = activeDispatch?.id || urlId;
-        if (!requestId) return;
+        if (!requestId) return undefined;
+        let cleanup;
         import('../socket').then(({ socket }) => {
             if (!socket.connected) socket.connect();
             socket.emit('join_request_room', requestId);
@@ -66,11 +109,15 @@ function TrackPage() {
             };
 
             socket.on('request_updated', handleUpdate);
-            
-            return () => {
+
+            cleanup = () => {
                 socket.off('request_updated', handleUpdate);
             };
         });
+
+        return () => {
+            if (cleanup) cleanup();
+        };
     }, [activeDispatch?.id, urlId]);
 
     useEffect(() => {
@@ -82,45 +129,7 @@ function TrackPage() {
                     .then(res => {
                         if (res.status === 'success') {
                             const req = res.data;
-                            // Resolve driver from either the direct driverId relation or via ambulance.driver
-                            const resolvedDriver = req.driver || req.ambulance?.driver || null;
-                            const resolvedAmbulance = req.ambulance || null;
-                            const isAssigned = !!(resolvedAmbulance?.id);
-
-                            // Compute a meaningful ETA: prefer ML value, else show 'Calculating…' once assigned
-                            let etaLabel;
-                            if (req.mlExpectedDelay) {
-                                etaLabel = `~${Math.round(req.mlExpectedDelay)} mins`;
-                            } else if (isAssigned) {
-                                etaLabel = 'Calculating…';
-                            } else {
-                                etaLabel = 'Awaiting dispatch';
-                            }
-
-                            const mapped = {
-                                ...req,
-                                requestId: req.id.slice(0, 8).toUpperCase(),
-                                status: req.status === 'PENDING' ? 'incoming' : req.status === 'ACCEPTED' ? 'assigned' : req.status === 'EN_ROUTE' ? 'en_route' : req.status === 'ARRIVED' ? 'arrived' : req.status === 'IN_TRANSIT' ? 'in_transit' : 'completed',
-                                patientName: req.patientName || 'Guest Patient',
-                                contactNumber: req.patientPhone,
-                                hospitalName: resolvedAmbulance?.hospital?.name || req.mlRecommendedHospitalName || 'Locating hospital…',
-                                driverName: resolvedDriver?.name || (isAssigned ? 'Driver en route' : 'Awaiting assignment'),
-                                driverPhone: resolvedDriver?.phone || (isAssigned ? 'Contact via hospital' : null),
-                                vehicleNumber: resolvedAmbulance?.plateNumber || null,
-                                pickupAddress: req.pickupAddress || null,
-                                patientPosition: (req.locationLat && req.locationLng) ? [req.locationLat, req.locationLng] : null,
-                                hospitalPosition: (resolvedAmbulance?.hospital?.locationLat && resolvedAmbulance?.hospital?.locationLng)
-                                    ? [resolvedAmbulance.hospital.locationLat, resolvedAmbulance.hospital.locationLng]
-                                    : null,
-                                ambulancePosition: (resolvedAmbulance?.locationLat && resolvedAmbulance?.locationLng)
-                                    ? [resolvedAmbulance.locationLat, resolvedAmbulance.locationLng]
-                                    : null,
-                                ambulanceInternalId: resolvedAmbulance?.id || null,
-                                priority: /cardiac|heart|stroke|panic|sos/i.test(req.emergencyType) ? 'CRITICAL' : 'HIGH',
-                                eta: etaLabel,
-                                estimatedCharge: 3000,
-                                logs: [{ id: '1', message: 'Request triggered successfully.', type: 'system', timestamp: new Date(req.createdAt || Date.now()).toLocaleTimeString() }]
-                            };
+                            const mapped = mapRequestToGuestDispatch(req);
                             setGuestDispatch(prev => {
                                 // Only show OTP modal if NO phone AND this is the first successful load
                                 if (!req.patientPhone && !prev) {
@@ -133,10 +142,53 @@ function TrackPage() {
             };
 
             fetchGuestDispatch();
-            interval = setInterval(fetchGuestDispatch, 3000); // Check every 3s since websockets won't work without auth
+            interval = setInterval(fetchGuestDispatch, FALLBACK_REFRESH_MS);
         }
         return () => {
              if (interval) clearInterval(interval);
+        };
+    }, [activeDispatch, urlId]);
+
+    useEffect(() => {
+        const requestId = activeDispatch?.id || urlId;
+        if (activeDispatch || !requestId) return undefined;
+
+        let cleanup;
+        import('../socket').then(({ socket }) => {
+            if (!socket.connected) socket.connect();
+            socket.emit('join_request_room', requestId);
+
+            const handleRequestUpdate = (updatedData) => {
+                if (!updatedData?.id || updatedData.id !== requestId) return;
+                setGuestDispatch(prev => {
+                    const mapped = mapRequestToGuestDispatch(updatedData);
+                    return prev ? { ...mapped, logs: prev.logs || mapped.logs } : mapped;
+                });
+            };
+
+            const handleAmbulanceLocation = ({ requestId: socketRequestId, locationLat, locationLng, ambulanceId }) => {
+                if (socketRequestId !== requestId) return;
+                setGuestDispatch(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        ambulanceInternalId: ambulanceId || prev.ambulanceInternalId,
+                        ambulancePosition: (locationLat && locationLng) ? [locationLat, locationLng] : prev.ambulancePosition
+                    };
+                });
+            };
+
+            socket.on('request_updated', handleRequestUpdate);
+            socket.on('ambulance_location_update', handleAmbulanceLocation);
+
+            cleanup = () => {
+                socket.off('request_updated', handleRequestUpdate);
+                socket.off('ambulance_location_update', handleAmbulanceLocation);
+            };
+        });
+
+        return () => {
+            if (cleanup) cleanup();
         };
     }, [activeDispatch, urlId]);
 

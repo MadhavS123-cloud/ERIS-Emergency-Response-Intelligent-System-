@@ -22,6 +22,7 @@ def _build_dispatch_card(event_name: str, payload: dict) -> dict:
     ambulance    = payload.get("ambulance") or {}
     driver       = ambulance.get("driver") or {}
     hospital     = ambulance.get("hospital") or {}
+    patient      = payload.get("patient") or {}
 
     return {
         "ts":             datetime.utcnow().isoformat(),
@@ -35,8 +36,15 @@ def _build_dispatch_card(event_name: str, payload: dict) -> dict:
         "locationLng":    payload.get("locationLng"),
         # ── Assignment info ────────────────────────────────────────────────
         "driverName":     driver.get("name") or payload.get("driverName") or "—",
+        "driverEmail":    driver.get("email") or payload.get("driverEmail") or "—",
         "ambulancePlate": ambulance.get("plateNumber") or payload.get("ambulancePlate") or "—",
         "hospitalName":   hospital.get("name") or payload.get("hospitalName") or "—",
+        "hospitalEmail":  (
+            payload.get("hospitalEmail")
+            or next((staff.get("email") for staff in (hospital.get("staff") or []) if staff.get("email")), None)
+            or "—"
+        ),
+        "patientEmail":   patient.get("email") or payload.get("patientEmail") or "—",
         "mlRisk":         payload.get("mlDelayRisk") or payload.get("mlRisk") or "—",
         "mlDelayMins":    payload.get("mlExpectedDelay") or payload.get("mlDelayMins") or None,
         "isSuspicious":   payload.get("isSuspicious") or False,

@@ -8,6 +8,11 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 import streamlit as st
+from dotenv import load_dotenv
+
+# Load local .env file from the dashboard root
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+load_dotenv(env_path)
 
 # ── Environment Config ────────────────────────────────────────────────────────
 BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
@@ -116,7 +121,8 @@ def make_demo_kpis(requests_data, fleet_data):
         "activeNodes": len(HOSPITAL_NAMES),
     }
 
-def fetch_live_requests():
+@st.cache_data(ttl=300, show_spinner=False)
+def _fetch_live_requests_cached(force_refresh=False):
     """
     Fetch all requests from the backend with full relation data.
     Returns (list_of_requests, error_string_or_None)
@@ -125,7 +131,8 @@ def fetch_live_requests():
         return None, "BACKEND_URL not configured"
     try:
         headers = {"x-internal-token": "ERIS_INTERNAL"}
-        r = requests.get(f"{API_BASE}/admin/dashboard-stats", headers=headers, timeout=5)
+        force_query = "?forceRefresh=true" if force_refresh else ""
+        r = requests.get(f"{API_BASE}/admin/dashboard-stats{force_query}", headers=headers, timeout=15)
         if r.status_code == 200:
             d = r.json().get("data", {})
             return d, None
@@ -137,7 +144,12 @@ def fetch_live_requests():
     except Exception as e:
         return None, str(e)
 
-def load_data():
+def fetch_live_requests(force_refresh=False):
+    if force_refresh:
+        _fetch_live_requests_cached.clear()
+    return _fetch_live_requests_cached(force_refresh=force_refresh)
+
+def load_data(force_refresh=False):
     """
     Fetch live data from the backend.
     Falls back to demo data with a visible warning if unreachable.
@@ -154,7 +166,7 @@ def load_data():
     hospitals_data = demo_hospitals
     kpis_data = demo_kpis
 
-    live_data, connection_error = fetch_live_requests()
+    live_data, connection_error = fetch_live_requests(force_refresh=force_refresh)
 
     if live_data is not None:
         requests_data = live_data.get("recentRequests", demo_requests)
@@ -169,6 +181,8 @@ def load_data():
         "hospitals": hospitals_data,
         "kpis": kpis_data,
         "live": live,
+        "stale": False,
         "connection_error": connection_error,
         "backend_url": BACKEND_URL or "Not configured",
+        "fetched_at": datetime.now().isoformat(),
     }

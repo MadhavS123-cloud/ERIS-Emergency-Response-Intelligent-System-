@@ -2,50 +2,148 @@ import { prisma } from '../../config/db.js';
 import requestRepository from '../request/request.repository.js';
 import bcrypt from 'bcrypt';
 
+const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
+const DASHBOARD_RECENT_REQUEST_LIMIT = 15;
+
+const parseJsonArray = (value) => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 class AdminService {
-  async getDashboardStats() {
-    // KPI Data
-    const totalRequests24h = await prisma.request.count({
-      where: {
-        createdAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+  constructor() {
+    this.dashboardCache = {
+      expiresAt: 0,
+      payload: null
+    };
+  }
+
+  async getDashboardStats({ forceRefresh = false } = {}) {
+    if (!forceRefresh && this.dashboardCache.payload && this.dashboardCache.expiresAt > Date.now()) {
+      return this.dashboardCache.payload;
+    }
+
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const [
+      totalRequests24h,
+      fleet,
+      hospitals,
+      recentRequests
+    ] = await Promise.all([
+      prisma.request.count({
+        where: {
+          createdAt: {
+            gte: since24h
+          }
         }
-      }
-    });
-    
-    const activeAmbulances = await prisma.ambulance.count({
-      where: { isAvailable: false } // 'deployed' units
-    });
-
-    const activeNodes = await prisma.hospital.count();
-
-    // Active Fleet
-    const fleet = await prisma.ambulance.findMany({
-      include: { driver: true, hospital: true }
-    });
-
-    // Node Stations
-    const hospitals = await prisma.hospital.findMany();
-
-    // Requests (For distress vector charts & System Logs)
-    const recentRequests = await prisma.request.findMany({
-      take: 20,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        ambulance: {
-          include: {
-            driver: true,
-            hospital: {
-              include: {
-                staff: true
+      }),
+      prisma.ambulance.findMany({
+        select: {
+          id: true,
+          plateNumber: true,
+          hospitalId: true,
+          locationLat: true,
+          locationLng: true,
+          isAvailable: true,
+          driver: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          hospital: {
+            select: {
+              name: true
+            }
+          }
+        }
+      }),
+      prisma.hospital.findMany({
+        select: {
+          id: true,
+          name: true,
+          locationLat: true,
+          locationLng: true,
+          icuBedsAvailable: true,
+          bedCapacity: true
+        }
+      }),
+      prisma.request.findMany({
+        take: DASHBOARD_RECENT_REQUEST_LIMIT,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          emergencyType: true,
+          patientName: true,
+          patientPhone: true,
+          pickupAddress: true,
+          locationLat: true,
+          locationLng: true,
+          isGuest: true,
+          isFake: true,
+          isSuspicious: true,
+          suspiciousReason: true,
+          trustScoreAtRequest: true,
+          mlDelayRisk: true,
+          mlExpectedDelay: true,
+          mlReasons: true,
+          mlSuggestedActions: true,
+          mlRecommendedHospitalName: true,
+          createdAt: true,
+          updatedAt: true,
+          patient: {
+            select: {
+              email: true
+            }
+          },
+          driver: {
+            select: {
+              name: true,
+              phone: true,
+              email: true
+            }
+          },
+          ambulance: {
+            select: {
+              id: true,
+              plateNumber: true,
+              locationLat: true,
+              locationLng: true,
+              driver: {
+                select: {
+                  name: true,
+                  phone: true,
+                  email: true
+                }
+              },
+              hospital: {
+                select: {
+                  name: true,
+                  locationLat: true,
+                  locationLng: true,
+                  staff: {
+                    select: {
+                      email: true
+                    },
+                    take: 1
+                  }
+                }
               }
             }
           }
-        },
-        driver: true,
-        patient: true
-      }
-    });
+        }
+      })
+    ]);
+
+    const activeAmbulances = fleet.filter((ambulance) => !ambulance.isAvailable).length;
+    const activeNodes = hospitals.length;
 
     // Compute average delay latency if available from ML
     let avgLatency = "0.0";
@@ -55,7 +153,7 @@ class AdminService {
       avgLatency = (totalLatency / requestsWithLatency.length).toFixed(1);
     }
 
-    return {
+    const payload = {
       kpis: {
         signals24h: totalRequests24h,
         unitsDeployed: activeAmbulances,
@@ -101,8 +199,8 @@ class AdminService {
         trustScoreAtRequest: r.trustScoreAtRequest,
         mlRisk: r.mlDelayRisk,
         mlDelayMins: r.mlExpectedDelay,
-        mlReasons: r.mlReasons ? JSON.parse(r.mlReasons) : [],
-        mlActions: r.mlSuggestedActions ? JSON.parse(r.mlSuggestedActions) : [],
+        mlReasons: parseJsonArray(r.mlReasons),
+        mlActions: parseJsonArray(r.mlSuggestedActions),
         ambulanceId: r.ambulance?.id || null,
         ambulancePlate: r.ambulance?.plateNumber || null,
         ambulanceLat: r.ambulance?.locationLat || null,
@@ -121,6 +219,13 @@ class AdminService {
         updatedAt: r.updatedAt,
       }))
     };
+
+    this.dashboardCache = {
+      expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS,
+      payload
+    };
+
+    return payload;
   }
 
   async getAllUsers() {
