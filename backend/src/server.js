@@ -1,7 +1,7 @@
 import http from "http";
 import { fileURLToPath } from "url";
 import env from "./config/env.js";
-import { connectDB } from "./config/db.js";
+import { connectDB, startKeepAlive } from "./config/db.js";
 import { initRedis } from "./config/redis.js";
 import { initQueue } from "./services/queue.service.js";
 import { initSocket } from "./services/socket.service.js";
@@ -37,6 +37,9 @@ const startServer = async () => {
   try {
     await connectDB();
     logger.info("✅ Database connected");
+    
+    // Start keep-alive to prevent Neon database from sleeping during active sessions
+    startKeepAlive();
 
     const redisConnection = initRedis();
     logger.info("✅ Redis initialized");

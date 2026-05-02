@@ -1,4 +1,41 @@
 import { prisma } from '../../config/db.js';
+import logger from '../../utils/logger.js';
+
+// Retry configuration for Neon database sleep/wake cycles
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 500; // 500ms
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const isConnectionError = (error) => {
+  return error.message?.includes("Can't reach database server") || 
+         error.message?.includes('Connection timed out') ||
+         error.code === 'P1001' ||
+         error.code === 'P1002' ||
+         error.code === 'P2024'; // Connection pool timeout
+};
+
+const withRetry = async (operation, operationName) => {
+  let lastError;
+  
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      
+      if (isConnectionError(error) && attempt < MAX_RETRIES - 1) {
+        const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+        logger.warn(`${operationName} failed (attempt ${attempt + 1}/${MAX_RETRIES}). Retrying in ${delay}ms...`);
+        await sleep(delay);
+      } else {
+        throw error;
+      }
+    }
+  }
+  
+  throw lastError;
+};
 
 const requestInclude = {
   patient: { select: { id: true, name: true, phone: true, email: true } },
@@ -54,11 +91,13 @@ class RequestRepository {
   }
 
   async updateRequest(id, data) {
-    return await prisma.request.update({
-      where: { id },
-      data,
-      include: requestInclude
-    });
+    return await withRetry(async () => {
+      return await prisma.request.update({
+        where: { id },
+        data,
+        include: requestInclude
+      });
+    }, `updateRequest(${id})`);
   }
 
   async findRequestsByPatientId(patientId) {
