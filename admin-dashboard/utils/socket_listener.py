@@ -15,6 +15,7 @@ MAX_FEED_SIZE = 50
 
 _listener_thread = None
 _sio = None
+_listener_backend_url = None
 
 
 def _build_dispatch_card(event_name: str, payload: dict) -> dict:
@@ -107,16 +108,36 @@ def ensure_listener_running(session_state):
     Called once per Streamlit session. Starts the background listener
     thread if it is not already running.
     """
-    global _listener_thread
+    global _listener_thread, _listener_backend_url
 
-    if _listener_thread is not None and _listener_thread.is_alive():
+    backend_candidates = ["http://localhost:5001"]
+    configured_backend = os.getenv("BACKEND_URL", "").rstrip("/")
+    if configured_backend and configured_backend not in backend_candidates:
+        backend_candidates.append(configured_backend)
+
+    backend_url = backend_candidates[0]
+    for candidate in backend_candidates:
+        try:
+            import requests
+            r = requests.get(f"{candidate}/health", timeout=2)
+            if r.status_code == 200:
+                backend_url = candidate
+                break
+        except Exception:
+            continue
+
+    if (
+        _listener_thread is not None and
+        _listener_thread.is_alive() and
+        _listener_backend_url == backend_url
+    ):
         return  # Already running
 
     # Initialise feed if not present
     if not hasattr(session_state, "live_dispatch_feed"):
         session_state.live_dispatch_feed = []
 
-    backend_url = os.getenv("BACKEND_URL", "http://localhost:5001")
+    _listener_backend_url = backend_url
 
     _listener_thread = threading.Thread(
         target=_start_listener,

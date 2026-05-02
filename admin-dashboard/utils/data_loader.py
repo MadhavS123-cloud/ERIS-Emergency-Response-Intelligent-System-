@@ -17,7 +17,7 @@ load_dotenv(env_path)
 # ── Environment Config ────────────────────────────────────────────────────────
 BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
 ML_SERVICE_URL = os.getenv("ML_SERVICE_URL", "").rstrip("/")
-API_BASE = f"{BACKEND_URL}/api/v1" if BACKEND_URL else ""
+DEFAULT_LOCAL_BACKEND_URL = "http://localhost:5001"
 
 # ── Seed for reproducible demo data ──────────────────────────────────────────
 SEED = 42
@@ -127,22 +127,36 @@ def _fetch_live_requests_cached(force_refresh=False):
     Fetch all requests from the backend with full relation data.
     Returns (list_of_requests, error_string_or_None)
     """
-    if not API_BASE:
+    backend_candidates = []
+    if DEFAULT_LOCAL_BACKEND_URL:
+        backend_candidates.append(DEFAULT_LOCAL_BACKEND_URL)
+    if BACKEND_URL and BACKEND_URL not in backend_candidates:
+        backend_candidates.append(BACKEND_URL)
+
+    if not backend_candidates:
         return None, "BACKEND_URL not configured"
-    try:
-        headers = {"x-internal-token": "ERIS_INTERNAL"}
-        force_query = "?forceRefresh=true" if force_refresh else ""
-        r = requests.get(f"{API_BASE}/admin/dashboard-stats{force_query}", headers=headers, timeout=15)
-        if r.status_code == 200:
-            d = r.json().get("data", {})
-            return d, None
-        return None, f"Backend returned HTTP {r.status_code}"
-    except requests.exceptions.ConnectionError:
-        return None, "Cannot reach backend (connection refused)"
-    except requests.exceptions.Timeout:
-        return None, "Backend request timed out"
-    except Exception as e:
-        return None, str(e)
+
+    errors = []
+    headers = {"x-internal-token": "ERIS_INTERNAL"}
+    force_query = "?forceRefresh=true" if force_refresh else ""
+
+    for backend_url in backend_candidates:
+        api_base = f"{backend_url}/api/v1"
+        try:
+            r = requests.get(f"{api_base}/admin/dashboard-stats{force_query}", headers=headers, timeout=15)
+            if r.status_code == 200:
+                d = r.json().get("data", {})
+                d["_resolved_backend_url"] = backend_url
+                return d, None
+            errors.append(f"{backend_url}: HTTP {r.status_code}")
+        except requests.exceptions.ConnectionError:
+            errors.append(f"{backend_url}: connection refused")
+        except requests.exceptions.Timeout:
+            errors.append(f"{backend_url}: request timed out")
+        except Exception as e:
+            errors.append(f"{backend_url}: {e}")
+
+    return None, " | ".join(errors)
 
 def fetch_live_requests(force_refresh=False):
     if force_refresh:
@@ -161,6 +175,7 @@ def load_data(force_refresh=False):
 
     live = False
     connection_error = None
+    resolved_backend_url = BACKEND_URL or DEFAULT_LOCAL_BACKEND_URL or "Not configured"
     requests_data = demo_requests
     fleet_data = demo_fleet
     hospitals_data = demo_hospitals
@@ -173,6 +188,7 @@ def load_data(force_refresh=False):
         fleet_data = live_data.get("fleet", demo_fleet)
         kpis_data = live_data.get("kpis", demo_kpis)
         hospitals_data = live_data.get("hospitals", demo_hospitals)
+        resolved_backend_url = live_data.get("_resolved_backend_url", resolved_backend_url)
         live = True
 
     return {
@@ -183,6 +199,6 @@ def load_data(force_refresh=False):
         "live": live,
         "stale": False,
         "connection_error": connection_error,
-        "backend_url": BACKEND_URL or "Not configured",
+        "backend_url": resolved_backend_url,
         "fetched_at": datetime.now().isoformat(),
     }

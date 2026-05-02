@@ -22,6 +22,27 @@ const haversineKm = (lat1, lng1, lat2, lng2) => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+const buildGoogleMapsNavigationUrl = ({ origin, destination, destinationLabel }) => {
+    if (!destination) return null;
+
+    const destinationValue = Array.isArray(destination)
+        ? `${destination[0]},${destination[1]}`
+        : destinationLabel || '';
+
+    const params = new URLSearchParams({
+        api: '1',
+        travelmode: 'driving',
+        dir_action: 'navigate',
+        destination: destinationValue
+    });
+
+    if (Array.isArray(origin)) {
+        params.set('origin', `${origin[0]},${origin[1]}`);
+    }
+
+    return `https://www.google.com/maps/dir/?${params.toString()}`;
+};
+
 const stepConfig = {
     incoming:   { label: 'WAIT FOR DISPATCH',  color: 'btn-blue',   next: null,         stepNum: 0, totalSteps: 4, stepTitle: 'Awaiting hospital assignment' },
     assigned:   { label: 'START NAVIGATION →',  color: 'btn-blue',   next: 'en_route',   stepNum: 1, totalSteps: 4, stepTitle: 'GO TO PICKUP' },
@@ -83,6 +104,18 @@ function DriverDashboard() {
             return dispatchInfo.hospitalPosition;
         }
         return dispatchInfo.patientPosition;
+    }, [dispatchInfo]);
+
+    const getGoogleNavigationUrl = useCallback((statusOverride = null) => {
+        if (!dispatchInfo) return null;
+
+        const effectiveStatus = statusOverride || dispatchInfo.status;
+        const headingToHospital = effectiveStatus === 'in_transit' || effectiveStatus === 'completed';
+        const destination = headingToHospital ? dispatchInfo.hospitalPosition : dispatchInfo.patientPosition;
+        const destinationLabel = headingToHospital ? dispatchInfo.hospitalName : dispatchInfo.pickupAddress;
+        const origin = currentPos.current || dispatchInfo.ambulancePosition || dispatchInfo.hospitalPosition || dispatchInfo.patientPosition;
+
+        return buildGoogleMapsNavigationUrl({ origin, destination, destinationLabel });
     }, [dispatchInfo]);
 
     const renderRoute = useCallback((pos, routePoints) => {
@@ -383,8 +416,16 @@ function DriverDashboard() {
         const result = await updateDispatchStatus(dispatchInfo.id, nextStatus, msg[nextStatus]);
         if (!result.ok) {
             alert(`⚠️ Update Failed: ${result.message}`);
+            return;
         }
-    }, [dispatchInfo, updateDispatchStatus]);
+
+        if (nextStatus === 'en_route' || nextStatus === 'in_transit') {
+            const navigationUrl = getGoogleNavigationUrl(nextStatus);
+            if (navigationUrl) {
+                window.open(navigationUrl, '_blank', 'noopener,noreferrer');
+            }
+        }
+    }, [dispatchInfo, updateDispatchStatus, getGoogleNavigationUrl]);
 
     const handleMarkFake = useCallback(() => {
         if (!dispatchInfo || !window.confirm('Mark this as a fake request? It will cancel the case.')) return;
@@ -430,6 +471,7 @@ function DriverDashboard() {
     const isGoingToHospital = dispatchInfo.status === 'in_transit' || dispatchInfo.status === 'completed';
     const destLabel = isGoingToHospital ? 'HOSPITAL' : 'PICKUP';
     const destAddress = isGoingToHospital ? dispatchInfo.hospitalName : dispatchInfo.pickupAddress;
+    const googleNavigationUrl = getGoogleNavigationUrl();
 
     return (
         <div className="dd-layout">
@@ -536,6 +578,11 @@ function DriverDashboard() {
                 <a href="tel:102" className="dd-fab" title="Call Dispatch">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
                 </a>
+                {googleNavigationUrl && (
+                    <a href={googleNavigationUrl} target="_blank" rel="noreferrer" className="dd-fab" title="Open Google Maps Navigation">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m21 3-9 9"/><path d="M10 3H3v7"/><path d="m21 3-6 18-4-8-8-4Z"/></svg>
+                    </a>
+                )}
             </div>
 
             {/* ====== BOTTOM PANEL ====== */}
@@ -601,6 +648,12 @@ function DriverDashboard() {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         <span>Notes</span>
                     </button>
+                    {googleNavigationUrl && (
+                        <a href={googleNavigationUrl} target="_blank" rel="noreferrer" className="dd-action-square">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m21 3-9 9"/><path d="M10 3H3v7"/><path d="m21 3-6 18-4-8-8-4Z"/></svg>
+                            <span>Navigate</span>
+                        </a>
+                    )}
                 </div>
             </div>
         </div>

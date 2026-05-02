@@ -148,8 +148,8 @@ def render_dispatch_feed(data: dict = None):
     is_live = data.get("live", False) if data else False
 
     # ── REST-based feed (primary — always works if backend is reachable) ────
-    if data and data.get("requests"):
-        rest_requests = data["requests"]
+    if data and "requests" in data:
+        rest_requests = data.get("requests") or []
         # Show active first, sorted by newest
         active = [r for r in rest_requests if r.get("status") not in ("COMPLETED", "CANCELLED")]
         completed = [r for r in rest_requests if r.get("status") in ("COMPLETED", "CANCELLED")]
@@ -168,7 +168,10 @@ def render_dispatch_feed(data: dict = None):
             for r in active:
                 _render_request_card(r, is_new=(r.get("status") == "PENDING"))
         else:
-            st.info("No active emergencies right now.", icon="✅")
+            if is_live:
+                st.info("No active emergencies yet on the connected backend.", icon="✅")
+            else:
+                st.info("No active emergencies right now.", icon="✅")
 
         if completed:
             with st.expander(f"📋 Recent Completed / Cancelled ({len(completed)})"):
