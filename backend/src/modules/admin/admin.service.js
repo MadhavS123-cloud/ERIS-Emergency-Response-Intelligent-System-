@@ -15,6 +15,44 @@ const parseJsonArray = (value) => {
   }
 };
 
+const deriveFallbackMlSnapshot = (request) => {
+  const hospitalLat = request.ambulance?.hospital?.locationLat;
+  const hospitalLng = request.ambulance?.hospital?.locationLng;
+  const requestLat = request.locationLat;
+  const requestLng = request.locationLng;
+  const type = String(request.emergencyType || '').toLowerCase();
+  const createdAt = new Date(request.createdAt || Date.now());
+  const hour = createdAt.getHours();
+  const isPeakHour = (hour >= 8 && hour <= 10) || (hour >= 17 && hour <= 21);
+
+  let distanceKm = 6;
+  if ([hospitalLat, hospitalLng, requestLat, requestLng].every(value => typeof value === 'number')) {
+    distanceKm = Math.sqrt(Math.pow(hospitalLat - requestLat, 2) + Math.pow(hospitalLng - requestLng, 2)) * 111;
+  }
+
+  let delay = 5 + (distanceKm * 1.4);
+  if (isPeakHour) delay += 4;
+  if (/(cardiac|heart|stroke|trauma|accident|bleeding|respiratory|breathing)/i.test(type)) delay += 3;
+  const roundedDelay = Number(Math.max(5, delay).toFixed(1));
+  const risk = roundedDelay >= 18 ? 'High' : roundedDelay >= 11 ? 'Medium' : 'Low';
+
+  return {
+    mlRisk: risk,
+    mlDelayMins: roundedDelay,
+    mlReasons: [
+      `${distanceKm.toFixed(1)} km estimated dispatch distance`,
+      isPeakHour ? 'Peak-hour traffic conditions likely' : 'Standard traffic conditions likely',
+      'Heuristic fallback used because stored ML output is missing'
+    ],
+    mlActions: [
+      risk === 'High'
+        ? 'Dispatch immediately and notify receiving hospital'
+        : 'Proceed with standard dispatch while monitoring route'
+    ],
+    mlPredictionSource: 'fallback'
+  };
+};
+
 class AdminService {
   constructor() {
     this.dashboardCache = {
@@ -182,42 +220,52 @@ class AdminService {
         totalBeds: h.bedCapacity || 0,
         status: 'Operational'
       })),
-      recentRequests: recentRequests.map(r => ({
-        id: r.id,
-        status: r.status,
-        emergencyType: r.emergencyType,
-        patientName: r.patientName || 'Unknown',
-        patientPhone: r.patientPhone || null,
-        patientEmail: r.patient?.email || null,
-        pickupAddress: r.pickupAddress || null,
-        locationLat: r.locationLat,
-        locationLng: r.locationLng,
-        isGuest: r.isGuest,
-        isFake: r.isFake,
-        isSuspicious: r.isSuspicious,
-        suspiciousReason: r.suspiciousReason,
-        trustScoreAtRequest: r.trustScoreAtRequest,
-        mlRisk: r.mlDelayRisk,
-        mlDelayMins: r.mlExpectedDelay,
-        mlReasons: parseJsonArray(r.mlReasons),
-        mlActions: parseJsonArray(r.mlSuggestedActions),
-        ambulanceId: r.ambulance?.id || null,
-        ambulancePlate: r.ambulance?.plateNumber || null,
-        ambulanceLat: r.ambulance?.locationLat || null,
-        ambulanceLng: r.ambulance?.locationLng || null,
-        // Resolve driver from direct relation first, then via ambulance
-        driverName: r.driver?.name || r.ambulance?.driver?.name || null,
-        driverPhone: r.driver?.phone || r.ambulance?.driver?.phone || null,
-        driverEmail: r.driver?.email || r.ambulance?.driver?.email || null,
-        // Resolve hospital from ambulance relation, fallback to ML recommendation
-        hospitalName: r.ambulance?.hospital?.name || r.mlRecommendedHospitalName || null,
-        hospitalEmail: r.ambulance?.hospital?.staff?.[0]?.email || null,
-        hospitalLat: r.ambulance?.hospital?.locationLat || null,
-        hospitalLng: r.ambulance?.hospital?.locationLng || null,
-        mlRecommendedHospitalName: r.mlRecommendedHospitalName || null,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      }))
+      recentRequests: recentRequests.map(r => {
+        const baseRequest = {
+          id: r.id,
+          status: r.status,
+          emergencyType: r.emergencyType,
+          patientName: r.patientName || 'Unknown',
+          patientPhone: r.patientPhone || null,
+          patientEmail: r.patient?.email || null,
+          pickupAddress: r.pickupAddress || null,
+          locationLat: r.locationLat,
+          locationLng: r.locationLng,
+          isGuest: r.isGuest,
+          isFake: r.isFake,
+          isSuspicious: r.isSuspicious,
+          suspiciousReason: r.suspiciousReason,
+          trustScoreAtRequest: r.trustScoreAtRequest,
+          mlRisk: r.mlDelayRisk,
+          mlDelayMins: r.mlExpectedDelay,
+          mlReasons: parseJsonArray(r.mlReasons),
+          mlActions: parseJsonArray(r.mlSuggestedActions),
+          ambulanceId: r.ambulance?.id || null,
+          ambulancePlate: r.ambulance?.plateNumber || null,
+          ambulanceLat: r.ambulance?.locationLat || null,
+          ambulanceLng: r.ambulance?.locationLng || null,
+          driverName: r.driver?.name || r.ambulance?.driver?.name || null,
+          driverPhone: r.driver?.phone || r.ambulance?.driver?.phone || null,
+          driverEmail: r.driver?.email || r.ambulance?.driver?.email || null,
+          hospitalName: r.ambulance?.hospital?.name || r.mlRecommendedHospitalName || null,
+          hospitalEmail: r.ambulance?.hospital?.staff?.[0]?.email || null,
+          hospitalLat: r.ambulance?.hospital?.locationLat || null,
+          hospitalLng: r.ambulance?.hospital?.locationLng || null,
+          mlRecommendedHospitalName: r.mlRecommendedHospitalName || null,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+          mlPredictionSource: 'stored'
+        };
+
+        if (baseRequest.mlRisk && baseRequest.mlDelayMins !== null && baseRequest.mlDelayMins !== undefined) {
+          return baseRequest;
+        }
+
+        return {
+          ...baseRequest,
+          ...deriveFallbackMlSnapshot(r)
+        };
+      })
     };
 
     this.dashboardCache = {

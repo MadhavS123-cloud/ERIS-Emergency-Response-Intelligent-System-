@@ -64,26 +64,27 @@ export const initQueue = (connection) => {
         logger.info(`ML Payload constructed for job ${job.id}`, mlPayload);
 
         // 2. Query ML Service
-        const prediction = await MLService.predictDelay(mlPayload);
+        const prediction = await MLService.predictDelay(mlPayload)
+          || MLService.buildHeuristicDelayPrediction(mlPayload);
 
         // 3. Update Database with ML Context
-        let updateData = {};
-        if (prediction) {
-          updateData = {
-            distanceKm: route.distance_km,
-            trafficLevel: route.traffic_level,
-            weather: weatherInfo.weather,
-            mlDelayRisk: prediction.delay_risk,
-            mlExpectedDelay: prediction.expected_delay_minutes,
-            mlReasons: JSON.stringify(prediction.all_reasons || []),
-            mlSuggestedActions: JSON.stringify([prediction.main_cause, prediction.suggested_action])
-          };
-          
-          await prisma.request.update({
-            where: { id: requestData.id },
-            data: updateData
-          });
-        }
+        const updateData = {
+          distanceKm: route.distance_km,
+          trafficLevel: route.traffic_level,
+          weather: weatherInfo.weather,
+          mlDelayRisk: prediction?.delay_risk || prediction?.risk_category || 'Medium',
+          mlExpectedDelay: prediction?.expected_delay_minutes || prediction?.delay_minutes || null,
+          mlReasons: JSON.stringify(prediction?.all_reasons || prediction?.explanation || []),
+          mlSuggestedActions: JSON.stringify(
+            prediction?.recommended_actions
+            || [prediction?.main_cause, prediction?.suggested_action].filter(Boolean)
+          )
+        };
+        
+        await prisma.request.update({
+          where: { id: requestData.id },
+          data: updateData
+        });
         
         // 4. Broadcast Real-Time System Intelligence Update
         const io = getIO();

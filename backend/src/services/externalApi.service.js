@@ -3,6 +3,23 @@ import logger from '../utils/logger.js';
 
 const MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'MOCK_MAPS_KEY';
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY || 'MOCK_WEATHER_KEY';
+const OSRM_ROUTE_URL = 'https://router.project-osrm.org/route/v1/driving';
+const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
+
+const deriveTrafficLevel = (distanceKm, durationMins) => {
+  if (!distanceKm || !durationMins || durationMins <= 0) return 'Medium';
+  const avgSpeedKmh = (distanceKm / durationMins) * 60;
+  if (avgSpeedKmh < 18) return 'High';
+  if (avgSpeedKmh < 32) return 'Medium';
+  return 'Low';
+};
+
+const mapOpenMeteoWeatherCode = (code) => {
+  if ([45, 48].includes(code)) return 'Fog';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'Snow';
+  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(code)) return 'Rain';
+  return 'Clear';
+};
 
 /**
  * Fetch route details from Google Maps API (Distance Matrix API).
@@ -13,19 +30,34 @@ const WEATHER_API_KEY = process.env.WEATHER_API_KEY || 'MOCK_WEATHER_KEY';
  * @returns {Promise<{distance_km: number, traffic_level: string, duration_mins: number}>}
  */
 export const getRouteDetails = async (originLat, originLng, destLat, destLng) => {
-  // Return mocked values if no real keys
+  // Use public routing first when no paid key is configured
   if (MAPS_API_KEY.includes('MOCK_')) {
-    logger.warn('Using MOCKED Google Maps API.');
-    // Approximate distance
+    try {
+      const routeUrl = `${OSRM_ROUTE_URL}/${originLng},${originLat};${destLng},${destLat}?overview=false`;
+      const response = await axios.get(routeUrl, { timeout: 5000 });
+      const route = response.data?.routes?.[0];
+
+      if (route) {
+        const distance_km = Number((route.distance / 1000).toFixed(1));
+        const duration_mins = Number((route.duration / 60).toFixed(1));
+        return {
+          distance_km,
+          traffic_level: deriveTrafficLevel(distance_km, duration_mins),
+          duration_mins
+        };
+      }
+    } catch (error) {
+      logger.warn(`OSRM routing fallback failed: ${error.message}`);
+    }
+
+    logger.warn('Falling back to heuristic route approximation.');
     const dist = Math.sqrt(Math.pow(destLat - originLat, 2) + Math.pow(destLng - originLng, 2)) * 111;
-    let traffic = 'Low';
-    if (dist > 15) traffic = 'High';
-    else if (dist > 5) traffic = 'Medium';
-    
+    const durationMins = Number(Math.max(3, dist * 2.2).toFixed(1));
+
     return {
       distance_km: Number(Math.max(1, dist).toFixed(1)),
-      traffic_level: traffic,
-      duration_mins: Number(Math.max(2, dist * 2).toFixed(1))
+      traffic_level: deriveTrafficLevel(dist, durationMins),
+      duration_mins: durationMins
     };
   }
 
@@ -71,10 +103,28 @@ export const getRouteDetails = async (originLat, originLng, destLat, destLng) =>
  */
 export const getWeather = async (lat, lng) => {
   if (WEATHER_API_KEY.includes('MOCK_')) {
-    logger.warn('Using MOCKED Weather API.');
-    const conditions = ['Clear', 'Rain', 'Fog', 'Snow'];
-    const mockCondition = conditions[Math.floor(Math.random() * conditions.length)];
-    return { weather: mockCondition };
+    try {
+      const response = await axios.get(OPEN_METEO_URL, {
+        params: {
+          latitude: lat,
+          longitude: lng,
+          current: 'weather_code',
+          timezone: 'auto',
+          forecast_days: 1
+        },
+        timeout: 5000
+      });
+
+      const weatherCode = response.data?.current?.weather_code;
+      if (typeof weatherCode === 'number') {
+        return { weather: mapOpenMeteoWeatherCode(weatherCode) };
+      }
+    } catch (error) {
+      logger.warn(`Open-Meteo weather fallback failed: ${error.message}`);
+    }
+
+    logger.warn('Falling back to deterministic clear weather approximation.');
+    return { weather: 'Clear' };
   }
 
   try {

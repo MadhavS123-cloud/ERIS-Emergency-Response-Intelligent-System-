@@ -8,8 +8,79 @@ import { prisma } from '../../config/db.js';
 import { randomUUID } from 'crypto';
 import MLService from '../../services/ml.service.js';
 import logger from '../../utils/logger.js';
+import { getRouteDetails, getWeather } from '../../services/externalApi.service.js';
 
 class RequestService {
+  async buildFallbackFeatures(requestData) {
+    const hospitals = await hospitalRepository.findAllHospitals();
+    const eligibleHospitals = hospitals.filter(h =>
+      typeof h.locationLat === 'number' &&
+      typeof h.locationLng === 'number'
+    );
+
+    const nearestHospital = eligibleHospitals
+      .sort((a, b) => (
+        calculateDistance(requestData.locationLat, requestData.locationLng, a.locationLat, a.locationLng) -
+        calculateDistance(requestData.locationLat, requestData.locationLng, b.locationLat, b.locationLng)
+      ))[0];
+
+    const destinationLat = nearestHospital?.locationLat ?? requestData.locationLat;
+    const destinationLng = nearestHospital?.locationLng ?? requestData.locationLng;
+    const route = await getRouteDetails(requestData.locationLat, requestData.locationLng, destinationLat, destinationLng);
+    const weather = await getWeather(requestData.locationLat, requestData.locationLng);
+
+    const availableAmbulancesNearby = hospitals.reduce((count, hospital) => {
+      const nearbyUnits = (hospital.ambulances || []).filter(ambulance => {
+        if (!ambulance.isAvailable) return false;
+        if (typeof ambulance.locationLat === 'number' && typeof ambulance.locationLng === 'number') {
+          return calculateDistance(
+            requestData.locationLat,
+            requestData.locationLng,
+            ambulance.locationLat,
+            ambulance.locationLng
+          ) <= 8;
+        }
+        if (typeof hospital.locationLat === 'number' && typeof hospital.locationLng === 'number') {
+          return calculateDistance(
+            requestData.locationLat,
+            requestData.locationLng,
+            hospital.locationLat,
+            hospital.locationLng
+          ) <= 8;
+        }
+        return false;
+      });
+      return count + nearbyUnits.length;
+    }, 0);
+
+    return {
+      distance_to_nearest_hospital_km: route.distance_km || 5.0,
+      hour_of_day: new Date().getHours(),
+      day_of_week: new Date().getDay(),
+      traffic_level: route.traffic_level || 'Medium',
+      weather: weather.weather || 'Clear',
+      area_type: 'urban',
+      available_ambulances_nearby: availableAmbulancesNearby || 1,
+      nearest_hospital_id: nearestHospital?.id || null,
+      nearest_hospital_name: nearestHospital?.name || null
+    };
+  }
+
+  buildRequestMlFields(predictions) {
+    const delay = predictions?.delay;
+    if (!delay) return {};
+
+    const reasons = delay.explanation || delay.all_reasons || [];
+    const actions = delay.recommended_actions || [delay.main_cause, delay.suggested_action].filter(Boolean);
+
+    return {
+      mlDelayRisk: delay.risk_category || delay.delay_risk || 'Medium',
+      mlExpectedDelay: delay.delay_minutes || delay.expected_delay_minutes || null,
+      mlReasons: JSON.stringify(reasons),
+      mlSuggestedActions: JSON.stringify(actions)
+    };
+  }
+
   sortAmbulancesByDistance(ambulances, request) {
     return [...ambulances].sort((a, b) => (
       calculateDistance(request.locationLat, request.locationLng, a.locationLat ?? 0, a.locationLng ?? 0) -
@@ -35,29 +106,31 @@ class RequestService {
         timestamp: new Date().toISOString()
       });
 
-      if (!features || !features.features) {
-        logger.warn('Failed to compute features for ML predictions');
-        return null;
-      }
+      const fallbackFeatures = await this.buildFallbackFeatures(requestData);
+      const featureSet = features?.features || fallbackFeatures;
 
       // Get delay prediction
-      const delayPrediction = await MLService.predictDelay({
-        distance_km: features.features.distance_to_nearest_hospital_km || 5.0,
-        time_of_day: features.features.hour_of_day || new Date().getHours(),
-        day_of_week: features.features.day_of_week || new Date().getDay(),
-        traffic_level: features.features.traffic_level || 'Medium',
-        weather: features.features.weather || 'Clear',
-        area_type: features.features.area_type || 'urban',
-        available_ambulances_nearby: features.features.available_ambulances_nearby || 3
-      });
+      const delayPayload = {
+        distance_km: featureSet.distance_to_nearest_hospital_km || 5.0,
+        time_of_day: featureSet.hour_of_day || new Date().getHours(),
+        day_of_week: featureSet.day_of_week || new Date().getDay(),
+        traffic_level: featureSet.traffic_level || 'Medium',
+        weather: featureSet.weather || 'Clear',
+        area_type: featureSet.area_type || 'urban',
+        available_ambulances_nearby: featureSet.available_ambulances_nearby || 3
+      };
+      const delayPrediction = await MLService.predictDelay(delayPayload)
+        || MLService.buildHeuristicDelayPrediction(delayPayload);
 
       // Get severity prediction
-      const severityPrediction = await MLService.predictSeverity({
+      const severityPayload = {
         emergency_type: requestData.emergencyType,
         patient_age: requestData.patientAge || null,
         vital_signs: requestData.vitalSigns || null,
         location_type: 'home'
-      });
+      };
+      const severityPrediction = await MLService.predictSeverity(severityPayload)
+        || MLService.buildHeuristicSeverityPrediction(severityPayload);
 
       // Get hospital recommendations
       const hospitalRecommendation = await MLService.recommendHospital({
@@ -76,7 +149,7 @@ class RequestService {
         delay: delayPrediction,
         severity: severityPrediction,
         hospital: hospitalRecommendation,
-        features: features.features,
+        features: featureSet,
         latency_ms: latency
       };
     } catch (error) {
@@ -274,7 +347,8 @@ class RequestService {
       medicalNotes: data.medicalNotes || '',
       status: 'PENDING',
       ...(mlRecommendedHospitalId && { mlRecommendedHospitalId }),
-      ...(mlRecommendedHospitalName && { mlRecommendedHospitalName })
+      ...(mlRecommendedHospitalName && { mlRecommendedHospitalName }),
+      ...this.buildRequestMlFields(predictions)
     });
 
     // Store ML predictions
@@ -446,7 +520,8 @@ class RequestService {
       suspiciousReason,
       trustScoreAtRequest: trustScore,
       ...(mlRecommendedHospitalId && { mlRecommendedHospitalId }),
-      ...(mlRecommendedHospitalName && { mlRecommendedHospitalName })
+      ...(mlRecommendedHospitalName && { mlRecommendedHospitalName }),
+      ...this.buildRequestMlFields(predictions)
     });
 
     // Store ML predictions

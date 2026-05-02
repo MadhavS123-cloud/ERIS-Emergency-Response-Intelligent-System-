@@ -6,6 +6,85 @@ const ML_URL = env.ML_SERVICE_URL || 'http://localhost:8000';
 const ML_TIMEOUT = 5000; // 5 second timeout
 
 class MLService {
+  static buildHeuristicDelayPrediction(payload = {}) {
+    const distanceKm = Number(payload.distance_km || 5);
+    const availableNearby = Number(payload.available_ambulances_nearby || 1);
+    const traffic = payload.traffic_level || 'Medium';
+    const weather = payload.weather || 'Clear';
+    const hour = Number(payload.time_of_day ?? new Date().getHours());
+    const isPeakHour = (hour >= 8 && hour <= 10) || (hour >= 17 && hour <= 21);
+
+    let delay = 4 + (distanceKm * 1.45);
+    if (traffic === 'High') delay += 8;
+    else if (traffic === 'Medium') delay += 4;
+    if (weather === 'Rain') delay += 5;
+    if (weather === 'Fog') delay += 4;
+    if (weather === 'Snow') delay += 6;
+    if (isPeakHour) delay += 3;
+    if (availableNearby <= 1) delay += 5;
+    else if (availableNearby <= 3) delay += 2;
+
+    const expectedDelay = Number(Math.max(5, delay).toFixed(1));
+    const risk = expectedDelay >= 18 ? 'High' : expectedDelay >= 11 ? 'Medium' : 'Low';
+
+    const reasons = [
+      `${distanceKm.toFixed(1)} km route to the nearest response point`,
+      `${traffic} traffic estimated from live/public routing context`,
+      `${weather} weather conditions at pickup location`,
+      `${availableNearby} ambulance unit(s) estimated nearby`
+    ];
+
+    let mainCause = 'Normal city response conditions';
+    if (traffic === 'High') mainCause = 'Traffic congestion on the likely dispatch route';
+    else if (weather !== 'Clear') mainCause = `${weather} conditions may slow ambulance movement`;
+    else if (availableNearby <= 1) mainCause = 'Limited nearby ambulance availability';
+
+    const suggestedAction = risk === 'High'
+      ? 'Dispatch the nearest available unit immediately and alert the receiving hospital'
+      : risk === 'Medium'
+        ? 'Dispatch the nearest available unit and monitor route progress closely'
+        : 'Dispatch the nearest available unit on the standard route';
+
+    return {
+      model_version: 'heuristic-v1',
+      delay_minutes: expectedDelay,
+      expected_delay_minutes: expectedDelay,
+      risk_category: risk,
+      delay_risk: risk,
+      confidence: 0.67,
+      prediction_interval: {
+        min: Math.max(3, Math.round(expectedDelay - 3)),
+        max: Math.round(expectedDelay + 4)
+      },
+      explanation: reasons,
+      all_reasons: reasons,
+      main_cause: mainCause,
+      suggested_action: suggestedAction
+    };
+  }
+
+  static buildHeuristicSeverityPrediction(payload = {}) {
+    const type = String(payload.emergency_type || '').toLowerCase();
+    let severity = 'Medium';
+
+    if (/(cardiac|heart|stroke|trauma|accident|bleeding|burn|seizure|respiratory|breathing|poison|overdose|anaphylaxis)/i.test(type)) {
+      severity = 'High';
+    } else if (/(fever|pain|injury|fracture|fall|other)/i.test(type)) {
+      severity = 'Medium';
+    } else {
+      severity = 'Low';
+    }
+
+    return {
+      model_version: 'heuristic-v1',
+      severity,
+      confidence: 0.63,
+      recommended_actions: severity === 'High'
+        ? ['Prioritize dispatch', 'Keep emergency department on standby']
+        : ['Standard dispatch flow', 'Monitor ETA updates']
+    };
+  }
+
   /**
    * Request delay inference from FastAPI ML Service.
    * @param {Object} payload 
