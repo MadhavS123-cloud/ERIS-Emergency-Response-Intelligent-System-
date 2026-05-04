@@ -298,7 +298,7 @@ function HomePage() {
             {/* Header */}
             <header className="home-header">
                 <Link to="/" className="home-brand-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                    <span className="eris-mark" aria-hidden="true">E</span>
+                    <img src="/image.png" alt="ERIS" className="eris-shield" />
                     <span className="home-brand-text">ERIS</span>
                     <span className="home-brand-sub">Emergency Response System</span>
                 </Link>
@@ -680,7 +680,7 @@ function HomePage() {
             </section>
 
             <footer className="home-footer">
-                <span className="eris-mark eris-mark--sm" aria-hidden="true">E</span>
+                <img src="/image.png" alt="ERIS" className="eris-shield" />
                 <span>© 2026 ERIS · National emergency dispatch · Authorized access</span>
             </footer>
         </div>

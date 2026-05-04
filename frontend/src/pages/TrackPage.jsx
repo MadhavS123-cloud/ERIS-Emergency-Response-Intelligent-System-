@@ -195,6 +195,24 @@ function TrackPage() {
     const dispatch = activeDispatch || guestDispatch;
     const currentIndex = Math.max(STATUS_STEPS.findIndex((step) => step.key === dispatch?.status), 0);
 
+    // Persist active emergency tracking so accidental close/reopen resumes correctly.
+    useEffect(() => {
+        if (!dispatch?.id) return;
+
+        try {
+            if (dispatch.status === 'completed') {
+                localStorage.removeItem('eris:lastEmergencyTrack');
+                return;
+            }
+
+            const search = window.location.search || `?id=${dispatch.id}`;
+            const url = `/track${search}`;
+            localStorage.setItem('eris:lastEmergencyTrack', JSON.stringify({ url, at: Date.now() }));
+        } catch {
+            // ignore storage failures
+        }
+    }, [dispatch?.id, dispatch?.status]);
+
     // Reverse geocode if pickupAddress is missing or is the generic fallback
     useEffect(() => {
         const pos = dispatch?.patientPosition;

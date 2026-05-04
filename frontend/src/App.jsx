@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
 import { ErisProvider } from './context/ErisContext';
@@ -30,6 +30,58 @@ function ProtectedRoute({ children, role }) {
   return children;
 }
 
+function StaffIsolationRoute({ children }) {
+  const user = authService.getUser();
+  const token = authService.getToken();
+
+  if (token && user?.role === 'DRIVER') {
+    return <Navigate to="/driver" replace />;
+  }
+
+  if (token && (user?.role === 'ADMIN' || user?.role === 'HOSPITAL')) {
+    return <Navigate to="/hospital" replace />;
+  }
+
+  return children;
+}
+
+function EmergencyResumeGate() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = authService.getToken();
+    const user = authService.getUser();
+
+    // Never auto-redirect staff sessions into patient tracking.
+    if (token && (user?.role === 'DRIVER' || user?.role === 'ADMIN' || user?.role === 'HOSPITAL')) {
+      return;
+    }
+
+    // Don't hijack explicit track/login routes.
+    if (location.pathname === '/track' || location.pathname === '/login') {
+      return;
+    }
+
+    const raw = localStorage.getItem('eris:lastEmergencyTrack');
+    if (!raw) return;
+
+    try {
+      const { url, at } = JSON.parse(raw);
+      if (!url || typeof url !== 'string') return;
+      const ageMs = typeof at === 'number' ? (Date.now() - at) : Infinity;
+      // Resume window: 12 hours.
+      if (ageMs > 12 * 60 * 60 * 1000) return;
+
+      navigate(url, { replace: true });
+    } catch {
+      // Ignore malformed storage
+    }
+  }, [location.pathname, navigate]);
+
+  return null;
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -54,13 +106,14 @@ function App() {
       <ErisProvider>
         <Router>
           <div className="app-container">
+            <EmergencyResumeGate />
             <FloatingBookButton />
             <Routes>
-              <Route path="/" element={<EmergencyPage />} />
-              <Route path="/home" element={<HomePage />} />
+              <Route path="/" element={<StaffIsolationRoute><EmergencyPage /></StaffIsolationRoute>} />
+              <Route path="/home" element={<StaffIsolationRoute><HomePage /></StaffIsolationRoute>} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/patient" element={<PatientPage />} />
-              <Route path="/track" element={<TrackPage />} />
+              <Route path="/patient" element={<StaffIsolationRoute><PatientPage /></StaffIsolationRoute>} />
+              <Route path="/track" element={<StaffIsolationRoute><TrackPage /></StaffIsolationRoute>} />
               <Route path="/driver" element={<ProtectedRoute role="DRIVER"><DriverPage /></ProtectedRoute>} />
               <Route path="/hospital" element={<ProtectedRoute role={['ADMIN', 'HOSPITAL']}><HospitalPage /></ProtectedRoute>} />
             </Routes>

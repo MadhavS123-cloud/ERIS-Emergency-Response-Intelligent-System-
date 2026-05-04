@@ -375,6 +375,11 @@ export function ErisProvider({ children }) {
 
       setDispatches(prev => [newDispatch, ...prev]);
       setSelectedDispatchId(newDispatch.id);
+      try {
+        localStorage.setItem('eris:lastEmergencyTrack', JSON.stringify({ url: `/track?id=${newDispatch.id}`, at: Date.now() }));
+      } catch {
+        // ignore storage failures
+      }
       return newDispatch;
     } catch (error) {
       console.error('NETWORK/FETCH ERROR:', error.message);

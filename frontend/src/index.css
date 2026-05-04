@@ -205,6 +205,21 @@ select option {
   border-radius: 4px;
 }
 
+.eris-shield {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.eris-shield--lg {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+}
+
 /* ═══════════════════════════════════════════════════════════
    TYPOGRAPHY UTILITIES
    ═══════════════════════════════════════════════════════════ */

@@ -27,7 +27,7 @@ function PatientPage() {
                 <div className="patient-page-header-inner">
                     <BackButton />
                     <Link to="/" className="patient-page-logo-link">
-                        <span className="eris-mark" aria-hidden="true">E</span>
+                        <img src="/image.png" alt="ERIS" className="eris-shield" />
                         <span className="patient-page-logo-text">ERIS</span>
                     </Link>
                 </div>

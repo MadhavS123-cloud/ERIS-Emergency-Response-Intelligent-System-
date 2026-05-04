@@ -334,6 +334,47 @@
   font-size: 10px;
 }
 
+/* Bottom action bar (sticky, high visibility) */
+.ep-bottombar {
+  position: sticky;
+  bottom: 0;
+  min-height: var(--bottombar-height);
+  padding: 8px 12px;
+  border-top: 0.5px solid #1e2535;
+  background: var(--bg-panel);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ep-bottombar-left,
+.ep-bottombar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ep-bottombar-btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .ep-bottombar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ep-bottombar-left,
+  .ep-bottombar-right {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .ep-bottombar-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .ep-brand-badge {
   display: inline-flex;
   align-items: center;

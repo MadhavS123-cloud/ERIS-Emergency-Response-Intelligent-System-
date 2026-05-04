@@ -70,7 +70,7 @@ function LoginPage() {
 
             {/* Header / Logo */}
             <div className="login-header">
-                <span className="eris-mark eris-mark--lg" aria-hidden="true">E</span>
+                <img src="/image.png" alt="ERIS" className="eris-shield eris-shield--lg" />
                 <div className="login-brand-name">ERIS</div>
                 <div className="login-subtitle">Emergency Response System</div>
             </div>
