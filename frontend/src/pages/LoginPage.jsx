@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 import './LoginPage.css';
 import authService from '../services/authService';
 import { useEris } from '../context/ErisContext';
 
 function LoginPage() {
     const navigate = useNavigate();
-    const { theme } = useTheme();
     const [role, setRole] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -72,11 +70,9 @@ function LoginPage() {
 
             {/* Header / Logo */}
             <div className="login-header">
-                <div className="login-logo-box">
-                    <img src="/image.png" alt="ERIS Logo" className={`app-logo app-logo-${theme}`} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
-                </div>
-                <div className="login-brand-name">ERIS SYSTEM</div>
-                <div className="login-subtitle">Secure Staff Portal</div>
+                <span className="eris-mark eris-mark--lg" aria-hidden="true">E</span>
+                <div className="login-brand-name">ERIS</div>
+                <div className="login-subtitle">Emergency Response System</div>
             </div>
 
             {/* Login Card */}
@@ -143,6 +139,7 @@ function LoginPage() {
                     </button>
                 </form>
             </div>
+            <p className="login-footer-note">© 2026 ERIS · System status · live</p>
         </div>
     );
 }

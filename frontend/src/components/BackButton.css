@@ -2,30 +2,28 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  margin-bottom: 24px;
+  padding: 6px 12px;
+  margin-bottom: 0;
   cursor: pointer;
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 0.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
   z-index: 50;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .back-btn-modern:hover {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  transform: translateX(-4px); /* modern leftward nudge */
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .back-btn-modern:active {
-  transform: translateX(-2px) scale(0.96);
+  transform: scale(0.98);
 }

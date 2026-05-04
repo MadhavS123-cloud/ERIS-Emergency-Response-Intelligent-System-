@@ -1,42 +1,50 @@
-/* ═══════════════════════════════════════════════════════════
-   ERIS Patient Page
-   ═══════════════════════════════════════════════════════════ */
-
 .patient-page-root {
   min-height: 100vh;
-  background-color: var(--bg-main);
+  background-color: var(--bg-base);
 }
 
 .patient-page-header {
   height: var(--header-height);
-  background: var(--bg-card);
+  background: var(--bg-panel);
   display: flex;
   align-items: center;
-  padding: 0 40px;
-  border-bottom: 1px solid var(--border-std);
-  box-shadow: var(--shadow-sm);
+  padding: 0 16px;
+  border-bottom: 0.5px solid #1e2535;
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 .patient-page-header-inner {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
+}
+
+.patient-page-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  gap: 8px;
+}
+
+.patient-page-logo-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #f1f5f9;
 }
 
 .patient-page-main {
-  padding: 48px 20px;
+  padding: 16px 16px 32px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 @media (max-width: 768px) {
   .patient-page-header {
-    padding: 0 16px;
+    padding: 0 12px;
   }
   .patient-page-main {
-    padding: 28px 16px;
+    padding: 12px 12px 24px;
   }
 }

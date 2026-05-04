@@ -1,5 +1,4 @@
-/* DriverDashboard.css — Clean, mobile + desktop */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+/* DriverDashboard — command surfaces */
 
 /* ===================== LAYOUT ===================== */
 .dd-layout {
@@ -7,9 +6,9 @@
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    background: #0f172a;
-    font-family: 'Inter', sans-serif;
-    color: #e2e8f0;
+    background: var(--bg-base);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text-primary);
     overflow: hidden;
 }
 
@@ -27,11 +26,10 @@
 
 /* ===================== MAP MARKERS ===================== */
 .dd-ambulance-icon div {
-    background: #2563eb;
-    border: 3px solid white;
+    background: var(--blue);
+    border: 0.5px solid rgba(255,255,255,0.2);
     padding: 6px;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    border-radius: 6px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -47,34 +45,28 @@
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%,-50%);
-    width: 14px; height: 14px;
-    background: #ef4444;
+    width: 12px; height: 12px;
+    background: var(--red);
     border-radius: 50%;
     z-index: 2;
+    animation: pulse 1.4s ease-in-out infinite;
 }
 
 .dd-pulse-ring {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%,-50%);
-    width: 40px; height: 40px;
-    background: rgba(239,68,68,0.25);
+    width: 28px; height: 28px;
+    background: rgba(220,38,38,0.12);
     border-radius: 50%;
     z-index: 1;
-    animation: dd-pulsar 2s ease-out infinite;
-}
-
-@keyframes dd-pulsar {
-    0%   { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
-    100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
 }
 
 .dd-hospital-icon div {
-    background: #10b981;
-    border: 3px solid white;
+    background: var(--green);
+    border: 0.5px solid rgba(255,255,255,0.2);
     padding: 5px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-radius: 6px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -85,13 +77,12 @@
     position: absolute;
     top: 18px; left: 18px;
     z-index: 10;
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(15,23,42,0.9);
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border-subtle);
+    background: var(--bg-panel);
     display: flex; justify-content: center; align-items: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .dd-top-pill {
@@ -99,38 +90,40 @@
     top: 18px; left: 50%;
     transform: translateX(-50%);
     z-index: 10;
-    background: rgba(15,23,42,0.92);
-    border: 1px solid rgba(239,68,68,0.3);
-    border-radius: 999px;
-    padding: 6px 16px;
+    background: var(--bg-panel);
+    border: 0.5px solid rgba(220,38,38,0.25);
+    border-radius: 6px;
+    padding: 5px 12px;
     display: flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 800;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     white-space: nowrap;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
 
 .dd-pill-icon { font-size: 14px; }
-.dd-pill-title { color: #f1f5f9; text-transform: uppercase; letter-spacing: 0.04em; }
+.dd-pill-title { color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.06em; }
 .dd-pill-sep { color: #475569; }
 .dd-pill-priority {
-    color: #fca5a5;
-    background: rgba(239,68,68,0.15);
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 12px;
+    color: var(--red-text);
+    background: var(--red-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 500;
 }
 
 .dd-eta-float {
     position: absolute;
-    top: 70px; right: 18px;
+    top: 62px; right: 18px;
     z-index: 10;
-    background: rgba(15,23,42,0.92);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 999px;
-    padding: 6px 14px;
+    background: var(--bg-panel);
+    border: 0.5px solid var(--border-default);
+    border-radius: 6px;
+    padding: 5px 10px;
     display: flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 800;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 11px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }
 
 .dd-map-fabs {
@@ -143,24 +136,28 @@
 }
 
 .dd-fab {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(15,23,42,0.9);
-    color: white;
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border-subtle);
+    background: var(--bg-panel);
+    color: var(--text-primary);
     display: flex; justify-content: center; align-items: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     text-decoration: none;
-    transition: transform 0.15s;
+    transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
 }
 
-.dd-fab:active { transform: scale(0.9); }
+.dd-fab:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+}
+
+.dd-fab:active { transform: scale(0.98); }
 
 /* ===================== BOTTOM PANEL ===================== */
 .dd-bottom-panel {
-    background: #0f172a;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    background: var(--bg-panel);
+    border-top: 0.5px solid #1e2535;
     padding: 16px 20px;
     padding-bottom: max(16px, env(safe-area-inset-bottom));
     flex-shrink: 0;
@@ -174,28 +171,30 @@
 }
 
 .dd-step-title {
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #cbd5e1;
+    color: var(--text-faint);
 }
 
 .dd-details-toggle {
-    background: none;
-    border: 1px solid #334155;
-    color: #94a3b8;
-    padding: 4px 12px;
+    background: transparent;
+    border: 0.5px solid var(--border-default);
+    color: var(--text-secondary);
+    padding: 4px 10px;
     border-radius: 6px;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background-color 0.15s ease-out, color 0.15s ease-out;
 }
 
 .dd-details-toggle:hover {
-    background: #1e293b;
-    color: #e2e8f0;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
 }
 
 .dd-progress-bar {

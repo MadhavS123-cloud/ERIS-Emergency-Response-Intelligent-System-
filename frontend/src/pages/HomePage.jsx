@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 import { useEris } from '../context/ErisContext';
 import { CircleLoader } from 'react-spinners';
 import { addTomTomLayers } from '../config/tomtom';
@@ -29,29 +28,6 @@ function HomePage() {
 
     // Determine if the current active dispatch belongs to an actual user session (not a pre-seeded demo dispatch)
     const isPatientSession = activeDispatch && !activeDispatch.id.startsWith('dispatch-seed-');
-
-    // Intersection Observer for Lazy Animations
-    useEffect(() => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    // Unobserve after the animation triggers
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
-
-        const timeout = setTimeout(() => {
-            const lazyElements = document.querySelectorAll('.lazy-fade-in, .lazy-slide-up');
-            lazyElements.forEach(el => observer.observe(el));
-        }, 100);
-
-        return () => {
-            clearTimeout(timeout);
-            observer.disconnect();
-        };
-    }, []);
 
     useEffect(() => {
         document.title = "ERIS | Fast Emergency Response System";
@@ -241,12 +217,11 @@ function HomePage() {
                 className: 'custom-patient-icon',
                 html: `
                   <div style="
-                    background-color: #C62828; 
-                    width: 16px; 
-                    height: 16px; 
-                    border-radius: 50%; 
-                    border: 3px solid white;
-                    box-shadow: 0 0 0 2px #C62828, 0 4px 10px rgba(0,0,0,0.3);
+                    background-color: #dc2626;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    border: 2px solid #0a0e17;
                   "></div>
                 `,
                 iconSize: [22, 22],
@@ -254,7 +229,7 @@ function HomePage() {
             });
             window.L.marker(userLocation, { icon: patientIcon })
                 .addTo(mapRef.current)
-                .bindPopup('<strong style="color:#C62828">Your Actual Location</strong>')
+                .bindPopup('<strong style="color:#fca5a5;font-weight:500">Your location</strong>')
                 .openPopup();
         } else {
             // Recenter if location updates
@@ -271,19 +246,18 @@ function HomePage() {
                 className: 'custom-hospital-icon',
                 html: `
                   <div style="
-                    background-color: white; 
-                    border: 3px solid #0D47A1; 
-                    color: #0D47A1; 
-                    width: 32px; 
-                    height: 32px; 
-                    border-radius: 50%; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center; 
-                    font-weight: 900;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                    font-family: sans-serif;
-                    font-size: 16px;
+                    background-color: #111827;
+                    border: 0.5px solid rgba(255,255,255,0.18);
+                    color: #93c5fd;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 500;
+                    font-family: system-ui, sans-serif;
+                    font-size: 12px;
                   ">H</div>
                 `,
                 iconSize: [32, 32],
@@ -294,9 +268,9 @@ function HomePage() {
                 const marker = window.L.marker(h.coords, { icon: hospitalIcon })
                     .addTo(mapRef.current)
                     .bindPopup(`
-                    <div style="font-family: sans-serif; padding: 4px;">
-                      <strong style="color: #0D47A1; font-size: 14px;">${h.name}</strong><br/>
-                      <span style="color: ${h.status === 'ER Ready' ? '#C62828' : '#d97706'}; font-weight: 800; font-size: 12px; text-transform: uppercase;">STATUS: ${h.status}</span>
+                    <div style="font-family: system-ui,sans-serif;padding:4px;">
+                      <strong style="color:#e2e8f0;font-size:12px;font-weight:500">${h.name}</strong><br/>
+                      <span style="color:${h.status === 'ER Ready' ? '#fca5a5' : '#fcd34d'};font-weight:500;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;">${h.status}</span>
                     </div>
                   `);
                 markersRef.current.push(marker);
@@ -320,25 +294,25 @@ function HomePage() {
     };
 
     return (
-        <div className="landing-page" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-main)' }}>
+        <div className="landing-page">
             {/* Header */}
             <header className="home-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ display: 'flex', alignItems: 'center' }}>
-                        <img src="/image.png" alt="ERIS Logo" className="app-logo home-logo-img" style={{ height: '48px' }} />
-                    </Link>
-                </div>
+                <Link to="/" className="home-brand-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                    <span className="eris-mark" aria-hidden="true">E</span>
+                    <span className="home-brand-text">ERIS</span>
+                    <span className="home-brand-sub">Emergency Response System</span>
+                </Link>
 
                 <nav className={`home-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
                     <a href="#how" className={activeSection === 'how' ? 'active-link' : ''}>How It Works</a>
                     <a href="#hospitals" className={activeSection === 'hospitals' ? 'active-link' : ''}>Facilities</a>
                     {isPatientSession ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontWeight: '600', fontSize: 'var(--text-sm)', background: 'var(--bg-card)', padding: '8px 16px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-std)' }}>
-                                <span className="live-dot" style={{ background: 'var(--success-green)' }}></span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div className="home-welcome-chip">
+                                <span className="live-dot" />
                                 Welcome, <span style={{ textTransform: 'capitalize' }}>{activeDispatch.patientName.split(' ')[0]}</span>
                             </div>
-                            <button onClick={resetDemoState} className="btn-nav-login" style={{ background: 'transparent', color: 'var(--emergency-red)', border: '1px solid var(--emergency-red)', cursor: 'pointer' }}>
+                            <button type="button" onClick={resetDemoState} className="home-logout-btn">
                                 Logout
                             </button>
                         </div>
@@ -355,8 +329,8 @@ function HomePage() {
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                         </div>
                         <div className="nav-helpline-text">
-                            <span style={{ fontSize: '10px', fontWeight: '800', opacity: 0.8, letterSpacing: '0.05em' }}>EMERGENCY</span>
-                            <span style={{ fontSize: '18px', fontWeight: '900', lineHeight: 1 }}>112</span>
+                            <span className="nav-helpline-label">Emergency</span>
+                            <span className="nav-helpline-num">112</span>
                         </div>
                     </a>
 
@@ -367,51 +341,39 @@ function HomePage() {
             </header>
 
             {/* Hero Section */}
-            <main className="hero-section lazy-fade-in">
-                <div className="hero-text lazy-slide-up">
-                    <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: 'var(--emergency-red-light)',
-                        color: 'var(--emergency-red-dark)',
-                        padding: '6px 16px',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: 'var(--text-xs)',
-                        fontWeight: '700',
-                        marginBottom: '32px',
-                        boxShadow: 'var(--shadow-sm)'
-                    }}>
-                        <span className="live-dot" style={{ width: '6px', height: '6px' }}></span>
-                        24/7 EMERGENCY DISPATCH
+            <main className="hero-section">
+                <div className="hero-text">
+                    <div className="home-hero-eyebrow">
+                        <span className="live-dot" />
+                        24/7 emergency dispatch
                     </div>
 
                     {isPatientSession ? (
-                        <div className="active-booking-hero" style={{ background: 'var(--bg-card)', padding: '32px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-std)', boxShadow: 'var(--shadow-lg)', marginBottom: '40px', textAlign: 'left' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                                <h2 style={{ fontSize: 'var(--text-2xl)', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>Active Emergency Booking</h2>
-                                <span style={{ background: 'var(--emergency-red-light)', color: 'var(--emergency-red)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: '800', letterSpacing: '0.05em' }}>
-                                    {activeDispatch.status === 'completed' ? 'COMPLETED' : 'IN PROGRESS'}
+                        <div className="home-active-booking">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '8px' }}>
+                                <h2>Active emergency booking</h2>
+                                <span className="badge badge-red">
+                                    {activeDispatch.status === 'completed' ? 'Completed' : 'In progress'}
                                 </span>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
-                                <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Assigned EMS Unit</div>
-                                    <div style={{ fontSize: 'var(--text-lg)', fontWeight: '800', color: 'var(--text-primary)' }}>{activeDispatch.ambulanceId}</div>
+                            <div className="home-active-meta">
+                                <div className="home-active-cell">
+                                    <div className="home-active-cell-label">Assigned EMS unit</div>
+                                    <div className="home-active-cell-value">{activeDispatch.ambulanceId}</div>
                                 </div>
-                                <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Estimated Arrival</div>
-                                    <div style={{ fontSize: 'var(--text-lg)', fontWeight: '800', color: 'var(--dept-blue)' }}>{activeDispatch.eta}</div>
+                                <div className="home-active-cell">
+                                    <div className="home-active-cell-label">Estimated arrival</div>
+                                    <div className="home-active-cell-value home-active-cell-value--accent">{activeDispatch.eta}</div>
                                 </div>
-                                <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
-                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Destination Facility</div>
-                                    <div style={{ fontSize: 'var(--text-base)', fontWeight: '700', color: 'var(--text-primary)' }}>{activeDispatch.hospitalName}</div>
+                                <div className="home-active-cell home-active-cell--full">
+                                    <div className="home-active-cell-label">Destination facility</div>
+                                    <div className="home-active-cell-value">{activeDispatch.hospitalName}</div>
                                 </div>
                             </div>
 
-                            <Link to="/track" className="btn-emergency" style={{ display: 'flex', justifyContent: 'center', padding: '16px', textDecoration: 'none' }}>
-                                Track Ambulance Live
+                            <Link to="/track" className="btn-emergency" style={{ display: 'flex', justifyContent: 'center', width: '100%', textDecoration: 'none' }}>
+                                Track ambulance live
                             </Link>
                         </div>
                     ) : (
@@ -420,37 +382,19 @@ function HomePage() {
                                 Fast Emergency Response When Every Second Counts
                             </h1>
 
-                            <p style={{ fontSize: 'var(--text-xl)', color: 'var(--text-secondary)', marginBottom: '48px', lineHeight: '1.6', fontWeight: '400' }}>
+                            <p className="home-hero-lead">
                                 Get immediate ambulance assistance with real-time tracking and intelligent routing to the nearest prepared hospital.
                             </p>
 
                             <div className="hero-buttons">
-                                <Link to="/patient" className="btn-emergency" style={{
-                                    textDecoration: 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px',
-                                    padding: '16px 36px',
-                                    fontSize: 'var(--text-base)'
-                                }}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                    Book Emergency Ambulance
+                                <Link to="/patient" className="btn-emergency" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                    Book emergency ambulance
                                 </Link>
 
-                                <Link to="/track" className="btn-secondary" style={{
-                                    textDecoration: 'none',
-                                    background: 'var(--bg-card)',
-                                    color: 'var(--text-primary)',
-                                    border: '1px solid var(--border-std)',
-                                    boxShadow: 'var(--shadow-sm)',
-                                    padding: '16px 36px',
-                                    fontSize: 'var(--text-base)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px'
-                                }}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                                    Track Ambulance
+                                <Link to="/track" className="btn-secondary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                    Track ambulance
                                 </Link>
                             </div>
                         </>
@@ -459,92 +403,81 @@ function HomePage() {
 
                 </div>
 
-                <div className="lazy-fade-in hero-image-wrapper">
+                <div className="hero-image-wrapper">
                     <img
                         src="/erisimg.jpeg"
                         alt="ERIS Ambulance Dispatch"
-                        style={{
-                            width: '100%',
-                            borderRadius: 'var(--radius-lg)',
-                            boxShadow: 'var(--shadow-lg)',
-                            position: 'relative',
-                            zIndex: 1,
-                            border: '1px solid var(--border-std)',
-                            objectFit: 'cover',
-                            aspectRatio: '16/9'
-                        }}
+                        className="hero-image"
                     />
                 </div>
             </main>
 
             {/* How It Works Section */}
-            <section id="how" className="section-padding lazy-fade-in" style={{ padding: '100px 40px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-std)' }}>
-                <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+            <section id="how" className="section-padding home-section-how">
+                        <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
                     <div className="stats-grid">
                         <div>
-                            <div style={{ fontSize: 'var(--text-5xl)', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>5<span style={{ fontSize: 'var(--text-2xl)' }}>min</span></div>
-                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Avg Response Time</div>
+                            <div className="home-stat-value">5<span className="home-stat-unit">min</span></div>
+                            <div className="home-stat-label">Avg response</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: 'var(--text-5xl)', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>24<span style={{ fontSize: 'var(--text-2xl)' }}>/7</span></div>
-                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Always Available</div>
+                            <div className="home-stat-value">24<span className="home-stat-unit">/7</span></div>
+                            <div className="home-stat-label">Always on</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: 'var(--text-5xl)', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>150<span style={{ fontSize: 'var(--text-2xl)' }}>+</span></div>
-                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Ambulances Ready</div>
+                            <div className="home-stat-value">150<span className="home-stat-unit">+</span></div>
+                            <div className="home-stat-label">Ambulances</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: 'var(--text-5xl)', fontWeight: '900', color: 'var(--dept-blue)', lineHeight: 1 }}>50<span style={{ fontSize: 'var(--text-2xl)' }}>+</span></div>
-                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: '12px', fontWeight: '500' }}>Partner Hospitals</div>
+                            <div className="home-stat-value">50<span className="home-stat-unit">+</span></div>
+                            <div className="home-stat-label">Hospitals</div>
                         </div>
                     </div>
 
-                    <h2 style={{ fontSize: 'var(--text-4xl)', color: 'var(--text-primary)', marginBottom: '16px', letterSpacing: '-0.02em' }}>How ERIS Works</h2>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '64px', fontSize: 'var(--text-lg)', maxWidth: '600px', margin: '0 auto 64px' }}>Simple, reliable emergency response in 3 steps</p>
+                    <h2 className="home-section-title" style={{ textAlign: 'center' }}>How ERIS works</h2>
+                    <p className="home-section-lead" style={{ textAlign: 'center', maxWidth: '560px', margin: '0 auto 28px' }}>Simple, reliable emergency response in three steps.</p>
 
                     <div className="steps-grid">
-                        <div className="card-std" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ background: 'var(--dept-blue-light)', width: '56px', height: '56px', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', marginBottom: '32px' }}>
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                        <div className="card-std home-step-card">
+                            <div className="home-step-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                             </div>
-                            <h3 style={{ fontSize: 'var(--text-xl)', marginBottom: '16px', color: 'var(--text-primary)' }}>1. Request Ambulance</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', lineHeight: '1.6', flex: 1 }}>Fill in basic details and your location. Our system instantly finds the nearest available ambulance using smart routing.</p>
+                            <h3 className="home-step-title">1. Request ambulance</h3>
+                            <p className="home-step-body">Fill in basic details and your location. Our system finds the nearest available ambulance using smart routing.</p>
                         </div>
-                        <div className="card-std" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ background: 'var(--dept-blue-light)', width: '56px', height: '56px', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', marginBottom: '32px' }}>
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                        <div className="card-std home-step-card">
+                            <div className="home-step-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                             </div>
-                            <h3 style={{ fontSize: 'var(--text-xl)', marginBottom: '16px', color: 'var(--text-primary)' }}>2. Track in Real-Time</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', lineHeight: '1.6', flex: 1 }}>See your ambulance's live location and estimated arrival time. Stay informed every step of the way on a map.</p>
+                            <h3 className="home-step-title">2. Track live</h3>
+                            <p className="home-step-body">See live location and ETA. Stay informed every step on the map.</p>
                         </div>
-                        <div className="card-std" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ background: 'var(--dept-blue-light)', width: '56px', height: '56px', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', marginBottom: '32px' }}>
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+                        <div className="card-std home-step-card">
+                            <div className="home-step-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
                             </div>
-                            <h3 style={{ fontSize: 'var(--text-xl)', marginBottom: '16px', color: 'var(--text-primary)' }}>3. Get Treatment</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', lineHeight: '1.6', flex: 1 }}>We route you to the best available hospital actively equipped to handle your specific emergency.</p>
+                            <h3 className="home-step-title">3. Get treatment</h3>
+                            <p className="home-step-body">We route you to the best available hospital equipped for your emergency.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Dynamic Real-Time Hospitals Section */}
-            <section id="hospitals" className="section-padding lazy-fade-in" style={{ padding: '100px 40px', background: 'var(--bg-main)' }}>
+            <section id="hospitals" className="section-padding home-section-hospitals">
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
-                        <div>
-                            <h2 className="hospitals-header-title" style={{ fontSize: 'var(--text-4xl)', color: 'var(--text-primary)', marginBottom: '8px', letterSpacing: '-0.02em' }}>Real-Time Nearby Hospitals</h2>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-lg)' }}>Live view of facilities around your actual GPS location</p>
-                        </div>
+                    <div style={{ marginBottom: '16px' }}>
+                        <h2 className="hospitals-header-title">Real-time nearby hospitals</h2>
+                        <p className="home-section-lead" style={{ marginBottom: 0 }}>Live view of facilities around your GPS location.</p>
                     </div>
 
                     <div className="hospitals-grid">
                         {/* Left side: Fetched Hospital List */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {loadingHospitals ? (
-                                <div style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--dept-blue)', fontWeight: '600', gap: '24px' }}>
-                                    <img src="/image.png" alt="Loading ERIS Data" className="app-logo" style={{ height: '64px', animation: 'logoPulse 2s infinite ease-in-out' }} />
-                                    <span style={{ animation: 'pulseText 2s infinite ease-in-out', letterSpacing: '0.02em' }}>Establishing secure connection to ERIS network...</span>
+                                <div className="home-hospitals-loading">
+                                    <div className="skeleton-shimmer home-hospitals-loading-bar" aria-hidden="true" />
+                                    <span className="home-hospitals-loading-text">Loading hospital network…</span>
                                 </div>
                             ) : hospitals.length > 0 ? (
                                 <>
@@ -585,39 +518,40 @@ function HomePage() {
                                                     <span style={{
                                                         background: hospital.status === 'ER Ready' ? 'var(--emergency-red-light)' : 'rgba(245, 158, 11, 0.1)',
                                                         color: hospital.status === 'ER Ready' ? 'var(--emergency-red)' : 'var(--warning-orange)',
-                                                        fontSize: 'var(--text-xs)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontWeight: '800'
+                                                        fontSize: 'var(--text-xs)', padding: '2px 7px', borderRadius: 'var(--radius-sm)', fontWeight: '500', letterSpacing: '0.06em', textTransform: 'uppercase'
                                                     }}>{hospital.status}</span>
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', marginBottom: '12px' }}>
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                                                     {calculateDistance(userLocation, hospital.coords)} km away
                                                 </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--success-green)' : 'var(--warning-orange)', fontSize: 'var(--text-sm)', marginBottom: '16px', fontWeight: '600' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: hospital.status === 'ER Ready' ? 'var(--green-text)' : 'var(--amber-text)', fontSize: '11px', marginBottom: '12px', fontWeight: '500', fontVariantNumeric: 'tabular-nums' }}>
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                                                     Available beds: {hospital.beds} General
                                                 </div>
                                                 {/* Insurance Section */}
                                                 <div style={{ marginBottom: '16px' }}>
-                                                    <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '8px' }}>Accepted Insurance</div>
+                                                    <div style={{ fontSize: '9px', fontWeight: '500', color: 'var(--text-faint)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>Accepted insurance</div>
                                                     {hospital.insurance && hospital.insurance.length > 0 ? (
                                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
                                                             {hospital.insurance.slice(0, 3).map((ins, i) => (
                                                                 <span key={i} style={{
-                                                                    background: '#F3F4F6',
-                                                                    color: '#374151',
-                                                                    fontSize: '12px',
-                                                                    fontWeight: '600',
-                                                                    padding: '4px 10px',
-                                                                    borderRadius: '999px',
-                                                                    whiteSpace: 'nowrap'
+                                                                    background: 'var(--bg-elevated)',
+                                                                    color: 'var(--text-secondary)',
+                                                                    fontSize: '11px',
+                                                                    fontWeight: '500',
+                                                                    padding: '2px 7px',
+                                                                    borderRadius: '4px',
+                                                                    whiteSpace: 'nowrap',
+                                                                    border: '0.5px solid var(--border-subtle)'
                                                                 }}>{ins}</span>
                                                             ))}
                                                             {hospital.insurance.length > 3 && (
                                                                 <span style={{
-                                                                    fontSize: '12px',
-                                                                    fontWeight: '600',
-                                                                    color: '#6B7280',
-                                                                    padding: '4px 6px'
+                                                                    fontSize: '11px',
+                                                                    fontWeight: '500',
+                                                                    color: 'var(--text-muted)',
+                                                                    padding: '2px 6px'
                                                                 }}>+{hospital.insurance.length - 3} more</span>
                                                             )}
                                                         </div>
@@ -721,9 +655,13 @@ function HomePage() {
                             className="card-std"
                             style={{ padding: '0', overflow: 'hidden', minHeight: '500px', display: 'flex', flexDirection: 'column' }}
                         >
-                            <div style={{ background: 'var(--text-primary)', color: 'white', padding: '16px 20px', fontSize: 'var(--text-xs)', fontWeight: '700', letterSpacing: '0.1em', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span className="live-dot" style={{ background: 'var(--success-green)' }}></span> LIVE GPS TRACKING</span>
-                                {userLocation && <span style={{ fontFamily: 'monospace', opacity: 0.8 }}>LAT: {userLocation[0].toFixed(4)} LON: {userLocation[1].toFixed(4)}</span>}
+                            <div className="map-chrome-bar">
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span className="live-dot" /> Live GPS</span>
+                                {userLocation && (
+                                    <span className="map-chrome-coords">
+                                        LAT {userLocation[0].toFixed(4)} · LON {userLocation[1].toFixed(4)}
+                                    </span>
+                                )}
                             </div>
                             <div ref={mapContainer} style={{ flex: 1, width: '100%', minHeight: '460px', backgroundColor: '#1a2744' }}></div>
                         </div>
@@ -732,50 +670,18 @@ function HomePage() {
             </section>
 
             {/* Final CTA Banner */}
-            <section className="lazy-fade-in" style={{
-                background: 'var(--emergency-red)',
-                padding: '80px 40px',
-                color: 'white',
-                textAlign: 'center'
-            }}>
-                <h2 style={{ fontSize: 'var(--text-4xl)', marginBottom: '16px', color: 'white', letterSpacing: '-0.02em' }}>Need Emergency Help Right Now?</h2>
-                <p style={{ fontSize: 'var(--text-xl)', opacity: 0.9, marginBottom: '40px' }}>Don't wait. Every second matters in an emergency.</p>
-                <Link to="/patient" style={{
-                    background: 'white',
-                    color: 'var(--emergency-red)',
-                    padding: '18px 40px',
-                    borderRadius: 'var(--radius-full)',
-                    textDecoration: 'none',
-                    fontWeight: '800',
-                    fontSize: 'var(--text-lg)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                    transition: 'transform var(--transition-fast)'
-                }}
-                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                    Book Ambulance Now
+            <section className="home-cta-banner">
+                <h2 className="home-cta-title">Need emergency help right now?</h2>
+                <p className="home-cta-desc">Do not wait. Every second matters in an emergency.</p>
+                <Link to="/patient" className="home-cta-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    Book ambulance now
                 </Link>
             </section>
 
-            <footer className="footer-text" style={{
-                height: '80px',
-                background: 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '16px',
-                fontSize: 'var(--text-xs)',
-                color: 'rgba(255,255,255,0.7)',
-                fontWeight: '600',
-                letterSpacing: '0.05em'
-            }}>
-                <img src="/image.png" alt="ERIS Footer Logo" className="app-logo" style={{ height: '28px', opacity: 0.5, filter: 'grayscale(100%) brightness(2)' }} />
-                <span>© 2026 ERIS NATIONAL EMERGENCY DISPATCH SYSTEM | AUTHORIZED PERSONNEL ONLY</span>
+            <footer className="home-footer">
+                <span className="eris-mark eris-mark--sm" aria-hidden="true">E</span>
+                <span>© 2026 ERIS · National emergency dispatch · Authorized access</span>
             </footer>
         </div>
     );

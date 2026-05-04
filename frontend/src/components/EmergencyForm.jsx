@@ -198,7 +198,7 @@ function EmergencyForm() {
 
     if (submittedDispatch) {
         return (
-            <div className="emergency-form-wrapper animate-slide-up">
+            <div className="emergency-form-wrapper">
                 {showPopup && (
                     <div className="toast-popup">
                         <span className="toast-icon">🚑</span>
@@ -264,7 +264,7 @@ function EmergencyForm() {
     }
 
     return (
-        <div className="emergency-form-wrapper animate-slide-up">
+        <div className="emergency-form-wrapper">
             <div className="emergency-form-container">
                 <h2>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--emergency-red)" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>

@@ -72,8 +72,9 @@ export default function EmergencyPage() {
       {/* Top bar */}
       <header className="ep-topbar">
         <Link to="/home" className="ep-logo-link">
-          <img src="/image.png" alt="ERIS" className="ep-logo" />
+          <span className="eris-mark" aria-hidden="true">E</span>
           <span className="ep-logo-text">ERIS</span>
+          <span className="ep-logo-sub">Emergency Response System</span>
         </Link>
         <div className="ep-topbar-right">
           <span className={`ep-gps-badge ep-gps-badge--${locationStatus}`}>
@@ -88,8 +89,8 @@ export default function EmergencyPage() {
       <main className="ep-main">
         {/* Logo + brand */}
         <div className="ep-brand">
-          <div className="ep-logo-circle">
-            <img src="/image.png" alt="ERIS Logo" className="ep-brand-logo" />
+          <div className="ep-logo-circle" aria-hidden="true">
+            <span className="eris-mark eris-mark--lg">E</span>
           </div>
           <div className="ep-brand-badge">
             <span className="live-dot" />

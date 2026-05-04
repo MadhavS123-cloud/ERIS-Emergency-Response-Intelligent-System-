@@ -33,7 +33,24 @@ function ProtectedRoute({ children, role }) {
 function App() {
   return (
     <ThemeProvider>
-      <Toaster position="top-center" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px', borderRadius: '8px', padding: '12px 16px', fontWeight: 600 } }} />
+      <Toaster
+        position="bottom-right"
+        containerStyle={{ bottom: 16, right: 16 }}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'var(--bg-panel)',
+            color: 'var(--text-primary)',
+            fontSize: '12px',
+            borderRadius: '6px',
+            padding: '12px 14px',
+            fontWeight: 500,
+            border: '0.5px solid var(--border-strong)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+            maxWidth: 360,
+          },
+        }}
+      />
       <ErisProvider>
         <Router>
           <div className="app-container">
