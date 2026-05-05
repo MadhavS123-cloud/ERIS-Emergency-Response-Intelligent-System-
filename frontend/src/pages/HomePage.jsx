@@ -345,18 +345,17 @@ function HomePage() {
                 <div className="hero-text">
                     <div className="home-hero-eyebrow">
                         <span className="live-dot" />
-                        24/7 emergency dispatch
+                        24 / 7 Emergency Dispatch
                     </div>
 
                     {isPatientSession ? (
                         <div className="home-active-booking">
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', gap: '8px' }}>
                                 <h2>Active emergency booking</h2>
                                 <span className="badge badge-red">
                                     {activeDispatch.status === 'completed' ? 'Completed' : 'In progress'}
                                 </span>
                             </div>
-
                             <div className="home-active-meta">
                                 <div className="home-active-cell">
                                     <div className="home-active-cell-label">Assigned EMS unit</div>
@@ -371,8 +370,7 @@ function HomePage() {
                                     <div className="home-active-cell-value">{activeDispatch.hospitalName}</div>
                                 </div>
                             </div>
-
-                            <Link to="/track" className="btn-emergency" style={{ display: 'flex', justifyContent: 'center', width: '100%', textDecoration: 'none' }}>
+                            <Link to="/track" className="btn-emergency" style={{ display: 'inline-flex', justifyContent: 'center', textDecoration: 'none', width: '100%' }}>
                                 Track ambulance live
                             </Link>
                         </div>
@@ -381,26 +379,37 @@ function HomePage() {
                             <h1 className="hero-title">
                                 Fast Emergency Response When Every Second Counts
                             </h1>
-
                             <p className="home-hero-lead">
                                 Get immediate ambulance assistance with real-time tracking and intelligent routing to the nearest prepared hospital.
                             </p>
-
                             <div className="hero-buttons">
-                                <Link to="/patient" className="btn-emergency" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                    Book emergency ambulance
+                                <Link to="/patient" className="btn-emergency" style={{ textDecoration: 'none' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                    Book Emergency Ambulance
                                 </Link>
-
-                                <Link to="/track" className="btn-secondary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                                    Track ambulance
+                                <Link to="/track" className="btn-secondary" style={{ textDecoration: 'none' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                    Track Ambulance
                                 </Link>
+                            </div>
+                            <div className="hero-trust-bar">
+                                <div className="hero-trust-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    Avg. 5 min response
+                                </div>
+                                <div className="hero-trust-divider" />
+                                <div className="hero-trust-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    GPS auto-detected
+                                </div>
+                                <div className="hero-trust-divider" />
+                                <div className="hero-trust-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                    Nearest hospital routed
+                                </div>
                             </div>
                         </>
                     )}
-
-
                 </div>
 
                 <div className="hero-image-wrapper">
@@ -414,7 +423,7 @@ function HomePage() {
 
             {/* How It Works Section */}
             <section id="how" className="section-padding home-section-how">
-                        <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+                <div className="section-inner">
                     <div className="stats-grid">
                         <div>
                             <div className="home-stat-value">5<span className="home-stat-unit">min</span></div>
@@ -434,30 +443,35 @@ function HomePage() {
                         </div>
                     </div>
 
-                    <h2 className="home-section-title" style={{ textAlign: 'center' }}>How ERIS works</h2>
-                    <p className="home-section-lead" style={{ textAlign: 'center', maxWidth: '560px', margin: '0 auto 28px' }}>Simple, reliable emergency response in three steps.</p>
+                    <div className="section-header">
+                        <h2 className="home-section-title">How ERIS works</h2>
+                        <p className="home-section-lead">Simple, reliable emergency response in three steps.</p>
+                    </div>
 
                     <div className="steps-grid">
-                        <div className="card-std home-step-card">
+                        <div className="home-step-card">
+                            <div className="home-step-num">Step 01</div>
                             <div className="home-step-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                             </div>
-                            <h3 className="home-step-title">1. Request ambulance</h3>
+                            <h3 className="home-step-title">Request ambulance</h3>
                             <p className="home-step-body">Fill in basic details and your location. Our system finds the nearest available ambulance using smart routing.</p>
                         </div>
-                        <div className="card-std home-step-card">
+                        <div className="home-step-card">
+                            <div className="home-step-num">Step 02</div>
                             <div className="home-step-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                             </div>
-                            <h3 className="home-step-title">2. Track live</h3>
-                            <p className="home-step-body">See live location and ETA. Stay informed every step on the map.</p>
+                            <h3 className="home-step-title">Track live</h3>
+                            <p className="home-step-body">See live location and ETA. Stay informed every step on the map with real-time GPS tracking.</p>
                         </div>
-                        <div className="card-std home-step-card">
+                        <div className="home-step-card">
+                            <div className="home-step-num">Step 03</div>
                             <div className="home-step-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
                             </div>
-                            <h3 className="home-step-title">3. Get treatment</h3>
-                            <p className="home-step-body">We route you to the best available hospital equipped for your emergency.</p>
+                            <h3 className="home-step-title">Get treatment</h3>
+                            <p className="home-step-body">We route you to the best available hospital fully equipped for your emergency type.</p>
                         </div>
                     </div>
                 </div>
@@ -466,9 +480,11 @@ function HomePage() {
             {/* Dynamic Real-Time Hospitals Section */}
             <section id="hospitals" className="section-padding home-section-hospitals">
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                    <div style={{ marginBottom: '16px' }}>
-                        <h2 className="hospitals-header-title">Real-time nearby hospitals</h2>
-                        <p className="home-section-lead" style={{ marginBottom: 0 }}>Live view of facilities around your GPS location.</p>
+                    <div className="hospitals-section-header">
+                        <div>
+                            <h2 className="hospitals-header-title">Real-time nearby hospitals</h2>
+                            <p className="home-section-lead" style={{ marginBottom: 0 }}>Live view of facilities around your GPS location.</p>
+                        </div>
                     </div>
 
                     <div className="hospitals-grid">
@@ -559,88 +575,57 @@ function HomePage() {
                                                         <span style={{ fontSize: '12px', color: '#9CA3AF', fontStyle: 'italic' }}>No insurance info available</span>
                                                     )}
                                                 </div>
-                                                <button
-                                                    disabled={isDisabled}
-                                                    onClick={() => {
-                                                        if (!isDisabled) {
-                                                            setSelectedHospitalId(isSelected ? null : hospital.id);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        width: '100%',
-                                                        padding: '13px',
-                                                        marginTop: '0',
-                                                        background: btnBg,
-                                                        borderRadius: '8px',
-                                                        fontWeight: '700',
-                                                        fontSize: 'var(--text-sm)',
-                                                        color: btnColor,
-                                                        border: btnBorder,
-                                                        cursor: btnCursor,
-                                                        transition: 'background 0.15s ease, color 0.15s ease',
-                                                        letterSpacing: '0.02em'
-                                                    }}
-                                                >{btnText}</button>
+                                                <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '4px' }}>
+                                                    <button
+                                                        disabled={isDisabled}
+                                                        onClick={() => {
+                                                            if (!isDisabled) {
+                                                                setSelectedHospitalId(isSelected ? null : hospital.id);
+                                                            }
+                                                        }}
+                                                        className={`hospital-action-btn${isSelected ? ' hospital-action-btn--selected' : ''}${isDisabled ? ' hospital-action-btn--disabled' : ''}`}
+                                                        style={{
+                                                            background: btnBg,
+                                                            color: btnColor,
+                                                            cursor: btnCursor
+                                                        }}
+                                                    >{btnText}</button>
+                                                </div>
                                             </div>
                                         );
                                     })}
 
                                     {/* View More button */}
                                     {hospitals.length > 3 && !showAllHospitals && (
-                                        <button
-                                            onClick={() => setShowAllHospitals(true)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '16px',
-                                                background: 'var(--bg-card)',
-                                                border: '1px solid var(--border-std)',
-                                                borderRadius: 'var(--radius-md)',
-                                                color: 'var(--text-primary)',
-                                                fontSize: 'var(--text-sm)',
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '8px',
-                                                visibility: 'visible',
-                                                opacity: 1
-                                            }}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="12" cy="12" r="10" />
-                                                <polyline points="12 6 12 12 16 14" />
-                                            </svg>
-                                            View {hospitals.length - 3} More Hospitals
-                                        </button>
+                                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                            <button
+                                                onClick={() => setShowAllHospitals(true)}
+                                                className="hospitals-toggle-btn"
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <polyline points="12 8 12 16" />
+                                                    <polyline points="8 12 16 12" />
+                                                </svg>
+                                                View {hospitals.length - 3} More Hospitals
+                                            </button>
+                                        </div>
                                     )}
 
                                     {/* Show Less button */}
                                     {showAllHospitals && (
-                                        <button
-                                            onClick={() => setShowAllHospitals(false)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '16px',
-                                                background: 'var(--bg-card)',
-                                                border: '1px solid var(--border-std)',
-                                                borderRadius: 'var(--radius-md)',
-                                                color: 'var(--text-primary)',
-                                                fontSize: 'var(--text-sm)',
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '8px'
-                                            }}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="12" cy="12" r="10" />
-                                                <polyline points="12 6 12 12 8 14" />
-                                            </svg>
-                                            Show Less
-                                        </button>
+                                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                            <button
+                                                onClick={() => setShowAllHospitals(false)}
+                                                className="hospitals-toggle-btn"
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <polyline points="8 12 16 12" />
+                                                </svg>
+                                                Show Less
+                                            </button>
+                                        </div>
                                     )}
                                 </>
                             ) : (
