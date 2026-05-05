@@ -183,7 +183,8 @@ class MLService {
           'allergic reaction', 'respiratory', 'breathing'
         ];
 
-        const isCriticalEmergency = CRITICAL_EMERGENCY_KEYWORDS.some(kw => type.includes(kw));
+        const isCriticalEmergency = payload.priority === 'Critical' || CRITICAL_EMERGENCY_KEYWORDS.some(kw => type.includes(kw));
+        const isMinorEmergency = payload.priority === 'Low';
 
         const isTier1Capable = (hospitalName) => {
           const n = hospitalName.toLowerCase();
@@ -193,15 +194,32 @@ class MLService {
           return TIER1_KEYWORDS.some(kw => n.includes(kw));
         };
 
-        // For critical emergencies, ONLY route to Tier-1 capable hospitals
-        const candidatePool = isCriticalEmergency
-          ? eligible.filter(h => isTier1Capable(h.name))
-          : eligible;
+        const isClinic = (hospitalName) => {
+          const n = hospitalName.toLowerCase();
+          return TIER2_EXCLUSION_KEYWORDS.some(kw => n.includes(kw)) && !TIER1_KEYWORDS.some(kw => n.includes(kw));
+        };
 
-        // Safety fallback: if no Tier-1 nearby, open to all (better than nothing)
+        let candidatePool = eligible;
+        
+        if (isMinorEmergency) {
+          // For minor emergencies, route to nearest clinic
+          candidatePool = eligible.filter(h => isClinic(h.name));
+        } else if (payload.priority === 'Medium') {
+          // For medium, find small hospitals, NOT clinics and NOT multispeciality (if possible)
+          candidatePool = eligible.filter(h => !isClinic(h.name) && !isTier1Capable(h.name));
+        } else if (isCriticalEmergency) {
+          // For critical emergencies, ONLY route to Tier-1 capable hospitals
+          candidatePool = eligible.filter(h => isTier1Capable(h.name));
+        }
+
+        // Safety fallback: if no hospitals in specific tier nearby, fallback to next best or all
         const finalPool = candidatePool.length > 0 ? candidatePool : eligible;
 
-        if (isCriticalEmergency) {
+        if (isMinorEmergency) {
+          logger.info(`Minor emergency detected. Filtered to ${finalPool.length} clinics from ${eligible.length} total.`);
+        } else if (payload.priority === 'Medium') {
+          logger.info(`Medium emergency detected. Filtered to ${finalPool.length} small hospitals from ${eligible.length} total.`);
+        } else if (isCriticalEmergency) {
           logger.info(`Critical emergency detected. Filtered to ${finalPool.length} Tier-1 hospitals from ${eligible.length} total.`);
         }
 

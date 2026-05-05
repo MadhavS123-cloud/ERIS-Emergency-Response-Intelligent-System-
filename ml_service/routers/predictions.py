@@ -83,6 +83,7 @@ class HospitalRecommendationRequest(BaseModel):
     emergency_type: str
     severity: str
     current_time: str
+    priority: Optional[str] = None
 
 
 class HospitalRecommendation(BaseModel):
@@ -245,7 +246,8 @@ async def recommend_hospital(request: HospitalRecommendationRequest):
             patient_lat=patient_lat,
             patient_lng=patient_lng,
             emergency_type=request.emergency_type,
-            severity=request.severity
+            severity=request.severity,
+            priority=request.priority
         )
         
         # Convert to response format (top 5 recommendations)

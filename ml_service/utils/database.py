@@ -127,10 +127,11 @@ def rank_hospitals_by_criteria(
     patient_lat: float,
     patient_lng: float,
     emergency_type: str,
-    severity: str
+    severity: str,
+    priority: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
-    Rank hospitals based on distance, capacity, and specialization.
+    Rank hospitals based on distance, capacity, specialization, and priority.
     
     Args:
         hospitals: List of hospital records from database
@@ -144,7 +145,49 @@ def rank_hospitals_by_criteria(
     """
     ranked_hospitals = []
     
-    for hospital in hospitals:
+    # ── Capability Tier Definitions ──────────────────────────────────────
+    TIER1_KEYWORDS = [
+        'hospital', 'multispeciality', 'multi speciality', 'multispecialty',
+        'multi specialty', 'institute', 'medical center', 'medical centre',
+        'apollo', 'manipal', 'fortis', 'narayana', 'aster', 'columbia',
+        'sakra', 'bgs', 'victoria', 'bowring', 'lady curzon', 'kims',
+        'nimhans', 'general hospital', 'district hospital', 'government hospital',
+        'trauma center', 'emergency care', 'care hospital', 'rainbow',
+        'cloudnine', 'motherhood', 'sparsh', 'sathya sai', 'medanta',
+        'mazumdar shaw', 'vydehi', 'brookfield', 'yashomati', 'lions'
+    ]
+
+    TIER2_EXCLUSION_KEYWORDS = [
+        'clinic', 'dental', 'eye care', 'eye hospital', 'optical',
+        'homoeo', 'homeopathy', 'ayurvedic', 'ayurveda', 'wellness',
+        'physiotherapy', 'nursing home', 'diagnostic', 'pathology',
+        'lab', 'pharmacy', 'skin care', 'hair clinic', 'cosmetic',
+        'beauty', 'sleep clinic', 'batra'
+    ]
+
+    def is_tier1_capable(name: str) -> bool:
+        n = name.lower()
+        if any(kw in n for kw in TIER2_EXCLUSION_KEYWORDS):
+            return False
+        return any(kw in n for kw in TIER1_KEYWORDS)
+
+    def is_clinic(name: str) -> bool:
+        n = name.lower()
+        return any(kw in n for kw in TIER2_EXCLUSION_KEYWORDS) and not any(kw in n for kw in TIER1_KEYWORDS)
+
+    candidate_pool = hospitals
+    if priority == 'Low':
+        candidate_pool = [h for h in hospitals if is_clinic(h.get('name', ''))]
+    elif priority == 'Medium':
+        candidate_pool = [h for h in hospitals if not is_clinic(h.get('name', '')) and not is_tier1_capable(h.get('name', ''))]
+    elif priority == 'Critical':
+        candidate_pool = [h for h in hospitals if is_tier1_capable(h.get('name', ''))]
+
+    # Fallback if no matching hospitals found
+    if not candidate_pool:
+        candidate_pool = hospitals
+
+    for hospital in candidate_pool:
         # Calculate distance
         distance_km = haversine_distance(
             patient_lat,

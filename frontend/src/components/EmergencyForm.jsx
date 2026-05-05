@@ -10,6 +10,7 @@ function EmergencyForm() {
         patientEmail: '',
         contactNumber: '',
         emergencyType: '',
+        priority: '',
         pickupAddress: '',
         medicalNotes: '',
         locationLat: null,
@@ -184,6 +185,7 @@ function EmergencyForm() {
                 patientEmail: '',
                 contactNumber: '',
                 emergencyType: '',
+                priority: '',
                 pickupAddress: '',
                 medicalNotes: '',
                 locationLat: null,
@@ -344,6 +346,22 @@ function EmergencyForm() {
                             <option value="Psychiatric / Mental Health Crisis" />
                             <option value="Other General Medical Emergency" />
                         </datalist>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Priority Level *</label>
+                        <select
+                            name="priority"
+                            className="form-control"
+                            value={formData.priority}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Select Priority...</option>
+                            <option value="Critical">Critical (Nearest Multispeciality Hospital)</option>
+                            <option value="Medium">Medium (Nearest Small Hospital)</option>
+                            <option value="Low">Low (Minor/Clinic - Address Only, No Ambulance)</option>
+                        </select>
                     </div>
 
                     <div className="form-group">

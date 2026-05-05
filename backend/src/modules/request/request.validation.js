@@ -7,7 +7,8 @@ const createRequestSchema = Joi.object({
   locationLat: Joi.number().required(),
   locationLng: Joi.number().required(),
   patientName: Joi.string().required(),
-  patientPhone: Joi.string().allow('', null)
+  patientPhone: Joi.string().allow('', null),
+  priority: Joi.string().valid('Critical', 'Medium', 'Low').optional().allow('', null)
 });
 
 const updateRequestStatusSchema = Joi.object({

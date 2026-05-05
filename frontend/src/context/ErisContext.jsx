@@ -106,8 +106,13 @@ const computeEta = (request) => {
   if (status === 'IN_TRANSIT') return 'Heading to hospital';
   if (status === 'ARRIVED') return 'Ambulance at pickup';
 
+  // Check for Low priority (Clinic)
+  if (request.priority === 'Low' || (status === 'ACCEPTED' && !request.ambulanceId && request.mlRecommendedHospitalName?.toLowerCase().includes('clinic'))) {
+    return 'Proceed to Clinic (No Ambulance)';
+  }
+
   // Use ML-predicted delay if available
-  if (request.mlExpectedDelay && (status === 'EN_ROUTE' || status === 'ACCEPTED')) {
+  if (request.mlExpectedDelay && (status === 'EN_ROUTE' || status === 'ACCEPTED') && request.ambulanceId) {
     const mins = Math.round(request.mlExpectedDelay);
     return `~${mins} min${mins !== 1 ? 's' : ''}`;
   }
@@ -145,9 +150,9 @@ const mapRequestToDispatch = (request) => ({
   ambulancePosition: (request.ambulance?.locationLat && request.ambulance?.locationLng)
     ? [request.ambulance.locationLat, request.ambulance.locationLng]
     : null,
-  priority: getPriority(request.emergencyType),
-  ambulanceId: request.ambulance?.plateNumber || 'Awaiting assignment',
-  vehicleNumber: request.ambulance?.plateNumber || 'Awaiting assignment',
+  priority: request.priority || getPriority(request.emergencyType),
+  ambulanceId: request.priority === 'Low' ? 'No Ambulance Needed' : (request.ambulance?.plateNumber || 'Awaiting assignment'),
+  vehicleNumber: request.priority === 'Low' ? 'N/A' : (request.ambulance?.plateNumber || 'Awaiting assignment'),
   ambulanceInternalId: request.ambulance?.id || null,
   driverName: request.driver?.name || request.ambulance?.driver?.name || 'Awaiting assignment',
   driverId: request.driver?.id || request.ambulance?.driver?.id || null,
@@ -350,7 +355,8 @@ export function ErisProvider({ children }) {
           locationLat: formData.locationLat,
           locationLng: formData.locationLng,
           patientName: formData.patientName || 'Emergency Patient',
-          patientPhone: formData.contactNumber || null
+          patientPhone: formData.contactNumber || null,
+          priority: formData.priority
         })
       });
 

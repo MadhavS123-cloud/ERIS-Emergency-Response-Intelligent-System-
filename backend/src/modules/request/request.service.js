@@ -296,7 +296,8 @@ class RequestService {
       locationLng: data.locationLng,
       emergencyType: data.emergencyType,
       patientAge: data.patientAge || null,
-      vitalSigns: data.vitalSigns || null
+      vitalSigns: data.vitalSigns || null,
+      priority: data.priority
     };
     
     const predictions = await this.getMLPredictions(tempRequest);
@@ -344,6 +345,7 @@ class RequestService {
       pickupAddress: data.pickupAddress,
       patientName: data.patientName,
       patientPhone: patientPhone,
+      priority: data.priority,
       medicalNotes: data.medicalNotes || '',
       status: 'PENDING',
       ...(mlRecommendedHospitalId && { mlRecommendedHospitalId }),
@@ -365,34 +367,43 @@ class RequestService {
     await addEmergencyRequestToQueue(request);
 
     // ── Inline fast dispatch — same as guest flow ──────────────────────────
-    try {
-      const assignedAmbulance = await this.assignAmbulance(request, { role: 'ADMIN' });
-
-      const hospital = assignedAmbulance.hospital;
-
-      // Initialize ambulance at hospital GPS location
-      if (hospital?.locationLat && hospital?.locationLng) {
-        await ambulanceRepository.updateAmbulance(assignedAmbulance.id, {
-          locationLat: hospital.locationLat,
-          locationLng: hospital.locationLng
-        });
-      }
-
+    if (data.priority === 'Low') {
+      logger.info('Low priority emergency: No ambulance assigned. Instructing patient to proceed to clinic.', { requestId: request.id });
       await requestRepository.updateRequest(request.id, {
         status: 'ACCEPTED',
-        ambulanceId: assignedAmbulance.id,
-        driverId: assignedAmbulance.driverId,
-        mlRecommendedHospitalId: hospital?.id || mlRecommendedHospitalId,
-        mlRecommendedHospitalName: hospital?.name || mlRecommendedHospitalName
+        mlRecommendedHospitalId,
+        mlRecommendedHospitalName
       });
+    } else {
+      try {
+        const assignedAmbulance = await this.assignAmbulance(request, { role: 'ADMIN' });
 
-      logger.info('Auto-assigned ambulance to patient request', {
-        requestId: request.id,
-        ambulanceId: assignedAmbulance.id,
-        hospital: hospital?.name
-      });
-    } catch (e) {
-      logger.warn('Auto-assign failed for patient request (will stay PENDING):', e.message);
+        const hospital = assignedAmbulance.hospital;
+
+        // Initialize ambulance at hospital GPS location
+        if (hospital?.locationLat && hospital?.locationLng) {
+          await ambulanceRepository.updateAmbulance(assignedAmbulance.id, {
+            locationLat: hospital.locationLat,
+            locationLng: hospital.locationLng
+          });
+        }
+
+        await requestRepository.updateRequest(request.id, {
+          status: 'ACCEPTED',
+          ambulanceId: assignedAmbulance.id,
+          driverId: assignedAmbulance.driverId,
+          mlRecommendedHospitalId: hospital?.id || mlRecommendedHospitalId,
+          mlRecommendedHospitalName: hospital?.name || mlRecommendedHospitalName
+        });
+
+        logger.info('Auto-assigned ambulance to patient request', {
+          requestId: request.id,
+          ambulanceId: assignedAmbulance.id,
+          hospital: hospital?.name
+        });
+      } catch (e) {
+        logger.warn('Auto-assign failed for patient request (will stay PENDING):', e.message);
+      }
     }
 
     const finalRequest = await requestRepository.findRequestById(request.id);
