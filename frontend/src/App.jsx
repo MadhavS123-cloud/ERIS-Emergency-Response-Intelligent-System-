@@ -71,9 +71,37 @@ function EmergencyResumeGate() {
       if (!url || typeof url !== 'string') return;
       const ageMs = typeof at === 'number' ? (Date.now() - at) : Infinity;
       // Resume window: 12 hours.
-      if (ageMs > 12 * 60 * 60 * 1000) return;
+      if (ageMs > 12 * 60 * 60 * 1000) {
+        localStorage.removeItem('eris:lastEmergencyTrack');
+        return;
+      }
 
-      navigate(url, { replace: true });
+      // Extract request ID from stored URL and verify it's still active
+      const urlParams = new URLSearchParams(url.split('?')[1] || '');
+      const requestId = urlParams.get('id');
+      if (!requestId) {
+        localStorage.removeItem('eris:lastEmergencyTrack');
+        return;
+      }
+
+      // Async verify the request is still active before redirecting
+      import('./config/api').then(({ default: API_BASE_URL }) => {
+        fetch(`${API_BASE_URL}/emergency/${requestId}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(res => {
+            const status = res?.data?.status;
+            if (!status || status === 'COMPLETED' || status === 'CANCELLED') {
+              // Request is done — clear stale storage, don't redirect
+              localStorage.removeItem('eris:lastEmergencyTrack');
+              return;
+            }
+            // Still active — resume tracking
+            navigate(url, { replace: true });
+          })
+          .catch(() => {
+            // If we can't verify, don't redirect
+          });
+      });
     } catch {
       // Ignore malformed storage
     }

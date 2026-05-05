@@ -83,7 +83,7 @@ export default function EmergencyPage() {
             <span className="ep-gps-dot" />
             {locationStatus === 'ready' ? 'GPS Ready' : locationStatus === 'denied' ? 'No GPS' : 'Locating…'}
           </span>
-          <Link to="/home" className="ep-login-link">Staff Login</Link>
+          <Link to="/login" className="ep-login-link">Staff Login</Link>
         </div>
       </header>
 
