@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEris } from '../context/ErisContext';
 import { CircleLoader } from 'react-spinners';
 import { addTomTomLayers } from '../config/tomtom';
+import authService from '../services/authService';
 import './HomePage.css';
 
 /**
@@ -13,7 +14,18 @@ function HomePage() {
     const mapRef = useRef(null);
     const mapContainer = useRef(null);
     const { activeDispatch, resetDemoState } = useEris();
+    const navigate = useNavigate();
+    const user = authService.getUser();
+    const token = authService.getToken();
 
+    // Redirect staff to their dashboards when they land on home
+    useEffect(() => {
+        if (token && user?.role === 'DRIVER') {
+            navigate('/driver', { replace: true });
+        } else if (token && (user?.role === 'ADMIN' || user?.role === 'HOSPITAL')) {
+            navigate('/hospital', { replace: true });
+        }
+    }, [token, user, navigate]);
 
 
     // State for live location and fetched hospitals
@@ -295,7 +307,7 @@ function HomePage() {
 
     return (
         <div className="landing-page">
-            {/* Header */}
+            {/* ── HEADER ─────────────────────────────────────────────── */}
             <header className="home-header">
                 <Link to="/" className="home-brand-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                     <img src="/image.png" alt="ERIS" className="eris-shield" />
@@ -303,30 +315,17 @@ function HomePage() {
                     <span className="home-brand-sub">Emergency Response System</span>
                 </Link>
 
-                <nav className={`home-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                {/* Desktop nav */}
+                <nav className="home-nav">
                     <a href="#how" className={activeSection === 'how' ? 'active-link' : ''}>How It Works</a>
                     <a href="#hospitals" className={activeSection === 'hospitals' ? 'active-link' : ''}>Facilities</a>
-                    {isPatientSession ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div className="home-welcome-chip">
-                                <span className="live-dot" />
-                                Welcome, <span style={{ textTransform: 'capitalize' }}>{activeDispatch.patientName.split(' ')[0]}</span>
-                            </div>
-                            <button type="button" onClick={resetDemoState} className="home-logout-btn">
-                                Logout
-                            </button>
-                        </div>
-                    ) : (
-                        <Link to="/login" className="btn-nav-login">
-                            Staff Login
-                        </Link>
-                    )}
                 </nav>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {/* Right cluster */}
+                <div className="home-header-right">
                     <a href="tel:112" className="nav-helpline">
                         <div className="nav-helpline-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                         </div>
                         <div className="nav-helpline-text">
                             <span className="nav-helpline-label">Emergency</span>
@@ -334,11 +333,90 @@ function HomePage() {
                         </div>
                     </a>
 
-                    <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                        {mobileMenuOpen ? '✕' : '☰'}
+                    {isPatientSession ? (
+                        <div className="home-patient-actions">
+                            <Link to="/track" className="btn-nav-track">
+                                <span className="live-dot" style={{ width: '6px', height: '6px' }} />
+                                Track Request
+                            </Link>
+                            <button type="button" onClick={resetDemoState} className="btn-nav-logout">
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <Link to="/login" className="btn-nav-login">Staff Login</Link>
+                    )}
+
+                    {/* Hamburger — mobile only */}
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={mobileMenuOpen}
+                    >
+                        {mobileMenuOpen
+                            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/></svg>
+                        }
                     </button>
                 </div>
             </header>
+
+            {/* ── MOBILE MENU DRAWER ─────────────────────────────────── */}
+            {mobileMenuOpen && (
+                <div className="mobile-nav-drawer" onClick={() => setMobileMenuOpen(false)}>
+                    <div className="mobile-nav-inner" onClick={e => e.stopPropagation()}>
+                        <div className="mobile-nav-header">
+                            <div className="mobile-nav-brand">
+                                <img src="/image.png" alt="ERIS" className="eris-shield" style={{ height: '28px' }} />
+                                <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '14px' }}>ERIS</span>
+                            </div>
+                            <button className="mobile-nav-close" onClick={() => setMobileMenuOpen(false)}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+
+                        <nav className="mobile-nav-links">
+                            <a href="#how" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">How It Works</a>
+                            <a href="#hospitals" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">Nearby Facilities</a>
+                        </nav>
+
+                        <div className="mobile-nav-actions">
+                            {isPatientSession ? (
+                                <>
+                                    <Link to="/track" className="mobile-nav-cta-btn" onClick={() => setMobileMenuOpen(false)}>
+                                        <span className="live-dot" style={{ width: '7px', height: '7px' }} />
+                                        Track My Ambulance
+                                    </Link>
+                                    <button className="mobile-nav-secondary-btn" onClick={() => { resetDemoState(); setMobileMenuOpen(false); }}>
+                                        Logout / End Session
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link to="/patient" className="mobile-nav-cta-btn" onClick={() => setMobileMenuOpen(false)}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        Book Emergency Ambulance
+                                    </Link>
+                                    <Link to="/login" className="mobile-nav-secondary-btn" onClick={() => setMobileMenuOpen(false)}>
+                                        Staff Login (Hospital / Driver)
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="mobile-nav-helpline">
+                            <a href="tel:112" className="mobile-nav-helpline-link">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <div>
+                                    <div style={{ fontSize: '9px', fontWeight: 600, opacity: 0.7, letterSpacing: '0.1em', textTransform: 'uppercase' }}>National Emergency</div>
+                                    <div style={{ fontSize: '22px', fontWeight: 700, lineHeight: 1 }}>112</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section */}
             <main className="hero-section">
@@ -412,12 +490,81 @@ function HomePage() {
                     )}
                 </div>
 
-                <div className="hero-image-wrapper">
-                    <img
-                        src="/erisimg.jpeg"
-                        alt="ERIS Ambulance Dispatch"
-                        className="hero-image"
-                    />
+                {/* Hero right — Live Dispatch Activity Panel */}
+                <div className="hero-activity-panel">
+                    <div className="hap-header">
+                        <span className="hap-title">
+                            <span className="live-dot" />
+                            Live Dispatch Activity
+                        </span>
+                        <span className="hap-badge">BENGALURU</span>
+                    </div>
+
+                    <div className="hap-metric-row">
+                        <div className="hap-metric">
+                            <div className="hap-metric-value hap-red">3</div>
+                            <div className="hap-metric-label">Active Emergencies</div>
+                        </div>
+                        <div className="hap-metric">
+                            <div className="hap-metric-value hap-green">12</div>
+                            <div className="hap-metric-label">Units Available</div>
+                        </div>
+                        <div className="hap-metric">
+                            <div className="hap-metric-value hap-blue">~5m</div>
+                            <div className="hap-metric-label">Avg Response</div>
+                        </div>
+                    </div>
+
+                    <div className="hap-divider" />
+
+                    <div className="hap-feed-title">Recent dispatches</div>
+                    <div className="hap-feed">
+                        <div className="hap-feed-item">
+                            <div className="hap-feed-dot hap-green" />
+                            <div className="hap-feed-info">
+                                <div className="hap-feed-type">Cardiac Arrest</div>
+                                <div className="hap-feed-meta">Apollo Hospitals · 4 min ago</div>
+                            </div>
+                            <div className="hap-feed-status">EN ROUTE</div>
+                        </div>
+                        <div className="hap-feed-item">
+                            <div className="hap-feed-dot hap-blue" />
+                            <div className="hap-feed-info">
+                                <div className="hap-feed-type">Road Accident</div>
+                                <div className="hap-feed-meta">Manipal Hospital · 7 min ago</div>
+                            </div>
+                            <div className="hap-feed-status">ARRIVED</div>
+                        </div>
+                        <div className="hap-feed-item">
+                            <div className="hap-feed-dot hap-amber" />
+                            <div className="hap-feed-info">
+                                <div className="hap-feed-type">Respiratory Distress</div>
+                                <div className="hap-feed-meta">Fortis Bannerghatta · 11 min ago</div>
+                            </div>
+                            <div className="hap-feed-status">ASSIGNED</div>
+                        </div>
+                        <div className="hap-feed-item">
+                            <div className="hap-feed-dot hap-green" />
+                            <div className="hap-feed-info">
+                                <div className="hap-feed-type">Stroke</div>
+                                <div className="hap-feed-meta">Narayana Health City · 15 min ago</div>
+                            </div>
+                            <div className="hap-feed-status">IN TRANSIT</div>
+                        </div>
+                    </div>
+
+                    <div className="hap-divider" />
+
+                    <div className="hap-footer">
+                        <div className="hap-footer-item">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            Whitefield · Indiranagar · Koramangala
+                        </div>
+                        <div className="hap-footer-item">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Updated just now
+                        </div>
+                    </div>
                 </div>
             </main>
 
