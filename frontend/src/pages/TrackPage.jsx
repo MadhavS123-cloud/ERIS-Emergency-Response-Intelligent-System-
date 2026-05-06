@@ -503,7 +503,7 @@ function TrackPage() {
             </div>
         );
     }
-
+    return (
         <div className="track-page-shell">
             <header className="track-header">
                 <div className="track-brand">
