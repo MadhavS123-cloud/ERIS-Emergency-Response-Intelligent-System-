@@ -49,10 +49,11 @@
 }
 
 .login-brand-name {
-  font-size: 18px;
-  font-weight: 500;
-  color: #f1f5f9;
-  letter-spacing: normal;
+  font-size: 20px;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .login-subtitle {

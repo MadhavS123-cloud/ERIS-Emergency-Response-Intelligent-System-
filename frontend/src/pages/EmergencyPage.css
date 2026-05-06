@@ -29,9 +29,10 @@
 
 .ep-logo-text {
   font-size: 14px;
-  font-weight: 500;
-  color: #f1f5f9;
-  letter-spacing: normal;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .ep-logo-sub {

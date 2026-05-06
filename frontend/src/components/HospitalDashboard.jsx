@@ -435,7 +435,7 @@ function HospitalDashboard() {
             <div className="mobile-hospital-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '32px' }} />
-                    <span style={{ fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>{hospitalName}</span>
+                    <span style={{ fontWeight: '700', letterSpacing: '0.04em', color: '#f8fafc', textTransform: 'uppercase', fontSize: '14px' }}>{hospitalName}</span>
                 </div>
                 <button
                     className="mobile-sidebar-toggle"
@@ -454,7 +454,7 @@ function HospitalDashboard() {
             <aside className={`hospital-sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
                 <div className="hospital-sidebar-header">
                     <img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '56px', marginBottom: '8px' }} />
-                    <div style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '700', letterSpacing: '0.04em', color: '#f8fafc', textTransform: 'uppercase' }}>
                         {hospitalName}
                     </div>
                 </div>

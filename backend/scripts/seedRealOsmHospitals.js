@@ -181,9 +181,21 @@ async function main() {
 
   const driverData = [];
   const ambulanceData = [];
+  const hospitalUserData = [];
   let counter = 1;
 
   for (const hosp of emergencyHospitals) {
+    const hospitalUserId = `husr-${Math.random().toString(36).substring(2, 11)}-${counter}`;
+    hospitalUserData.push({
+      id: hospitalUserId,
+      name: hosp.name.substring(0, 50),
+      email: `hospital${counter}@eris.local`,
+      password: passwordHash,
+      role: 'HOSPITAL',
+      hospitalId: hosp.id,
+      phone: `91${Math.floor(1000000000 + Math.random() * 9000000000)}`.substring(0, 12),
+    });
+
     for (let a = 0; a < 10; a++) {
       const driverId = `drv-${Math.random().toString(36).substring(2, 11)}-${counter}`;
       driverData.push({
@@ -205,6 +217,11 @@ async function main() {
       });
       counter++;
     }
+  }
+
+  console.log(`👤 Inserting ${hospitalUserData.length} hospital users...`);
+  for (let i = 0; i < hospitalUserData.length; i += 2000) {
+    await prisma.user.createMany({ data: hospitalUserData.slice(i, i + 2000), skipDuplicates: true });
   }
 
   console.log(`👤 Inserting ${driverData.length} drivers...`);

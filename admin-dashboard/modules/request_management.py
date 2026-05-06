@@ -128,18 +128,19 @@ def render_request_management(data):
                 if r.get("ambulancePlate") or r.get("driverName"):
                     st.success(f"✅ Assigned")
                     st.write(f"**Driver:** {driver}")
-                    st.write(f"**Email:** {driver_email}")
+                    st.write(f"**Email:** {driver_email} `(pwd: password123)`")
                     st.write(f"**Phone:** {driver_phone}")
                     st.write(f"**Ambulance:** `{plate}`")
                     st.write(f"**Hospital:** {hospital}")
                     if hospital_email != "—":
-                        st.write(f"**Hospital Email:** {hospital_email}")
+                        st.write(f"**Hospital Email:** {hospital_email} `(pwd: password123)`")
                 else:
                     st.warning("⏳ No ambulance assigned yet")
                     if hospital != "Determining…":
                         st.write(f"**Routed to:** {hospital}")
                         if hospital_email != "—":
-                            st.write(f"**Hospital Email:** {hospital_email}")
+                            st.write(f"**Hospital Email:** {hospital_email} `(pwd: password123)`")
+
 
                 if status == "COMPLETED" and r.get("chargeAmount"):
                     st.write(f"**Trip Charge:** ₹{r.get('chargeAmount')}")

@@ -35,8 +35,9 @@
 .home-brand-text {
   font-size: 14px;
   font-weight: 600;
-  color: #f1f5f9;
+  color: #f8fafc; /* Brighter white for dark mode */
   letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .home-brand-sub {
@@ -869,23 +870,24 @@
 
 /* ── LOADING ─────────────────────────────────────────────────────── */
 .home-hospitals-loading {
-  padding: 48px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  color: var(--text-muted);
+  gap: 20px;
+  padding: 80px 24px;
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 0.5px dashed var(--border-strong);
+  margin: 10px 0;
 }
-.home-hospitals-loading-bar {
-  width: 100%;
-  max-width: 280px;
-  height: 10px;
-}
+
 .home-hospitals-loading-text {
   font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 /* ── CTA BANNER ──────────────────────────────────────────────────── */

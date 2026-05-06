@@ -121,7 +121,9 @@ export default function EmergencyPage() {
           <button className="ep-panic-btn" onClick={handlePanicClick} disabled={loading}>
             {loading ? (
               <>
-                <div className="ep-spinner" />
+                <div className="eris-loader" style={{ width: '20px', height: '20px' }}>
+                  <div className="eris-loader-inner" style={{ width: '6px', height: '6px' }} />
+                </div>
                 Dispatching…
               </>
             ) : (
