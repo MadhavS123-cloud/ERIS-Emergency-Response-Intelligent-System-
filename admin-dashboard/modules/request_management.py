@@ -141,6 +141,9 @@ def render_request_management(data):
                         if hospital_email != "—":
                             st.write(f"**Hospital Email:** {hospital_email}")
 
+                if status == "COMPLETED" and r.get("chargeAmount"):
+                    st.write(f"**Trip Charge:** ₹{r.get('chargeAmount')}")
+
                 st.markdown("---")
                 st.markdown("**📊 ML Assessment**")
                 st.write(f"Risk: {risk_icon} **{risk}**")
@@ -210,6 +213,7 @@ def render_request_management(data):
         "Ambulance": r.get("ambulancePlate", "—"),
         "Hospital": r.get("hospitalName") or r.get("mlRecommendedHospitalName", "—"),
         "Hospital Email": r.get("hospitalEmail", "—"),
+        "Charge (₹)": r.get("chargeAmount", "—"),
         "ML Risk": r.get("mlRisk", "?"),
         "ETA (min)": r.get("mlDelayMins") or r.get("mlExpectedDelay") or "—",
         "Suspicious": r.get("isSuspicious", False),

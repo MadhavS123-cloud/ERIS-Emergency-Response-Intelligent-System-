@@ -70,8 +70,11 @@ class AdminService {
 
     const [
       totalRequests24h,
-      fleet,
-      hospitals,
+      activeAmbulances,
+      totalAmbulances,
+      totalHospitals,
+      activeFleetSample,
+      hospitalSample,
       recentRequests
     ] = await Promise.all([
       prisma.request.count({
@@ -81,7 +84,14 @@ class AdminService {
           }
         }
       }),
+      prisma.ambulance.count({
+        where: { isAvailable: false }
+      }),
+      prisma.ambulance.count(),
+      prisma.hospital.count(),
       prisma.ambulance.findMany({
+        where: { isAvailable: false },
+        take: 50,
         select: {
           id: true,
           plateNumber: true,
@@ -89,20 +99,12 @@ class AdminService {
           locationLat: true,
           locationLng: true,
           isAvailable: true,
-          driver: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-          hospital: {
-            select: {
-              name: true
-            }
-          }
+          driver: { select: { id: true, name: true } },
+          hospital: { select: { name: true } }
         }
       }),
       prisma.hospital.findMany({
+        take: 100, // Limit to prevent payload bloat
         select: {
           id: true,
           name: true,
@@ -134,6 +136,7 @@ class AdminService {
           mlReasons: true,
           mlSuggestedActions: true,
           mlRecommendedHospitalName: true,
+          chargeAmount: true,
           createdAt: true,
           updatedAt: true,
           patient: {
@@ -180,9 +183,6 @@ class AdminService {
       })
     ]);
 
-    const activeAmbulances = fleet.filter((ambulance) => !ambulance.isAvailable).length;
-    const activeNodes = hospitals.length;
-
     // Compute average delay latency if available from ML
     let avgLatency = "0.0";
     const requestsWithLatency = recentRequests.filter(r => r.mlExpectedDelay);
@@ -196,9 +196,9 @@ class AdminService {
         signals24h: totalRequests24h,
         unitsDeployed: activeAmbulances,
         avgLatencyMins: avgLatency,
-        activeNodes: activeNodes
+        activeNodes: totalHospitals
       },
-      fleet: fleet.map(a => ({
+      fleet: activeFleetSample.map(a => ({
         unitId: a.plateNumber || a.id.slice(0, 8),
         ambulanceId: a.id,
         driverName: a.driver ? a.driver.name : 'Unassigned',
@@ -210,7 +210,7 @@ class AdminService {
         locationLat: a.locationLat,
         locationLng: a.locationLng,
       })),
-      hospitals: hospitals.map(h => ({
+      hospitals: hospitalSample.map(h => ({
         id: h.id,
         name: h.name,
         locationLat: h.locationLat,
@@ -252,6 +252,7 @@ class AdminService {
           hospitalLat: r.ambulance?.hospital?.locationLat || null,
           hospitalLng: r.ambulance?.hospital?.locationLng || null,
           mlRecommendedHospitalName: r.mlRecommendedHospitalName || null,
+          chargeAmount: r.chargeAmount || null,
           createdAt: r.createdAt,
           updatedAt: r.updatedAt,
           mlPredictionSource: 'stored'

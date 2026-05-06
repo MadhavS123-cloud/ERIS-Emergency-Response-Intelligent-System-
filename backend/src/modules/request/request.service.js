@@ -710,8 +710,23 @@ class RequestService {
        if (request.deviceId) {
           await requestRepository.updateDeviceTrustScore(request.deviceId, 1, false);
        }
-    } else if (newStatus === 'COMPLETED' && request.deviceId) {
-       await requestRepository.updateDeviceTrustScore(request.deviceId, 1, false);
+    } else if (newStatus === 'COMPLETED') {
+       if (request.deviceId) {
+          await requestRepository.updateDeviceTrustScore(request.deviceId, 1, false);
+       }
+       // Calculate charge based on distance from pickup to hospital
+       if (request.locationLat && request.locationLng && request.ambulance?.hospital?.locationLat && request.ambulance?.hospital?.locationLng) {
+           const distKm = calculateDistance(
+               request.locationLat, request.locationLng,
+               request.ambulance.hospital.locationLat, request.ambulance.hospital.locationLng
+           );
+           const baseFee = 500; // Base charge
+           const perKmCharge = 30; // ₹30 per km
+           updateData.chargeAmount = Number((baseFee + (distKm * perKmCharge)).toFixed(2));
+           logger.info(`Calculated charge for completed request ${request.id}: ₹${updateData.chargeAmount} for ${distKm.toFixed(2)} km`);
+       } else {
+           updateData.chargeAmount = 500; // Default flat fee if GPS is missing
+       }
     }
     
     updateData.status = newStatus;

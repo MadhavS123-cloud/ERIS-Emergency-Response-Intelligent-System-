@@ -96,6 +96,7 @@ model Request {
   trustScoreAtRequest Int?
   isFake            Boolean   @default(false)
   driverFeedback    String?
+  chargeAmount      Float?
 
   ambulance     Ambulance?    @relation("RequestAmbulance", fields: [ambulanceId], references: [id])
   driver        User?         @relation("DriverRequests", fields: [driverId], references: [id])
