@@ -469,7 +469,7 @@ function DriverDashboard() {
                     </div>
                     <button className="dd-exit-btn" onClick={() => { 
                         localStorage.clear(); 
-                        window.location.href = '/?t=' + Date.now(); 
+                        window.location.href = '/home'; 
                     }}>Exit Driver Portal</button>
                 </div>
             </div>

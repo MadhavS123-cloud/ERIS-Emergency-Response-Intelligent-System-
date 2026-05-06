@@ -138,7 +138,7 @@ function App() {
             <FloatingBookButton />
             <Routes>
               <Route path="/" element={<StaffIsolationRoute><EmergencyPage /></StaffIsolationRoute>} />
-              <Route path="/home" element={<StaffIsolationRoute><HomePage /></StaffIsolationRoute>} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/patient" element={<StaffIsolationRoute><PatientPage /></StaffIsolationRoute>} />
               <Route path="/track" element={<StaffIsolationRoute><TrackPage /></StaffIsolationRoute>} />
