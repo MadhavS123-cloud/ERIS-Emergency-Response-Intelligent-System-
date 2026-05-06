@@ -74,8 +74,12 @@ function DriverDashboard() {
 
     const dispatchInfo = activeDispatch;
 
-    // ── Navigation Lock ──
+    // ── Navigation Lock (Only for ACTIVE sessions) ──
     useEffect(() => {
+        if (!dispatchInfo || dispatchInfo.status === 'completed' || dispatchInfo.status === 'incoming') {
+            return undefined;
+        }
+
         window.history.pushState(null, '', window.location.href);
         const handlePopState = (e) => {
             const confirmLeave = window.confirm("Warning: You are in a critical active session. Navigating away might disrupt ongoing emergency tracking. Are you sure you want to leave?");
@@ -97,7 +101,7 @@ function DriverDashboard() {
             window.removeEventListener('popstate', handlePopState);
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, []);
+    }, [dispatchInfo?.id, dispatchInfo?.status]);
 
     const getDestinationPosition = useCallback(() => {
         if (!dispatchInfo) return null;
@@ -463,7 +467,10 @@ function DriverDashboard() {
                             <p className="dd-queue-empty">No pending dispatches.</p>
                         )}
                     </div>
-                    <a href="/" className="dd-exit-btn" onClick={() => { localStorage.clear(); }}>Exit Driver Portal</a>
+                    <button className="dd-exit-btn" onClick={() => { 
+                        localStorage.clear(); 
+                        window.location.href = '/?t=' + Date.now(); 
+                    }}>Exit Driver Portal</button>
                 </div>
             </div>
         );
