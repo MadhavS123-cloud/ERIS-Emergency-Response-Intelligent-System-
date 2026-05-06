@@ -47,7 +47,8 @@ function LoginPage() {
                     navigate('/');
                 }
             } else {
-                alert(`Login Failed: ${data.message}`);
+                const errorMsg = data.errors ? `${data.message}: ${data.errors.join(', ')}` : data.message;
+                alert(`Login Failed: ${errorMsg}`);
             }
         } catch (error) {
             console.error('Login error:', error);
