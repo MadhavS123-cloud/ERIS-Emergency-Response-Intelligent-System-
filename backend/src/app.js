@@ -82,7 +82,7 @@ app.use('/api/v1/forecasts', forecastsRoutes);
 app.use('/api/v1/resources', resourcesRoutes);
 app.use('/api/v1/patterns', patternsRoutes);
 
-// Health Check
+// Health Check (v2 - fixed validation)
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'ERIS API is running' });
 });
