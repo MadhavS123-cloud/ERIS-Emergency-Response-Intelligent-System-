@@ -18,6 +18,8 @@ const mapBackendStatusToUi = (status) => {
       return 'arrived';
     case 'IN_TRANSIT':
       return 'in_transit';
+    case 'ARRIVED_AT_HOSPITAL':
+      return 'arrived_at_hospital';
     case 'COMPLETED':
     case 'CANCELLED':
       return 'completed';
@@ -43,6 +45,9 @@ const mapUiStatusToBackend = (status) => {
     case 'in_transit':
     case 'IN_TRANSIT':
       return 'IN_TRANSIT';
+    case 'arrived_at_hospital':
+    case 'ARRIVED_AT_HOSPITAL':
+      return 'ARRIVED_AT_HOSPITAL';
     case 'completed':
     case 'COMPLETED':
     case 'CANCELLED':
@@ -252,7 +257,8 @@ export function ErisProvider({ children }) {
           'EN_ROUTE': 'Ambulance headed to pickup',
           'ARRIVED': 'Ambulance arrived',
           'IN_TRANSIT': 'In transit to hospital',
-          'COMPLETED': 'Arrived at hospital'
+          'ARRIVED_AT_HOSPITAL': 'Ambulance has arrived at hospital',
+          'COMPLETED': 'Handover complete'
         };
         const message = statusMap[updatedData.status];
         if (message && user.role === 'PATIENT') {
