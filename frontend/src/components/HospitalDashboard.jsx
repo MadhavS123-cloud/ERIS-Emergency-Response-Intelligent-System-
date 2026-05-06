@@ -140,11 +140,15 @@ function HospitalDashboard() {
             if (ambPos) {
                 const ambIcon = window.L.divIcon({
                     className: '',
-                    html: `<div style="background:white;border:3px solid #2563eb;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#2563eb" stroke="#2563eb" stroke-width="1.5">
-                            <path d="M10 17h.01"/><path d="M14 17h.01"/>
-                            <path d="M22 13h-4l-2-2H8l-2 2H2v7h20v-7Z"/>
-                            <path d="M6 13V8l4-4h4l4 4v5"/>
+                    html: `<div style="background:white;border:2px solid #dc2626;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#dc2626" stroke="#dc2626" stroke-width="1.5">
+                            <path d="M2 10h4l2-2h8l2 2h4v7H2v-7Z"/>
+                            <path d="M6 10V7l3-3h6l3 3v3"/>
+                            <rect x="9" y="6" width="6" height="4" fill="white" opacity="0.3"/>
+                            <circle cx="7" cy="17" r="2" fill="white"/>
+                            <circle cx="17" cy="17" r="2" fill="white"/>
+                            <path d="M11 12h2v3h-2z" fill="white"/>
+                            <path d="M10 13.5h4" stroke="white" stroke-width="1.5"/>
                         </svg>
                     </div>`,
                     iconSize: [30, 30],
