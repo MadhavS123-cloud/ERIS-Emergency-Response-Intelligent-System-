@@ -135,7 +135,6 @@ function App() {
         <Router>
           <div className="app-container">
             <EmergencyResumeGate />
-            <FloatingBookButton />
             <Routes>
               <Route path="/" element={<StaffIsolationRoute><EmergencyPage /></StaffIsolationRoute>} />
               <Route path="/home" element={<HomePage />} />
