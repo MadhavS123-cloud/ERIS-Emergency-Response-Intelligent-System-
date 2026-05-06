@@ -38,7 +38,7 @@ def render_overview(data):
     pending_requests = [r for r in all_requests if r.get("status") == "PENDING"]
 
     # ── KPI Cards ─────────────────────────────────────────────────────────────
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
         with st.container(border=True):
             st.metric("🔴 Active Emergencies", len(active_requests),
@@ -58,6 +58,9 @@ def render_overview(data):
                 for h in hospitals
             )
             st.metric("🏥 Beds Available", total_beds)
+    with c5:
+        with st.container(border=True):
+            st.metric("🏨 Active Nodes", len(hospitals))
 
     st.divider()
 
@@ -182,6 +185,24 @@ def render_overview(data):
                 margin=dict(t=10, b=10, l=10, r=10),
             )
             st.plotly_chart(fig_line, use_container_width=True)
+
+    st.divider()
+
+    # ── Hospital List ─────────────────────────────────────────────────────────
+    st.markdown("#### 🏥 Hospital Facilities & Capacity")
+    if hospitals:
+        h_df = pd.DataFrame([
+            {
+                "Hospital Name": h["name"],
+                "ICU Beds": h["icuBedsAvailable"],
+                "Gen Beds": h["generalBedsAvailable"],
+                "Total Capacity": h["totalBeds"],
+                "Status": h["status"]
+            } for h in hospitals
+        ])
+        st.dataframe(h_df, use_container_width=True, hide_index=True)
+    else:
+        st.info("No hospital nodes registered.")
 
     # ── Fleet Summary ─────────────────────────────────────────────────────────
     st.markdown("**Fleet Status Summary**")
