@@ -9,7 +9,7 @@ const registerSchema = Joi.object({
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string().email({ tlds: { allow: false } }).required().lowercase().trim(),
+  email: Joi.string().required().lowercase().trim(),
   password: Joi.string().required()
 });
 
@@ -21,7 +21,7 @@ const patientSessionSchema = Joi.object({
 
 const resetPasswordSchema = Joi.object({
   userId: Joi.string().uuid().optional(),
-  email: Joi.string().email().optional(),
+  email: Joi.string().optional().lowercase().trim(),
   newPassword: Joi.string().min(6).required()
 }).or('userId', 'email');
 

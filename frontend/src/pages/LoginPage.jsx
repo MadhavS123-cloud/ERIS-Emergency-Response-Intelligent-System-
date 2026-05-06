@@ -29,7 +29,7 @@ function LoginPage() {
         setIsLoggingIn(true);
 
         try {
-            const data = await authService.login(username, password);
+            const data = await authService.login(username.trim().toLowerCase(), password);
             if (data.status === 'success') {
                 const userRole = data.data.user?.role;
                 if (!roleMatchesSelection(role, userRole)) {
