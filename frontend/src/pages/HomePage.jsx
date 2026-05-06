@@ -316,22 +316,15 @@ function HomePage() {
                 </Link>
 
                 {/* Desktop nav */}
-                <nav className="home-nav">
-                    <a href="#how" className={activeSection === 'how' ? 'active-link' : ''}>How It Works</a>
-                    <a href="#hospitals" className={activeSection === 'hospitals' ? 'active-link' : ''}>Facilities</a>
+                <nav className="home-nav" style={{ display: 'flex', gap: '24px' }}>
+                    <Link to="/" className="home-nav-link">Home</Link>
+                    <a href="#how" className="home-nav-link">How It Works</a>
+                    <a href="#hospitals" className="home-nav-link">Hospitals</a>
                 </nav>
 
                 {/* Right cluster */}
                 <div className="home-header-right">
-                    <a href="tel:112" className="nav-helpline">
-                        <div className="nav-helpline-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                        </div>
-                        <div className="nav-helpline-text">
-                            <span className="nav-helpline-label">Emergency</span>
-                            <span className="nav-helpline-num">112</span>
-                        </div>
-                    </a>
+
 
                     {isPatientSession ? (
                         <div className="home-patient-actions">
@@ -347,76 +340,11 @@ function HomePage() {
                         <Link to="/login" className="btn-nav-login">Staff Login</Link>
                     )}
 
-                    {/* Hamburger — mobile only */}
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-                        aria-expanded={mobileMenuOpen}
-                    >
-                        {mobileMenuOpen
-                            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/></svg>
-                        }
-                    </button>
+
                 </div>
             </header>
 
-            {/* ── MOBILE MENU DRAWER ─────────────────────────────────── */}
-            {mobileMenuOpen && (
-                <div className="mobile-nav-drawer" onClick={() => setMobileMenuOpen(false)}>
-                    <div className="mobile-nav-inner" onClick={e => e.stopPropagation()}>
-                        <div className="mobile-nav-header">
-                            <div className="mobile-nav-brand">
-                                <img src="/image.png" alt="ERIS" className="eris-shield" style={{ height: '28px' }} />
-                                <span className="home-brand-text" style={{ fontSize: '15px' }}>ERIS</span>
-                            </div>
-                            <button className="mobile-nav-close" onClick={() => setMobileMenuOpen(false)}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            </button>
-                        </div>
 
-                        <nav className="mobile-nav-links">
-                            <a href="#how" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">How It Works</a>
-                            <a href="#hospitals" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">Nearby Facilities</a>
-                        </nav>
-
-                        <div className="mobile-nav-actions">
-                            {isPatientSession ? (
-                                <>
-                                    <Link to="/track" className="mobile-nav-cta-btn" onClick={() => setMobileMenuOpen(false)}>
-                                        <span className="live-dot" style={{ width: '7px', height: '7px' }} />
-                                        Track My Ambulance
-                                    </Link>
-                                    <button className="mobile-nav-secondary-btn" onClick={() => { resetDemoState(); setMobileMenuOpen(false); }}>
-                                        Logout / End Session
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <Link to="/patient" className="mobile-nav-cta-btn" onClick={() => setMobileMenuOpen(false)}>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                        Book Emergency Ambulance
-                                    </Link>
-                                    <Link to="/login" className="mobile-nav-secondary-btn" onClick={() => setMobileMenuOpen(false)}>
-                                        Staff Login (Hospital / Driver)
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="mobile-nav-helpline">
-                            <a href="tel:112" className="mobile-nav-helpline-link">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                <div>
-                                    <div style={{ fontSize: '9px', fontWeight: 600, opacity: 0.7, letterSpacing: '0.1em', textTransform: 'uppercase' }}>National Emergency</div>
-                                    <div style={{ fontSize: '22px', fontWeight: 700, lineHeight: 1 }}>112</div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Hero Section */}
             <main className="hero-section">

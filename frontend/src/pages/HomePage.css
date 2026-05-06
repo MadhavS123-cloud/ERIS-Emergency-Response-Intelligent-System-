@@ -1133,3 +1133,228 @@
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .hero-section { padding: 24px 14px 32px; }
 }
+
+/* ================================================================
+   UI REDESIGN OVERRIDES
+   ================================================================ */
+
+/* GLOBAL RULES */
+body, .landing-page {
+  background: #0a0a0f !important;
+  color: #E0E0E0 !important;
+}
+
+.home-section-how, .home-section-hospitals, .hero-section {
+  background: #0a0a0f !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.card-std, .home-active-booking, .hero-activity-panel, .home-step-card, .stats-grid > div {
+  background: #111116 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+h1, h2, h3, .hero-title, .home-section-title, .hospitals-header-title {
+  color: #FFFFFF !important;
+}
+
+.home-section-lead, .home-step-body, .home-stat-desc {
+  color: #9E9E9E !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+}
+
+.home-section-title, .hospitals-header-title {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+}
+
+button, .btn-emergency, .btn-secondary, .home-nav-link {
+  min-height: 48px !important;
+}
+
+/* NAVBAR */
+.home-header {
+  height: 56px !important;
+  background: #0a0a0f !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.home-nav-link {
+  color: #E0E0E0 !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.btn-nav-login {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 48px !important;
+}
+
+/* HERO SECTION */
+.hero-buttons {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.btn-emergency {
+  background: #D32F2F !important;
+  color: #FFFFFF !important;
+  height: 58px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  font-size: 1.1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.btn-secondary {
+  background: transparent !important;
+  color: #FFFFFF !important;
+  border: 1px solid #FFFFFF !important;
+  height: 58px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  font-size: 1.1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* STATS ROW IN HERO */
+.hero-trust-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #111116 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  padding: 12px 24px !important;
+  margin-top: 24px !important;
+}
+
+.hero-trust-item {
+  color: #E0E0E0 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.hero-trust-item svg {
+  color: #FFFFFF !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* LIVE DISPATCH ACTIVITY CARD */
+.hap-metric-value {
+  font-size: 2.2rem !important;
+}
+
+.hap-metric-label {
+  color: #E0E0E0 !important;
+}
+
+.hap-feed-status {
+  color: #111116 !important; /* dark text */
+  font-weight: 700 !important;
+}
+
+.hap-feed-item:nth-child(1) .hap-feed-status { background: #fbbf24 !important; } /* EN ROUTE */
+.hap-feed-item:nth-child(2) .hap-feed-status { background: #4ade80 !important; } /* ARRIVED */
+.hap-feed-item:nth-child(3) .hap-feed-status { background: #60a5fa !important; } /* ASSIGNED */
+.hap-feed-item:nth-child(4) .hap-feed-status { background: #c084fc !important; } /* IN TRANSIT */
+
+.hap-badge {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #E0E0E0 !important;
+}
+
+/* STATS GRID */
+.home-stat-value {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  background: none !important;
+  -webkit-text-fill-color: #60a5fa !important;
+  color: #60a5fa !important;
+}
+
+.home-stat-label {
+  color: #E0E0E0 !important; /* Min contrast > 4.5:1 against #111116 */
+}
+
+/* HOW ERIS WORKS */
+.home-step-num {
+  color: #E0E0E0 !important; /* Legible, not faded gray */
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.home-step-icon {
+  background: #1565C0 !important; /* Brighter blue */
+  color: #FFFFFF !important;
+}
+
+/* REAL-TIME NEARBY HOSPITALS */
+span[style*="ER Ready"] {
+  background: #D32F2F !important;
+  color: #FFFFFF !important;
+}
+
+span[style*="Limited"] {
+  background: #fbbf24 !important;
+  color: #78350f !important; /* Dark amber text */
+}
+
+/* Available beds text: green #4CAF50 */
+.hospitals-grid .card-std > div:nth-child(3) {
+  color: #4CAF50 !important;
+}
+
+/* Accepted Insurance tags: increase border opacity */
+.hospitals-grid .card-std span[style*="border"] {
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: #E0E0E0 !important;
+}
+
+/* LIVE GPS MAP SECTION */
+.map-chrome-bar span {
+  color: #FFFFFF !important;
+  font-size: 13px !important;
+}
+
+.map-chrome-coords {
+  color: #FFFFFF !important;
+  font-size: 13px !important;
+}
+
+/* FOOTER CTA SECTION */
+.home-cta-banner {
+  background: #D32F2F !important;
+}
+
+.home-cta-btn {
+  background: #FFFFFF !important;
+  color: #D32F2F !important;
+  font-weight: 700 !important;
+}
+
+.home-cta-btn:hover {
+  background: #F5F5F5 !important;
+  color: #B71C1C !important;
+}
+
+/* FOOTER */
+.home-footer span {
+  opacity: 0.8 !important;
+  color: #FFFFFF !important;
+}
+

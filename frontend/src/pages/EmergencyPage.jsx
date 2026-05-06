@@ -404,7 +404,7 @@ export default function EmergencyPage() {
           </div>
 
           <div className="secondary-actions">
-            <Link to="/home" className="secondary-btn">Staff Dashboard</Link>
+            <Link to="/home" className="secondary-btn">Home</Link>
             <Link to="/patient" className="secondary-btn">Book With Details</Link>
           </div>
         </main>
