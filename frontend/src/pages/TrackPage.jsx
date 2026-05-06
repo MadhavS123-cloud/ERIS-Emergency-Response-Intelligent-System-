@@ -90,9 +90,7 @@ const mapRequestToGuestDispatch = (req) => {
 function TrackPage() {
     const { activeDispatch } = useEris();
     const [guestDispatch, setGuestDispatch] = useState(null);
-    const [showOtpModal, setShowOtpModal] = useState(false);
-    const [phoneInput, setPhoneInput] = useState('');
-    const [otpStep, setOtpStep] = useState(false);
+
     const [resolvedAddress, setResolvedAddress] = useState('');
     
     const urlId = new URLSearchParams(window.location.search).get('id');
@@ -146,9 +144,7 @@ function TrackPage() {
                             const mapped = mapRequestToGuestDispatch(req);
                             setGuestDispatch(prev => {
                                 // Only show OTP modal if NO phone AND this is the first successful load
-                                if (!req.patientPhone && !prev) {
-                                    setShowOtpModal(true);
-                                }
+
                                 return mapped;
                             });
                         }
@@ -244,25 +240,7 @@ function TrackPage() {
             .catch(() => {});
     }, [dispatch?.id, dispatch?.patientPosition, dispatch?.pickupAddress]);
 
-    const submitOtp = async () => {
-        if (otpStep) {
-            // Verify
-            try {
-                await fetch(`${API_BASE_URL}/emergency/otp`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ requestId: dispatch.id, phone: phoneInput, otp: '1234' })
-                });
-                setShowOtpModal(false);
-                setGuestDispatch({ ...dispatch, contactNumber: phoneInput });
-            } catch (e) {
-                console.error(e);
-            }
-        } else {
-            console.log('OTP Mock Sent to '+phoneInput+': 1234');
-            setOtpStep(true);
-        }
-    };
+
 
     const mapRef = useRef(null);
     const mapContainerRef = useRef(null);
@@ -665,38 +643,7 @@ function TrackPage() {
                     </aside>
                 </section>
             </main>
-            {showOtpModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-                    <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', width: '90%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-                        <h2 style={{marginTop: 0}}>Help us reach you</h2>
-                        <p style={{color: '#64748b'}}>Your ambulance is already being dispatched! Please enter your phone number so the driver can contact you (Optional).</p>
-                        
-                        <input 
-                            type="tel" 
-                            placeholder="Phone Number" 
-                            style={{width: '100%', padding: '0.75rem', marginBottom: '1rem', border: '1px solid #cbd5e1', borderRadius: '6px', boxSizing: 'border-box'}} 
-                            value={phoneInput} 
-                            onChange={(e) => setPhoneInput(e.target.value)}
-                            disabled={otpStep}
-                        />
 
-                        {otpStep && (
-                            <input 
-                                type="text" 
-                                placeholder="Enter OTP (Mock: 1234)" 
-                                style={{width: '100%', padding: '0.75rem', marginBottom: '1rem', border: '1px solid #cbd5e1', borderRadius: '6px', boxSizing: 'border-box'}} 
-                            />
-                        )}
-
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                            <button onClick={() => setShowOtpModal(false)} style={{ padding: '0.5rem 1rem', background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}>Skip</button>
-                            <button onClick={submitOtp} style={{ padding: '0.5rem 1rem', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                                {otpStep ? 'Verify OTP' : 'Send OTP'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
