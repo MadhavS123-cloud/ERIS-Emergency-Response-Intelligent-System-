@@ -68,7 +68,6 @@ class RequestRepository {
       where: {
         OR: [
           {
-            status: 'PENDING',
             mlRecommendedHospitalId: hospitalId
           },
           {

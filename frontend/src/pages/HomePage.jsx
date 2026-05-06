@@ -572,21 +572,25 @@ function HomePage() {
             <section id="how" className="section-padding home-section-how">
                 <div className="section-inner">
                     <div className="stats-grid">
-                        <div>
-                            <div className="home-stat-value">5<span className="home-stat-unit">min</span></div>
-                            <div className="home-stat-label">Avg response</div>
+                        <div className="home-stat-item">
+                            <div className="home-stat-value">40%</div>
+                            <div className="home-stat-label">Faster Response</div>
+                            <p className="home-stat-desc">Target reduction in average emergency response time</p>
                         </div>
-                        <div>
-                            <div className="home-stat-value">24<span className="home-stat-unit">/7</span></div>
-                            <div className="home-stat-label">Always on</div>
+                        <div className="home-stat-item">
+                            <div className="home-stat-value">100%</div>
+                            <div className="home-stat-label">Real-Time Visibility</div>
+                            <p className="home-stat-desc">Complete tracking from request to hospital handoff</p>
                         </div>
-                        <div>
-                            <div className="home-stat-value">150<span className="home-stat-unit">+</span></div>
-                            <div className="home-stat-label">Ambulances</div>
+                        <div className="home-stat-item">
+                            <div className="home-stat-value">2000+</div>
+                            <div className="home-stat-label">Verified Hospitals</div>
+                            <p className="home-stat-desc">Direct system integration with major healthcare networks</p>
                         </div>
-                        <div>
-                            <div className="home-stat-value">50<span className="home-stat-unit">+</span></div>
-                            <div className="home-stat-label">Hospitals</div>
+                        <div className="home-stat-item">
+                            <div className="home-stat-value">7500+</div>
+                            <div className="home-stat-label">Fleet Units</div>
+                            <p className="home-stat-desc">Active emergency ambulances with live GPS telemetrics</p>
                         </div>
                     </div>
 
