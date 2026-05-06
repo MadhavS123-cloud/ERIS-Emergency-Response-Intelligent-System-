@@ -463,7 +463,7 @@ function DriverDashboard() {
                             <p className="dd-queue-empty">No pending dispatches.</p>
                         )}
                     </div>
-                    <button className="dd-exit-btn" onClick={() => navigate('/')}>Exit Driver Portal</button>
+                    <button className="dd-exit-btn" onClick={() => { logout(); navigate('/'); }}>Exit Driver Portal</button>
                 </div>
             </div>
         );
