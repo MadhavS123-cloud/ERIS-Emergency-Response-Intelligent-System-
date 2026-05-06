@@ -407,13 +407,20 @@ function TrackPage() {
 
         let routeOrigin = null;
         let routeDest = null;
+        
+        const ambPos = dispatch.ambulancePosition;
+        const hospitalPos = dispatch.hospitalPosition;
+        const patientPos = dispatch.patientPosition;
 
-        if (['incoming', 'assigned', 'en_route', 'arrived'].includes(dispatch.status)) {
-            routeOrigin = dispatch.hospitalPosition; 
-            routeDest = dispatch.patientPosition;
+        if (['assigned', 'en_route'].includes(dispatch.status)) {
+            routeOrigin = ambPos || hospitalPos || patientPos;
+            routeDest = patientPos;
+        } else if (['arrived', 'in_transit'].includes(dispatch.status)) {
+            routeOrigin = ambPos || patientPos;
+            routeDest = hospitalPos || patientPos;
         } else {
-            routeOrigin = dispatch.patientPosition;
-            routeDest = dispatch.hospitalPosition;
+            routeOrigin = ambPos || patientPos;
+            routeDest = patientPos;
         }
 
         if (routeOrigin && routeDest) {

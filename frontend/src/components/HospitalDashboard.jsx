@@ -157,12 +157,19 @@ function HospitalDashboard() {
                 // Fetch actual route line
                 let routeOrigin = null;
                 let routeDest = null;
-                if (['incoming', 'assigned', 'en_route', 'arrived'].includes(trackingDispatch.status)) {
-                    routeOrigin = currentHospital?.location?.coordinates || ambPos;
+                const realHospitalPos = (currentHospital?.locationLat && currentHospital?.locationLng) 
+                    ? [currentHospital.locationLat, currentHospital.locationLng] 
+                    : trackingDispatch.hospitalPosition;
+
+                if (['assigned', 'en_route'].includes(trackingDispatch.status)) {
+                    routeOrigin = ambPos || realHospitalPos || patientPos;
                     routeDest = patientPos;
+                } else if (['arrived', 'in_transit'].includes(trackingDispatch.status)) {
+                    routeOrigin = ambPos || patientPos;
+                    routeDest = realHospitalPos || patientPos;
                 } else {
-                    routeOrigin = patientPos;
-                    routeDest = currentHospital?.location?.coordinates || ambPos;
+                    routeOrigin = ambPos || patientPos;
+                    routeDest = patientPos;
                 }
 
                 if (routeOrigin && routeDest) {
