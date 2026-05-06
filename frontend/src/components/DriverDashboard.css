@@ -502,6 +502,8 @@
 }
 
 .dd-exit-btn {
+    display: inline-block;
+    text-decoration: none;
     margin-top: 32px;
     padding: 16px 40px;
     background: transparent;
@@ -514,6 +516,7 @@
     position: relative;
     z-index: 999;
     touch-action: manipulation;
+    text-align: center;
 }
 
 .dd-exit-btn:hover { 
