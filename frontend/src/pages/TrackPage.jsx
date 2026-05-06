@@ -12,16 +12,18 @@ const STATUS_STEPS = [
     { key: 'en_route', label: 'Ambulance headed to pickup' },
     { key: 'arrived', label: 'Ambulance arrived at pickup' },
     { key: 'in_transit', label: 'In transit to hospital' },
-    { key: 'completed', label: 'Arrived at hospital' },
+    { key: 'arrived_at_hospital', label: 'Arrived at hospital' },
+    { key: 'completed', label: 'Handover complete — Case closed' },
 ];
 
 const STATUS_COPY = {
-    incoming: 'We have received your emergency request. The hospital desk is assigning the nearest available ambulance now.',
-    assigned: 'A hospital dispatcher has assigned an ambulance and driver. The unit is preparing to reach your pickup location.',
-    en_route: 'Your ambulance is on the way. Please keep your phone nearby and be ready at the pickup point.',
-    arrived: 'The ambulance has arrived at your location. Please board the vehicle.',
-    in_transit: 'The ambulance is heading to the hospital with the patient.',
-    completed: 'The ambulance has reached the hospital and reception handover is complete.',
+    incoming:            'We have received your emergency request. The hospital desk is assigning the nearest available ambulance now.',
+    assigned:            'A hospital dispatcher has assigned an ambulance and driver. The unit is preparing to reach your pickup location.',
+    en_route:            'Your ambulance is on the way. Please keep your phone nearby and be ready at the pickup point.',
+    arrived:             'The ambulance has arrived at your location. Please board the vehicle.',
+    in_transit:          'The ambulance is heading to the hospital with the patient.',
+    arrived_at_hospital: 'The ambulance has arrived at the hospital. Awaiting final reception sign-off from hospital staff.',
+    completed:           '✅ Case closed. You have been successfully handed over to the hospital reception team. You may now leave this page.',
 };
 
 const formatCurrency = (amount) =>
@@ -50,7 +52,19 @@ const mapRequestToGuestDispatch = (req) => {
     return {
         ...req,
         requestId: req.id.slice(0, 8).toUpperCase(),
-        status: req.status === 'PENDING' ? 'incoming' : req.status === 'ACCEPTED' ? 'assigned' : req.status === 'EN_ROUTE' ? 'en_route' : req.status === 'ARRIVED' ? 'arrived' : req.status === 'IN_TRANSIT' ? 'in_transit' : 'completed',
+        status: req.status === 'PENDING'
+            ? 'incoming'
+            : req.status === 'ACCEPTED'
+                ? 'assigned'
+                : req.status === 'EN_ROUTE'
+                    ? 'en_route'
+                    : req.status === 'ARRIVED'
+                        ? 'arrived'
+                        : req.status === 'IN_TRANSIT'
+                            ? 'in_transit'
+                            : req.status === 'ARRIVED_AT_HOSPITAL'
+                                ? 'arrived_at_hospital'
+                                : 'completed',
         patientName: req.patientName || 'Guest Patient',
         contactNumber: req.patientPhone,
         hospitalName: resolvedAmbulance?.hospital?.name || req.mlRecommendedHospitalName || 'Locating hospital…',
@@ -440,7 +454,56 @@ function TrackPage() {
         );
     }
 
-    return (
+    // ── COMPLETED SCREEN ──────────────────────────────────────────────────────
+    if (dispatch.status === 'completed') {
+        return (
+            <div className="track-page-shell">
+                <header className="track-header">
+                    <div className="track-brand">
+                        <Link to="/"><img src="/image.png" alt="ERIS Logo" className="app-logo" style={{ height: '44px' }} /></Link>
+                        <div>
+                            <div className="track-brand-title">ERIS Ambulance</div>
+                            <div className="track-brand-subtitle">Emergency Response System</div>
+                        </div>
+                    </div>
+                </header>
+                <main style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)', padding: '24px' }}>
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid rgba(16,185,129,0.4)',
+                        borderRadius: '20px',
+                        padding: '48px 40px',
+                        textAlign: 'center',
+                        maxWidth: '480px',
+                        width: '100%',
+                        boxShadow: '0 0 40px rgba(16,185,129,0.12)'
+                    }}>
+                        <div style={{ fontSize: '64px', marginBottom: '16px' }}>✅</div>
+                        <h1 style={{ color: '#10b981', fontSize: '24px', fontWeight: 800, margin: '0 0 12px' }}>Case Closed</h1>
+                        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '32px' }}>
+                            You have been successfully handed over to the hospital reception team.
+                            Your emergency case <strong style={{ color: 'var(--text-primary)' }}>#{dispatch.requestId}</strong> is now closed.
+                        </p>
+                        <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '16px', marginBottom: '24px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: 'var(--text-primary)' }}>Receiving Hospital:</strong> {dispatch.hospitalName}<br />
+                            <strong style={{ color: 'var(--text-primary)' }}>Request ID:</strong> #{dispatch.requestId}
+                        </div>
+                        <Link to="/" style={{
+                            display: 'inline-block',
+                            background: '#10b981',
+                            color: 'white',
+                            padding: '14px 32px',
+                            borderRadius: '10px',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            fontSize: '15px'
+                        }}>Return to Home</Link>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
         <div className="track-page-shell">
             <header className="track-header">
                 <div className="track-brand">

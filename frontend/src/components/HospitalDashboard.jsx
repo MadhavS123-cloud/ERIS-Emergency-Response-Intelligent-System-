@@ -6,10 +6,12 @@ import { socket } from '../socket';
 import './HospitalDashboard.css';
 
 const statusLabels = {
-    incoming: 'Waiting for Ambulance',
-    assigned: 'Ambulance Assigned',
-    en_route: 'Ambulance En Route',
-    completed: 'Closed',
+    incoming:            'Waiting for Ambulance',
+    assigned:            'Ambulance Assigned',
+    en_route:            'Ambulance En Route',
+    in_transit:          'In Transit to Hospital',
+    arrived_at_hospital: '🟢 Ambulance Arrived — Confirm Handover',
+    completed:           'Closed',
 };
 
 function HospitalDashboard() {
@@ -401,8 +403,8 @@ function HospitalDashboard() {
             return;
         }
 
-        if (dispatch.status === 'in_transit') {
-            const result = await updateDispatchStatus(dispatch.id, 'completed', 'Emergency desk completed hospital intake and handover.');
+        if (dispatch.status === 'in_transit' || dispatch.status === 'arrived_at_hospital') {
+            const result = await updateDispatchStatus(dispatch.id, 'completed', 'Hospital confirmed patient handover and reception intake complete.');
             if (!result?.ok) {
                 setSyncMessage(result?.message || 'Unable to close the request right now.');
             }
@@ -570,7 +572,7 @@ function HospitalDashboard() {
                                         dispatches.filter(d => d.status !== 'completed').map((dispatch) => (
                                             <tr
                                                 key={dispatch.id}
-                                                className={`${dispatch.id === activeDispatch?.id ? 'queue-table-row-active ' : ''}${dispatch.priority === 'CRITICAL' ? 'critical-row' : ''}`}
+                                                className={`${dispatch.id === activeDispatch?.id ? 'queue-table-row-active ' : ''}${dispatch.priority === 'CRITICAL' ? 'critical-row' : ''}${dispatch.status === 'arrived_at_hospital' ? ' arrived-row' : ''}`}
                                                 onClick={() => selectDispatch(dispatch.id)}
                                             >
                                                 <td>
@@ -607,7 +609,11 @@ function HospitalDashboard() {
                                                                 handleDispatchAction(dispatch);
                                                             }}
                                                         >
-                                                            {dispatch.status === 'incoming' ? 'Dispatch' : dispatch.status === 'in_transit' ? 'Confirm Arrival' : 'Track'}
+                                                            {dispatch.status === 'incoming'
+                                                                ? 'Dispatch'
+                                                                : dispatch.status === 'in_transit' || dispatch.status === 'arrived_at_hospital'
+                                                                    ? 'Confirm Arrival'
+                                                                    : 'Track'}
                                                         </button>
                                                         <button 
                                                             className="action-cell-btn reject-btn" 

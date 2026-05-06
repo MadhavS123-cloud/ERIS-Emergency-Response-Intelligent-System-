@@ -316,6 +316,20 @@
   border-left: 4px solid var(--emergency-red);
 }
 
+/* Arrived-at-hospital row — green pulse to alert hospital staff */
+.arrived-row {
+  background: rgba(16, 185, 129, 0.06) !important;
+  animation: arrived-pulse 2s ease-in-out infinite;
+}
+.arrived-row td:first-child {
+  border-left: 4px solid #10b981;
+}
+
+@keyframes arrived-pulse {
+  0%, 100% { background: rgba(16, 185, 129, 0.06) !important; }
+  50%       { background: rgba(16, 185, 129, 0.14) !important; }
+}
+
 /* Active/dispatched row */
 .queue-table-row-active {
   background: rgba(37, 99, 235, 0.08) !important;

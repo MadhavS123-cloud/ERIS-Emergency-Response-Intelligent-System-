@@ -44,12 +44,13 @@ const buildGoogleMapsNavigationUrl = ({ origin, destination, destinationLabel })
 };
 
 const stepConfig = {
-    incoming:   { label: 'WAIT FOR DISPATCH',  color: 'btn-blue',   next: null,         stepNum: 0, totalSteps: 4, stepTitle: 'Awaiting hospital assignment' },
-    assigned:   { label: 'START NAVIGATION →',  color: 'btn-blue',   next: 'en_route',   stepNum: 1, totalSteps: 4, stepTitle: 'GO TO PICKUP' },
-    en_route:   { label: 'ARRIVED AT PICKUP →', color: 'btn-blue',   next: 'arrived',    stepNum: 2, totalSteps: 4, stepTitle: 'GO TO PICKUP' },
-    arrived:    { label: 'START TRANSIT →',     color: 'btn-orange', next: 'in_transit', stepNum: 3, totalSteps: 4, stepTitle: 'PATIENT BOARDING' },
-    in_transit: { label: 'COMPLETE HANDOVER →', color: 'btn-green',  next: 'completed',  stepNum: 4, totalSteps: 4, stepTitle: 'HEADING TO HOSPITAL' },
-    completed:  { label: 'CASE CLOSED',         color: 'btn-blue',   next: null,         stepNum: 4, totalSteps: 4, stepTitle: 'Standby' },
+    incoming:              { label: 'WAIT FOR DISPATCH',       color: 'btn-blue',   next: null,                  stepNum: 0, totalSteps: 4, stepTitle: 'Awaiting hospital assignment' },
+    assigned:              { label: 'START NAVIGATION →',      color: 'btn-blue',   next: 'en_route',            stepNum: 1, totalSteps: 4, stepTitle: 'GO TO PICKUP' },
+    en_route:              { label: 'ARRIVED AT PICKUP →',     color: 'btn-blue',   next: 'arrived',             stepNum: 2, totalSteps: 4, stepTitle: 'GO TO PICKUP' },
+    arrived:               { label: 'START TRANSIT →',         color: 'btn-orange', next: 'in_transit',          stepNum: 3, totalSteps: 4, stepTitle: 'PATIENT BOARDING' },
+    in_transit:            { label: 'ARRIVED AT HOSPITAL →',   color: 'btn-green',  next: 'arrived_at_hospital', stepNum: 4, totalSteps: 4, stepTitle: 'HEADING TO HOSPITAL' },
+    arrived_at_hospital:   { label: 'HANDOVER COMPLETE ✓',     color: 'btn-green',  next: null,                  stepNum: 4, totalSteps: 4, stepTitle: 'AWAITING HOSPITAL SIGN-OFF' },
+    completed:             { label: 'CASE CLOSED',             color: 'btn-blue',   next: null,                  stepNum: 4, totalSteps: 4, stepTitle: 'Standby' },
 };
 
 function DriverDashboard() {
@@ -408,10 +409,11 @@ function DriverDashboard() {
     const handleAdvance = useCallback(async (nextStatus) => {
         if (!dispatchInfo) return;
         const msg = {
-            en_route: 'Unit moving to pickup.',
-            arrived: 'Unit arrived at pickup.',
-            in_transit: 'Unit heading to hospital with patient.',
-            completed: 'Handover complete.',
+            en_route:            'Unit moving to pickup.',
+            arrived:             'Unit arrived at pickup.',
+            in_transit:          'Unit heading to hospital with patient.',
+            arrived_at_hospital: 'Unit has arrived at hospital. Awaiting hospital sign-off.',
+            completed:           'Handover complete.',
         };
         const result = await updateDispatchStatus(dispatchInfo.id, nextStatus, msg[nextStatus]);
         if (!result.ok) {
