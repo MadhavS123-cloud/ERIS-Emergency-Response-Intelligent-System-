@@ -1165,7 +1165,6 @@ h1, h2, h3, .hero-title, .home-section-title, .hospitals-header-title {
 }
 
 .home-section-title, .hospitals-header-title {
-  font-size: 1.5rem !important;
   font-weight: 700 !important;
 }
 
@@ -1195,19 +1194,12 @@ button, .btn-emergency, .btn-secondary, .home-nav-link {
 }
 
 /* HERO SECTION */
-.hero-buttons {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-}
-
 .btn-emergency {
   background: #D32F2F !important;
   color: #FFFFFF !important;
   height: 58px !important;
   border-radius: 8px !important;
   box-shadow: none !important;
-  width: 100% !important;
   font-size: 1.1rem !important;
   display: flex !important;
   align-items: center !important;
@@ -1221,19 +1213,25 @@ button, .btn-emergency, .btn-secondary, .home-nav-link {
   height: 58px !important;
   border-radius: 8px !important;
   box-shadow: none !important;
-  width: 100% !important;
   font-size: 1.1rem !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
 }
 
+@media (max-width: 768px) {
+  .hero-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  .btn-emergency, .btn-secondary {
+    width: 100% !important;
+  }
+}
+
 /* STATS ROW IN HERO */
 .hero-trust-bar {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
   background: #111116 !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 24px !important;
