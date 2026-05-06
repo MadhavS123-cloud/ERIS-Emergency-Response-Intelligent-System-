@@ -307,33 +307,51 @@ class RequestService {
     let mlRecommendedHospitalName = predictions?.hospital?.recommendations?.[0]?.hospital_name || null;
     
     const hospitals = await hospitalRepository.findAllHospitals();
+    const priority = data.priority || 'Medium';
 
+    // If ML recommended a hospital, validate it's emergency capable
     if (mlRecommendedHospitalId) {
       const mlHospital = hospitals.find(h => h.id === mlRecommendedHospitalId);
-      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.isAvailable === true))) {
-         logger.info(`ML recommended hospital ${mlRecommendedHospitalName} has no available drivers. Re-routing...`);
-         mlRecommendedHospitalId = null;
+      if (!mlHospital || !mlHospital.isEmergencyCapable || !mlHospital.ambulances?.some(a => a.isAvailable)) {
+        logger.info(`ML recommended hospital ${mlRecommendedHospitalName} is ineligible (not emergency capable or no fleet). Re-routing...`);
+        mlRecommendedHospitalId = null;
       }
     }
 
-    // Auto-assign nearest hospital
+    // Auto-assign best hospital based on priority and distance
     if (!mlRecommendedHospitalId) {
-      let eligibleHospitals = hospitals.filter(h => 
-        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.isAvailable === true)
+      // Always restrict to emergency-capable facilities
+      let eligibleHospitals = hospitals.filter(h =>
+        h.isEmergencyCapable &&
+        typeof h.locationLat === 'number' &&
+        typeof h.locationLng === 'number' &&
+        h.ambulances?.some(a => a.isAvailable)
       );
+
       if (eligibleHospitals.length === 0) {
-        eligibleHospitals = hospitals.filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number');
+        // Fallback: any emergency-capable hospital even without current fleet
+        eligibleHospitals = hospitals.filter(h =>
+          h.isEmergencyCapable &&
+          typeof h.locationLat === 'number' &&
+          typeof h.locationLng === 'number'
+        );
       }
-      const nearestHospital = eligibleHospitals
-        .sort((a, b) => (
-          calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
-          calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
-        ))[0];
-        
+
+      // For Critical priority, prefer multispeciality hospitals
+      if (priority === 'Critical') {
+        const multispeciality = eligibleHospitals.filter(h => h.facilityType === 'multispeciality');
+        if (multispeciality.length > 0) eligibleHospitals = multispeciality;
+      }
+
+      const nearestHospital = eligibleHospitals.sort((a, b) =>
+        calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
+        calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
+      )[0];
+
       if (nearestHospital) {
         mlRecommendedHospitalId = nearestHospital.id;
         mlRecommendedHospitalName = nearestHospital.name;
-        logger.info(`Auto-assigned nearest hospital: ${nearestHospital.name}`);
+        logger.info(`Auto-assigned nearest ${nearestHospital.facilityType || 'hospital'} [${priority}]: ${nearestHospital.name}`);
       }
     }
     
@@ -484,32 +502,45 @@ class RequestService {
 
     const hospitals = await hospitalRepository.findAllHospitals();
 
+    // If ML recommended a hospital, validate it's emergency capable
     if (mlRecommendedHospitalId) {
       const mlHospital = hospitals.find(h => h.id === mlRecommendedHospitalId);
-      if (mlHospital && (!mlHospital.ambulances || !mlHospital.ambulances.some(a => a.isAvailable === true))) {
-         logger.info(`ML recommended hospital ${mlRecommendedHospitalName} has no available drivers. Re-routing...`);
-         mlRecommendedHospitalId = null;
+      if (!mlHospital || !mlHospital.isEmergencyCapable || !mlHospital.ambulances?.some(a => a.isAvailable)) {
+        logger.info(`ML recommended hospital ${mlRecommendedHospitalName} is ineligible. Re-routing guest...`);
+        mlRecommendedHospitalId = null;
       }
     }
 
-    // Auto-assign nearest hospital
+    // 1-tap = treat as Critical — prefer multispeciality, emergency-capable only
     if (!mlRecommendedHospitalId) {
-      let eligibleHospitals = hospitals.filter(h => 
-        typeof h.locationLat === 'number' && typeof h.locationLng === 'number' && h.ambulances && h.ambulances.some(a => a.isAvailable === true)
+      let eligibleHospitals = hospitals.filter(h =>
+        h.isEmergencyCapable &&
+        typeof h.locationLat === 'number' &&
+        typeof h.locationLng === 'number' &&
+        h.ambulances?.some(a => a.isAvailable)
       );
+
       if (eligibleHospitals.length === 0) {
-        eligibleHospitals = hospitals.filter(h => typeof h.locationLat === 'number' && typeof h.locationLng === 'number');
+        eligibleHospitals = hospitals.filter(h =>
+          h.isEmergencyCapable &&
+          typeof h.locationLat === 'number' &&
+          typeof h.locationLng === 'number'
+        );
       }
-      const nearestHospital = eligibleHospitals
-        .sort((a, b) => (
-          calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
-          calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
-        ))[0];
-        
+
+      // 1-tap emergency always prefers multispeciality
+      const multispeciality = eligibleHospitals.filter(h => h.facilityType === 'multispeciality');
+      if (multispeciality.length > 0) eligibleHospitals = multispeciality;
+
+      const nearestHospital = eligibleHospitals.sort((a, b) =>
+        calculateDistance(data.locationLat, data.locationLng, a.locationLat, a.locationLng) -
+        calculateDistance(data.locationLat, data.locationLng, b.locationLat, b.locationLng)
+      )[0];
+
       if (nearestHospital) {
         mlRecommendedHospitalId = nearestHospital.id;
         mlRecommendedHospitalName = nearestHospital.name;
-        logger.info(`Auto-assigned nearest hospital for guest: ${nearestHospital.name}`);
+        logger.info(`1-tap auto-assigned nearest ${nearestHospital.facilityType}: ${nearestHospital.name}`);
       }
     }
 
